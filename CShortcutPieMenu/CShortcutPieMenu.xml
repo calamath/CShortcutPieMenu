@@ -1,0 +1,21 @@
+<GuiXml>
+	<Controls>
+		<TopLevelControl name="CSPM_UI_Root_Keyboard">
+			<AnchorFill/>
+			<Controls>
+				<Control name="$(parent)Menu" inherits="ZO_RadialMenuTemplate" hidden="true" />
+			</Controls>
+		</TopLevelControl>
+
+		<TopLevelControl name="CSPM_UI_Root_Gamepad">
+			<AnchorFill/>
+			<Controls>
+				<Control name="$(parent)Menu" inherits="ZO_RadialMenuHUDSize_Gamepad" hidden="true">
+					<Controls>
+						<Label name="$(parent)Action" inherits="ZO_RadialMenuActionText_Gamepad"/>
+					</Controls>
+				</Control>
+			</Controls>
+		</TopLevelControl>
+	</Controls>
+</GuiXml>
