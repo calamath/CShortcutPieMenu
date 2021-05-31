@@ -79,7 +79,8 @@ local function RebuildCollectibleSelectionChoicesByCategoryType(categoryId, unlo
 			end
 		end
 	end
-	return choices, choicesValues
+	-- In overridden custom tooltip functions, the ChoicesTooltips table uses the collectibleId value instead of a string.
+	return choices, choicesValues, choicesValues
 end
 
 
@@ -135,7 +136,7 @@ local function OnSlotIdSelectionChanged(newSlotId)
 	CSPM_UI_ActionTypeMenu:UpdateValue()
 	CSPM_UI_CategoryMenu:UpdateChoices(ui.categoryChoices[uiActionTypeId], ui.categoryChoicesValues[uiActionTypeId])
 	CSPM_UI_CategoryMenu:UpdateValue()
-	CSPM_UI_ActionValueMenu:UpdateChoices(ui.actionValueChoices[uiCategoryId], ui.actionValueChoicesValues[uiCategoryId])
+	CSPM_UI_ActionValueMenu:UpdateChoices(ui.actionValueChoices[uiCategoryId], ui.actionValueChoicesValues[uiCategoryId], ui.actionValueChoicesTooltips[uiCategoryId])
 	CSPM_UI_ActionValueMenu:UpdateValue()
 end
 
@@ -154,7 +155,7 @@ end
 local function OnCategorySelectionChanged(newCategoryId)
 	CSPM.LDL:Debug("OnCategorySelectionChanged : %s", newCategoryId)
 	CSPM.db.preset[uiPresetId].slot[uiSlotId].category = newCategoryId
-	CSPM_UI_ActionValueMenu:UpdateChoices(ui.actionValueChoices[newCategoryId], ui.actionValueChoicesValues[newCategoryId])
+	CSPM_UI_ActionValueMenu:UpdateChoices(ui.actionValueChoices[newCategoryId], ui.actionValueChoicesValues[newCategoryId], ui.actionValueChoicesTooltips[newCategoryId])
 	CSPM_UI_ActionValueMenu:UpdateValue()
 end
 
@@ -170,6 +171,36 @@ end
 local function OnLAMPanelControlsCreated(panel)
 	if (panel ~= ui.panel) then return end
 	CALLBACK_MANAGER:UnregisterCallback("LAM-PanelControlsCreated", OnLAMPanelControlsCreated)
+
+	-- override ScrollableDropdownHelper for CSPM_UI_ActionValueMenu to customize dropdown choices tooltips
+	if CSPM_UI_ActionValueMenu.scrollHelper and CSPM_UI_ActionValueMenu.scrollHelper.OnMouseEnter and CSPM_UI_ActionValueMenu.scrollHelper.OnMouseExit then
+		CSPM_UI_ActionValueMenu.scrollHelper.OnMouseEnter = function(self, control)
+--			CSPM.LDL:Debug("ActionValueMenu:OnMouseEnter")
+			if control.m_data.tooltip then
+				local uiActionTypeId = CSPM.db.preset[uiPresetId].slot[uiSlotId].type
+				if uiActionTypeId == CSPM_ACTION_TYPE_COLLECTIBLE then
+					InitializeTooltip(ItemTooltip, control, TOPLEFT, 0, 0, BOTTOMRIGHT)
+			        ItemTooltip:SetCollectible(control.m_data.tooltip, SHOW_NICKNAME, SHOW_PURCHASABLE_HINT, SHOW_BLOCK_REASON, GAMEPLAY_ACTOR_CATEGORY_PLAYER)
+					ItemTooltipTopLevel:BringWindowToTop()
+				else
+					InitializeTooltip(InformationTooltip, control, TOPLEFT, 0, 0, BOTTOMRIGHT)
+					SetTooltipText(InformationTooltip, LAM.util.GetStringFromValue(control.m_data.tooltip))
+					InformationTooltipTopLevel:BringWindowToTop()
+				end
+			end
+		end
+		CSPM_UI_ActionValueMenu.scrollHelper.OnMouseExit = function(self, control)
+--			CSPM.LDL:Debug("ActionValueMenu:OnMouseExit")
+			if control.m_data.tooltip then
+				local uiActionTypeId = CSPM.db.preset[uiPresetId].slot[uiSlotId].type
+				if uiActionTypeId == CSPM_ACTION_TYPE_COLLECTIBLE then
+					ClearTooltip(ItemTooltip)
+				else
+					ClearTooltip(InformationTooltip)
+				end
+			end
+		end
+	end
 
 	ChangePanelPresetState(1)
 	ui.panelInitialized = true
@@ -203,11 +234,12 @@ function CSPM:InitializeUI()
 
 	ui.actionValueChoices = {}
 	ui.actionValueChoicesValues = {}
-	ui.actionValueChoices[CSPM_CATEGORY_NOTHING], ui.actionValueChoicesValues[CSPM_CATEGORY_NOTHING] = {}, {}
-	ui.actionValueChoices[CSPM_CATEGORY_C_ASSISTANT], ui.actionValueChoicesValues[CSPM_CATEGORY_C_ASSISTANT] = RebuildCollectibleSelectionChoicesByCategoryType(COLLECTIBLE_CATEGORY_TYPE_ASSISTANT, true)
-	ui.actionValueChoices[CSPM_CATEGORY_C_COMPANION], ui.actionValueChoicesValues[CSPM_CATEGORY_C_COMPANION] = RebuildCollectibleSelectionChoicesByCategoryType(COLLECTIBLE_CATEGORY_TYPE_COMPANION, true)
-	ui.actionValueChoices[CSPM_CATEGORY_C_MEMENTO], ui.actionValueChoicesValues[CSPM_CATEGORY_C_MEMENTO] = RebuildCollectibleSelectionChoicesByCategoryType(COLLECTIBLE_CATEGORY_TYPE_MEMENTO, true)
-	ui.actionValueChoices[CSPM_CATEGORY_C_VANITY_PET], ui.actionValueChoicesValues[CSPM_CATEGORY_C_VANITY_PET] = RebuildCollectibleSelectionChoicesByCategoryType(COLLECTIBLE_CATEGORY_TYPE_VANITY_PET, true)
+	ui.actionValueChoicesTooltips = {}
+	ui.actionValueChoices[CSPM_CATEGORY_NOTHING], ui.actionValueChoicesValues[CSPM_CATEGORY_NOTHING], ui.actionValueChoicesTooltips[CSPM_CATEGORY_NOTHING] = {}, {}, {}
+	ui.actionValueChoices[CSPM_CATEGORY_C_ASSISTANT], ui.actionValueChoicesValues[CSPM_CATEGORY_C_ASSISTANT], ui.actionValueChoicesTooltips[CSPM_CATEGORY_C_ASSISTANT] = RebuildCollectibleSelectionChoicesByCategoryType(COLLECTIBLE_CATEGORY_TYPE_ASSISTANT, true)
+	ui.actionValueChoices[CSPM_CATEGORY_C_COMPANION], ui.actionValueChoicesValues[CSPM_CATEGORY_C_COMPANION], ui.actionValueChoicesTooltips[CSPM_CATEGORY_C_COMPANION] = RebuildCollectibleSelectionChoicesByCategoryType(COLLECTIBLE_CATEGORY_TYPE_COMPANION, true)
+	ui.actionValueChoices[CSPM_CATEGORY_C_MEMENTO], ui.actionValueChoicesValues[CSPM_CATEGORY_C_MEMENTO], ui.actionValueChoicesTooltips[CSPM_CATEGORY_C_MEMENTO] = RebuildCollectibleSelectionChoicesByCategoryType(COLLECTIBLE_CATEGORY_TYPE_MEMENTO, true)
+	ui.actionValueChoices[CSPM_CATEGORY_C_VANITY_PET], ui.actionValueChoicesValues[CSPM_CATEGORY_C_VANITY_PET] , ui.actionValueChoicesTooltips[CSPM_CATEGORY_C_VANITY_PET]= RebuildCollectibleSelectionChoicesByCategoryType(COLLECTIBLE_CATEGORY_TYPE_VANITY_PET, true)
 end
 
 function CSPM:CreateSettingsWindow()
@@ -305,7 +337,7 @@ function CSPM:CreateSettingsWindow()
 --			tooltip = L(SI_CSPM_UI_ACTION_VALUE_MENU_TIPS), 
 			choices = ui.actionValueChoices[CSPM.db.preset[uiPresetId].slot[uiSlotId].category], 	-- If choicesValue is defined, choices table is only used for UI display!
 			choicesValues = ui.actionValueChoicesValues[CSPM.db.preset[uiPresetId].slot[uiSlotId].category], 
---			choicesTooltips = ui.actionValueChoicesTooltips[CSPM.db.preset[uiPresetId].slot[uiSlotId].category], 
+			choicesTooltips = ui.actionValueChoicesTooltips[CSPM.db.preset[uiPresetId].slot[uiSlotId].category], 
 			getFunc = function() return CSPM.db.preset[uiPresetId].slot[uiSlotId].value end, 
 			setFunc = OnActionValueSelectionChanged, 
 --			sort = "name-up", --or "name-down", "numeric-up", "numeric-down", "value-up", "value-down", "numericvalue-up", "numericvalue-down" 
