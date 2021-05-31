@@ -1,7 +1,7 @@
 ## Title: Calamath's Shortcut Pie Menu
 ## Description: Shortcut Pie Menu
-## Version: 0.1.1
-## AddOnVersion: 101
+## Version: 0.2.0
+## AddOnVersion: 200
 ## Author: Calamath
 ## License: Artistic License 2.0
 ## APIVersion: 100034 100035

@@ -19,12 +19,30 @@ local CSPM = CShortcutPieMenu
 local CSPM_MENU_ITEMS_COUNT_DEFAULT				= CSPM.const.CSPM_MENU_ITEMS_COUNT_DEFAULT
 local CSPM_ACTION_TYPE_NOTHING					= CSPM.const.CSPM_ACTION_TYPE_NOTHING
 local CSPM_ACTION_TYPE_COLLECTIBLE				= CSPM.const.CSPM_ACTION_TYPE_COLLECTIBLE
+local CSPM_ACTION_TYPE_EMOTE					= CSPM.const.CSPM_ACTION_TYPE_EMOTE
 local CSPM_CATEGORY_NOTHING						= CSPM.const.CSPM_CATEGORY_NOTHING
 local CSPM_CATEGORY_C_ASSISTANT					= CSPM.const.CSPM_CATEGORY_C_ASSISTANT
 local CSPM_CATEGORY_C_COMPANION					= CSPM.const.CSPM_CATEGORY_C_COMPANION
 local CSPM_CATEGORY_C_MEMENTO					= CSPM.const.CSPM_CATEGORY_C_MEMENTO
 local CSPM_CATEGORY_C_VANITY_PET				= CSPM.const.CSPM_CATEGORY_C_VANITY_PET
+local CSPM_CATEGORY_E_CEREMONIAL				= CSPM.const.CSPM_CATEGORY_E_CEREMONIAL
+local CSPM_CATEGORY_E_CHEERS_AND_JEERS			= CSPM.const.CSPM_CATEGORY_E_CHEERS_AND_JEERS
+local CSPM_CATEGORY_E_EMOTION					= CSPM.const.CSPM_CATEGORY_E_EMOTION
+local CSPM_CATEGORY_E_ENTERTAINMENT				= CSPM.const.CSPM_CATEGORY_E_ENTERTAINMENT
+local CSPM_CATEGORY_E_FOOD_AND_DRINK			= CSPM.const.CSPM_CATEGORY_E_FOOD_AND_DRINK
+local CSPM_CATEGORY_E_GIVE_DIRECTIONS			= CSPM.const.CSPM_CATEGORY_E_GIVE_DIRECTIONS
+local CSPM_CATEGORY_E_PHYSICAL					= CSPM.const.CSPM_CATEGORY_E_PHYSICAL
+local CSPM_CATEGORY_E_POSES_AND_FIDGETS			= CSPM.const.CSPM_CATEGORY_E_POSES_AND_FIDGETS
+local CSPM_CATEGORY_E_PROP						= CSPM.const.CSPM_CATEGORY_E_PROP
+local CSPM_CATEGORY_E_SOCIAL					= CSPM.const.CSPM_CATEGORY_E_SOCIAL
+local CSPM_CATEGORY_E_COLLECTED					= CSPM.const.CSPM_CATEGORY_E_COLLECTED
+
 local CSPM_SLOT_DATA_DEFAULT 					= CSPM.const.CSPM_SLOT_DATA_DEFAULT
+
+-- Aliases of look up table
+local CSPM_LUT_CATEGORY_C_CSPM_TO_ZOS			= CSPM.lut.CSPM_LUT_CATEGORY_C_CSPM_TO_ZOS
+local CSPM_LUT_CATEGORY_E_CSPM_TO_ZOS			= CSPM.lut.CSPM_LUT_CATEGORY_E_CSPM_TO_ZOS
+local CSPM_LUT_CATEGORY_E_CSPM_TO_ICON			= CSPM.lut.CSPM_LUT_CATEGORY_E_CSPM_TO_ICON
 
 -- Library
 local LAM = LibAddonMenu2
@@ -80,6 +98,16 @@ local function RebuildCollectibleSelectionChoicesByCategoryType(categoryId, unlo
 		end
 	end
 	-- In overridden custom tooltip functions, the ChoicesTooltips table uses the collectibleId value instead of a string.
+	return choices, choicesValues, choicesValues
+end
+
+local function RebuildEmoteSelectionChoicesByEmoteCategory(emoteCategory)
+	local choices = {}
+	local choicesValues = PLAYER_EMOTE_MANAGER:GetEmoteListForType(emoteCategory) or {}
+	for k, emoteId in pairs(choicesValues) do
+		choices[#choices + 1] = ZO_CachedStrFormat("<<1>>", PLAYER_EMOTE_MANAGER:GetEmoteItemInfo(emoteId).displayName)
+	end
+	-- In overridden custom tooltip functions, the ChoicesTooltips table uses the emoteId value instead of a string.
 	return choices, choicesValues, choicesValues
 end
 
@@ -182,6 +210,8 @@ local function OnLAMPanelControlsCreated(panel)
 					InitializeTooltip(ItemTooltip, control, TOPLEFT, 0, 0, BOTTOMRIGHT)
 			        ItemTooltip:SetCollectible(control.m_data.tooltip, SHOW_NICKNAME, SHOW_PURCHASABLE_HINT, SHOW_BLOCK_REASON, GAMEPLAY_ACTOR_CATEGORY_PLAYER)
 					ItemTooltipTopLevel:BringWindowToTop()
+				elseif uiActionTypeId == CSPM_ACTION_TYPE_EMOTE then
+					
 				else
 					InitializeTooltip(InformationTooltip, control, TOPLEFT, 0, 0, BOTTOMRIGHT)
 					SetTooltipText(InformationTooltip, LAM.util.GetStringFromValue(control.m_data.tooltip))
@@ -195,6 +225,8 @@ local function OnLAMPanelControlsCreated(panel)
 				local uiActionTypeId = CSPM.db.preset[uiPresetId].slot[uiSlotId].type
 				if uiActionTypeId == CSPM_ACTION_TYPE_COLLECTIBLE then
 					ClearTooltip(ItemTooltip)
+				elseif uiActionTypeId == CSPM_ACTION_TYPE_EMOTE then
+					
 				else
 					ClearTooltip(InformationTooltip)
 				end
@@ -211,18 +243,18 @@ function CSPM:InitializeUI()
 
 	ui.slotChoices, ui.slotChoicesValues = RebuildSlotSelectionChoices(CSPM_MENU_ITEMS_COUNT_DEFAULT)
 
-	ui.actionTypeChoices = { "Nothing", "Collectible", } 
-	ui.actionTypeChoicesValues = { CSPM_ACTION_TYPE_NOTHING, CSPM_ACTION_TYPE_COLLECTIBLE, }
+	ui.actionTypeChoices = { "Nothing", "Collectible", "Emote", } 
+	ui.actionTypeChoicesValues = { CSPM_ACTION_TYPE_NOTHING, CSPM_ACTION_TYPE_COLLECTIBLE, CSPM_ACTION_TYPE_EMOTE, }
 
 	ui.categoryChoices = {}
 	ui.categoryChoicesValues = {}
 	ui.categoryChoices[CSPM_ACTION_TYPE_NOTHING], ui.categoryChoicesValues[CSPM_ACTION_TYPE_NOTHING] = {}, {}
 	ui.categoryChoices[CSPM_ACTION_TYPE_COLLECTIBLE] = {
 		"Nothing", 
-		"Assistant", 
-		"Companion", 
-		"Memento", 
-		"Non-combat-pet", 
+		L(SI_COLLECTIBLECATEGORYTYPE8), 	-- "Assistant", 
+		L(SI_COLLECTIBLECATEGORYTYPE27), 	-- "Companion", 
+		L(SI_COLLECTIBLECATEGORYTYPE5), 	-- "Memento", 
+		L(SI_COLLECTIBLECATEGORYTYPE3), 	-- "Non-combat-pet", 
 	}
 	ui.categoryChoicesValues[CSPM_ACTION_TYPE_COLLECTIBLE] = {
 		CSPM_CATEGORY_NOTHING, 
@@ -231,15 +263,45 @@ function CSPM:InitializeUI()
 		CSPM_CATEGORY_C_MEMENTO, 
 		CSPM_CATEGORY_C_VANITY_PET
 	}
+	ui.categoryChoices[CSPM_ACTION_TYPE_EMOTE] = {
+		"Nothing", 
+		L(SI_EMOTECATEGORY1), 	-- "Ceremonial"
+		L(SI_EMOTECATEGORY2), 	-- "Cheers and Jeers"
+		L(SI_EMOTECATEGORY4), 	-- "Emotion"
+		L(SI_EMOTECATEGORY5), 	-- "Entertainment"
+		L(SI_EMOTECATEGORY6), 	-- "Food and Drink"
+		L(SI_EMOTECATEGORY7), 	-- "Give Directions"
+		L(SI_EMOTECATEGORY9), 	-- "Physical"
+		L(SI_EMOTECATEGORY10), 	-- "Poses and Fidgets"
+		L(SI_EMOTECATEGORY11), 	-- "Prop"
+		L(SI_EMOTECATEGORY12), 	-- "Social"
+		L(SI_EMOTECATEGORY14), 	-- "Collected"
+	}
+	ui.categoryChoicesValues[CSPM_ACTION_TYPE_EMOTE] = {
+		CSPM_CATEGORY_NOTHING, 
+		CSPM_CATEGORY_E_CEREMONIAL, 
+		CSPM_CATEGORY_E_CHEERS_AND_JEERS, 
+		CSPM_CATEGORY_E_EMOTION, 
+		CSPM_CATEGORY_E_ENTERTAINMENT, 
+		CSPM_CATEGORY_E_FOOD_AND_DRINK, 
+		CSPM_CATEGORY_E_GIVE_DIRECTIONS, 
+		CSPM_CATEGORY_E_PHYSICAL, 
+		CSPM_CATEGORY_E_POSES_AND_FIDGETS, 
+		CSPM_CATEGORY_E_PROP, 
+		CSPM_CATEGORY_E_SOCIAL, 
+		CSPM_CATEGORY_E_COLLECTED, 
+	}
 
 	ui.actionValueChoices = {}
 	ui.actionValueChoicesValues = {}
 	ui.actionValueChoicesTooltips = {}
 	ui.actionValueChoices[CSPM_CATEGORY_NOTHING], ui.actionValueChoicesValues[CSPM_CATEGORY_NOTHING], ui.actionValueChoicesTooltips[CSPM_CATEGORY_NOTHING] = {}, {}, {}
-	ui.actionValueChoices[CSPM_CATEGORY_C_ASSISTANT], ui.actionValueChoicesValues[CSPM_CATEGORY_C_ASSISTANT], ui.actionValueChoicesTooltips[CSPM_CATEGORY_C_ASSISTANT] = RebuildCollectibleSelectionChoicesByCategoryType(COLLECTIBLE_CATEGORY_TYPE_ASSISTANT, true)
-	ui.actionValueChoices[CSPM_CATEGORY_C_COMPANION], ui.actionValueChoicesValues[CSPM_CATEGORY_C_COMPANION], ui.actionValueChoicesTooltips[CSPM_CATEGORY_C_COMPANION] = RebuildCollectibleSelectionChoicesByCategoryType(COLLECTIBLE_CATEGORY_TYPE_COMPANION, true)
-	ui.actionValueChoices[CSPM_CATEGORY_C_MEMENTO], ui.actionValueChoicesValues[CSPM_CATEGORY_C_MEMENTO], ui.actionValueChoicesTooltips[CSPM_CATEGORY_C_MEMENTO] = RebuildCollectibleSelectionChoicesByCategoryType(COLLECTIBLE_CATEGORY_TYPE_MEMENTO, true)
-	ui.actionValueChoices[CSPM_CATEGORY_C_VANITY_PET], ui.actionValueChoicesValues[CSPM_CATEGORY_C_VANITY_PET] , ui.actionValueChoicesTooltips[CSPM_CATEGORY_C_VANITY_PET]= RebuildCollectibleSelectionChoicesByCategoryType(COLLECTIBLE_CATEGORY_TYPE_VANITY_PET, true)
+	for cspmCollectibleCategory, zosCollectibleCategory in pairs(CSPM_LUT_CATEGORY_C_CSPM_TO_ZOS) do
+		ui.actionValueChoices[cspmCollectibleCategory], ui.actionValueChoicesValues[cspmCollectibleCategory], ui.actionValueChoicesTooltips[cspmCollectibleCategory] = RebuildCollectibleSelectionChoicesByCategoryType(zosCollectibleCategory, true)
+	end
+	for cspmEmoteCategory, zosEmoteCategory in pairs(CSPM_LUT_CATEGORY_E_CSPM_TO_ZOS) do
+		ui.actionValueChoices[cspmEmoteCategory], ui.actionValueChoicesValues[cspmEmoteCategory], ui.actionValueChoicesTooltips[cspmEmoteCategory] = RebuildEmoteSelectionChoicesByEmoteCategory(zosEmoteCategory) 
+	end
 end
 
 function CSPM:CreateSettingsWindow()
@@ -341,6 +403,7 @@ function CSPM:CreateSettingsWindow()
 			getFunc = function() return CSPM.db.preset[uiPresetId].slot[uiSlotId].value end, 
 			setFunc = OnActionValueSelectionChanged, 
 --			sort = "name-up", --or "name-down", "numeric-up", "numeric-down", "value-up", "value-down", "numericvalue-up", "numericvalue-down" 
+			sort = "name-up", 
 --			width = "half", 
 			scrollable = 15, 
 			default = 0, 
