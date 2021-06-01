@@ -1,3 +1,7 @@
+V0.2.1: [V201] by Calamath
+- For advanced users, you could now determine the collectibles and emotes settings with an immediate value.
+- Fixed an issue where the action value was not initialized when the user changed the category selection in the settings menu.
+
 V0.2.0: [V200] by Calamath
 - Emote support in Shortcut Pie Menu.
 - small improvements in code.

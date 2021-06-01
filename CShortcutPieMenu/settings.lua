@@ -21,6 +21,7 @@ local CSPM_ACTION_TYPE_NOTHING					= CSPM.const.CSPM_ACTION_TYPE_NOTHING
 local CSPM_ACTION_TYPE_COLLECTIBLE				= CSPM.const.CSPM_ACTION_TYPE_COLLECTIBLE
 local CSPM_ACTION_TYPE_EMOTE					= CSPM.const.CSPM_ACTION_TYPE_EMOTE
 local CSPM_CATEGORY_NOTHING						= CSPM.const.CSPM_CATEGORY_NOTHING
+local CSPM_CATEGORY_IMMEDIATE_VALUE				= CSPM.const.CSPM_CATEGORY_IMMEDIATE_VALUE
 local CSPM_CATEGORY_C_ASSISTANT					= CSPM.const.CSPM_CATEGORY_C_ASSISTANT
 local CSPM_CATEGORY_C_COMPANION					= CSPM.const.CSPM_CATEGORY_C_COMPANION
 local CSPM_CATEGORY_C_MEMENTO					= CSPM.const.CSPM_CATEGORY_C_MEMENTO
@@ -166,6 +167,8 @@ local function OnSlotIdSelectionChanged(newSlotId)
 	CSPM_UI_CategoryMenu:UpdateValue()
 	CSPM_UI_ActionValueMenu:UpdateChoices(ui.actionValueChoices[uiCategoryId], ui.actionValueChoicesValues[uiCategoryId], ui.actionValueChoicesTooltips[uiCategoryId])
 	CSPM_UI_ActionValueMenu:UpdateValue()
+	CSPM_UI_ActionValueEditbox:UpdateValue()
+	CSPM_UI_ActionValueEditbox:UpdateDisabled()
 end
 
 local function OnActionTypeSelectionChanged(newActionTypeId)
@@ -184,13 +187,24 @@ local function OnCategorySelectionChanged(newCategoryId)
 	CSPM.LDL:Debug("OnCategorySelectionChanged : %s", newCategoryId)
 	CSPM.db.preset[uiPresetId].slot[uiSlotId].category = newCategoryId
 	CSPM_UI_ActionValueMenu:UpdateChoices(ui.actionValueChoices[newCategoryId], ui.actionValueChoicesValues[newCategoryId], ui.actionValueChoicesTooltips[newCategoryId])
-	CSPM_UI_ActionValueMenu:UpdateValue()
+
+	-- To prevent a mismatch between the category id and the ActionValue,
+	-- the ActionValue should be initialized when the user changes the category selection.
+	CSPM_UI_ActionValueMenu:UpdateValue(true)
 end
 
 local function OnActionValueSelectionChanged(newActionValue)
 	CSPM.LDL:Debug("OnActionValueSelectionChanged : %s", newActionValue)
 	CSPM.db.preset[uiPresetId].slot[uiSlotId].value = newActionValue
 end
+
+local function OnActionValueEditboxChanged(newActionValueString)
+	CSPM.LDL:Debug("OnActionValueEditboxChanged : %s", newActionValueString)
+	local uiActionTypeId = CSPM.db.preset[uiPresetId].slot[uiSlotId].type
+	-- NOTE : the meaning of ActionValue is different for each ActionType, and they are not mutually compatible.
+	CSPM.db.preset[uiPresetId].slot[uiSlotId].value = tonumber(newActionValueString)
+end
+
 
 local function DoTestButton()
 	ChangePanelPresetState(1)
@@ -251,6 +265,7 @@ function CSPM:InitializeUI()
 	ui.categoryChoices[CSPM_ACTION_TYPE_NOTHING], ui.categoryChoicesValues[CSPM_ACTION_TYPE_NOTHING] = {}, {}
 	ui.categoryChoices[CSPM_ACTION_TYPE_COLLECTIBLE] = {
 		"Nothing", 
+		"Immediate Value", 
 		L(SI_COLLECTIBLECATEGORYTYPE8), 	-- "Assistant", 
 		L(SI_COLLECTIBLECATEGORYTYPE27), 	-- "Companion", 
 		L(SI_COLLECTIBLECATEGORYTYPE5), 	-- "Memento", 
@@ -258,6 +273,7 @@ function CSPM:InitializeUI()
 	}
 	ui.categoryChoicesValues[CSPM_ACTION_TYPE_COLLECTIBLE] = {
 		CSPM_CATEGORY_NOTHING, 
+		CSPM_CATEGORY_IMMEDIATE_VALUE, 
 		CSPM_CATEGORY_C_ASSISTANT, 
 		CSPM_CATEGORY_C_COMPANION, 
 		CSPM_CATEGORY_C_MEMENTO, 
@@ -265,6 +281,7 @@ function CSPM:InitializeUI()
 	}
 	ui.categoryChoices[CSPM_ACTION_TYPE_EMOTE] = {
 		"Nothing", 
+		"Immediate Value", 
 		L(SI_EMOTECATEGORY1), 	-- "Ceremonial"
 		L(SI_EMOTECATEGORY2), 	-- "Cheers and Jeers"
 		L(SI_EMOTECATEGORY4), 	-- "Emotion"
@@ -279,6 +296,7 @@ function CSPM:InitializeUI()
 	}
 	ui.categoryChoicesValues[CSPM_ACTION_TYPE_EMOTE] = {
 		CSPM_CATEGORY_NOTHING, 
+		CSPM_CATEGORY_IMMEDIATE_VALUE, 
 		CSPM_CATEGORY_E_CEREMONIAL, 
 		CSPM_CATEGORY_E_CHEERS_AND_JEERS, 
 		CSPM_CATEGORY_E_EMOTION, 
@@ -296,6 +314,7 @@ function CSPM:InitializeUI()
 	ui.actionValueChoicesValues = {}
 	ui.actionValueChoicesTooltips = {}
 	ui.actionValueChoices[CSPM_CATEGORY_NOTHING], ui.actionValueChoicesValues[CSPM_CATEGORY_NOTHING], ui.actionValueChoicesTooltips[CSPM_CATEGORY_NOTHING] = {}, {}, {}
+	ui.actionValueChoices[CSPM_CATEGORY_IMMEDIATE_VALUE], ui.actionValueChoicesValues[CSPM_CATEGORY_IMMEDIATE_VALUE], ui.actionValueChoicesTooltips[CSPM_CATEGORY_IMMEDIATE_VALUE] = {}, {}, {}
 	for cspmCollectibleCategory, zosCollectibleCategory in pairs(CSPM_LUT_CATEGORY_C_CSPM_TO_ZOS) do
 		ui.actionValueChoices[cspmCollectibleCategory], ui.actionValueChoicesValues[cspmCollectibleCategory], ui.actionValueChoicesTooltips[cspmCollectibleCategory] = RebuildCollectibleSelectionChoicesByCategoryType(zosCollectibleCategory, true)
 	end
@@ -408,6 +427,30 @@ function CSPM:CreateSettingsWindow()
 			scrollable = 15, 
 			default = 0, 
 			reference = "CSPM_UI_ActionValueMenu", 
+	}
+	optionsData[#optionsData + 1] = {
+		type = "editbox", 
+		name = "", 
+--		tooltip = nil, 
+		getFunc = function() return CSPM.db.preset[uiPresetId].slot[uiSlotId].value end, 
+		setFunc = OnActionValueEditboxChanged, 
+		isMultiline = false, 
+		isExtraWide = false, 
+--		maxChars = 3000, 
+--		textType = TEXT_TYPE_NUMERIC, -- number (optional) or function returning a number. Valid TextType numbers: TEXT_TYPE_ALL, TEXT_TYPE_ALPHABETIC, TEXT_TYPE_ALPHABETIC_NO_FULLWIDTH_LATIN, TEXT_TYPE_NUMERIC, TEXT_TYPE_NUMERIC_UNSIGNED_INT, TEXT_TYPE_PASSWORD
+--		width = "half", 
+		disabled = function()
+			local uiCategoryId = CSPM.db.preset[uiPresetId].slot[uiSlotId].category
+			return uiCategoryId ~= CSPM_CATEGORY_IMMEDIATE_VALUE
+		end, 
+		default = 0, 
+		reference = "CSPM_UI_ActionValueEditbox", 
+	}
+	optionsData[#optionsData + 1] = {
+		type = "divider", 
+		width = "full", 
+		height = 10, 
+		alpha = 0.25, 
 	}
 --[[
 	optionsData[#optionsData + 1] = {
