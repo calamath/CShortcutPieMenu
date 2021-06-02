@@ -202,6 +202,8 @@ end
 local function OnActionValueSelectionChanged(newActionValue)
 	CSPM.LDL:Debug("OnActionValueSelectionChanged : %s", newActionValue)
 	CSPM.db.preset[uiPresetId].slot[uiSlotId].value = newActionValue
+	-- According to the design policy, the slot name override setting is initialized.
+	CSPM_UI_SlotNameEditbox:UpdateValue(true)
 end
 
 local function OnActionValueEditboxChanged(newActionValueString)
@@ -493,12 +495,42 @@ function CSPM:CreateSettingsWindow()
 		default = "", 
 		reference = "CSPM_UI_SlotNameEditbox", 
 	}
+	optionsData[#optionsData + 1] = {
+		type = "button", 
+		name = "Default Name", 
+--		tooltip = nil, 
+		func = function()
+			local newSlotName = ""
+			local uiActionTypeId = CSPM.db.preset[uiPresetId].slot[uiSlotId].type
+			if uiActionTypeId == CSPM_ACTION_TYPE_COLLECTIBLE then
+				newSlotName = ZO_CachedStrFormat("<<1>>", GetCollectibleName(CSPM.db.preset[uiPresetId].slot[uiSlotId].value or ""))
+			elseif uiActionTypeId == CSPM_ACTION_TYPE_EMOTE then
+				local emoteItemInfo = PLAYER_EMOTE_MANAGER:GetEmoteItemInfo(CSPM.db.preset[uiPresetId].slot[uiSlotId].value)
+				newSlotName = ZO_CachedStrFormat("<<1>>", emoteItemInfo and emoteItemInfo.displayName or "")
+			end
+			CSPM.LDL:Debug("Got SlotName : ", tostring(newSlotName))
+			CSPM_UI_SlotNameEditbox:UpdateValue(false, newSlotName)
+		end, 
+		width = "full", 
+--		disabled = true, 
+		disabled = function()
+			local uiActionTypeId = CSPM.db.preset[uiPresetId].slot[uiSlotId].type
+			if uiActionTypeId == CSPM_ACTION_TYPE_COLLECTIBLE or uiActionTypeId == CSPM_ACTION_TYPE_EMOTE then
+				return false
+			else
+				return true
+			end
+		end, 
+--		isDangerous = false, 
+--		warning = "Will need to reload the UI.", -- (optional)
+--		reference = "CSPM_UI_GetSlotNameButton", 
+	}
 --[[
 	optionsData[#optionsData + 1] = {
-			type = "button", 
-			name = "Test", 
-			func = DoTestButton, 
---			width = "half", 
+		type = "button", 
+		name = "Test", 
+		func = DoTestButton, 
+--		width = "half", 
 	}
 ]]
 	LAM:RegisterOptionControls("CSPM_OptionsMenu", optionsData)
