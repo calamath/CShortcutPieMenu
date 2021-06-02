@@ -1,3 +1,7 @@
+V0.3.0: [V300] by Calamath
+- Chat Command support in Shortcut Pie Menu.
+- Added a new setting option to override the name for each slot. This will allow you to decide the acutual display name as needed.
+
 V0.2.1: [V201] by Calamath
 - For advanced users, you could now determine the collectibles and emotes settings with an immediate value.
 - Fixed an issue where the action value was not initialized when the user changed the category selection in the settings menu.

@@ -20,6 +20,7 @@ local CSPM_MENU_ITEMS_COUNT_DEFAULT				= CSPM.const.CSPM_MENU_ITEMS_COUNT_DEFAUL
 local CSPM_ACTION_TYPE_NOTHING					= CSPM.const.CSPM_ACTION_TYPE_NOTHING
 local CSPM_ACTION_TYPE_COLLECTIBLE				= CSPM.const.CSPM_ACTION_TYPE_COLLECTIBLE
 local CSPM_ACTION_TYPE_EMOTE					= CSPM.const.CSPM_ACTION_TYPE_EMOTE
+local CSPM_ACTION_TYPE_CHAT_COMMAND				= CSPM.const.CSPM_ACTION_TYPE_CHAT_COMMAND
 local CSPM_CATEGORY_NOTHING						= CSPM.const.CSPM_CATEGORY_NOTHING
 local CSPM_CATEGORY_IMMEDIATE_VALUE				= CSPM.const.CSPM_CATEGORY_IMMEDIATE_VALUE
 local CSPM_CATEGORY_C_ASSISTANT					= CSPM.const.CSPM_CATEGORY_C_ASSISTANT
@@ -169,6 +170,7 @@ local function OnSlotIdSelectionChanged(newSlotId)
 	CSPM_UI_ActionValueMenu:UpdateValue()
 	CSPM_UI_ActionValueEditbox:UpdateValue()
 	CSPM_UI_ActionValueEditbox:UpdateDisabled()
+	CSPM_UI_SlotNameEditbox:UpdateValue()
 end
 
 local function OnActionTypeSelectionChanged(newActionTypeId)
@@ -181,6 +183,8 @@ local function OnActionTypeSelectionChanged(newActionTypeId)
 	-- Therefore, when a user changes the ActionType selection, the category id and ActionValue should be initialized．
 	CSPM_UI_CategoryMenu:UpdateValue(true)
 	CSPM_UI_ActionValueMenu:UpdateValue(true)
+	-- According to the design policy, the slot name override setting is also initialized.
+	CSPM_UI_SlotNameEditbox:UpdateValue(true)
 end
 
 local function OnCategorySelectionChanged(newCategoryId)
@@ -191,6 +195,8 @@ local function OnCategorySelectionChanged(newCategoryId)
 	-- To prevent a mismatch between the category id and the ActionValue,
 	-- the ActionValue should be initialized when the user changes the category selection.
 	CSPM_UI_ActionValueMenu:UpdateValue(true)
+	-- According to the design policy, the slot name override setting is also initialized.
+	CSPM_UI_SlotNameEditbox:UpdateValue(true)
 end
 
 local function OnActionValueSelectionChanged(newActionValue)
@@ -202,9 +208,21 @@ local function OnActionValueEditboxChanged(newActionValueString)
 	CSPM.LDL:Debug("OnActionValueEditboxChanged : %s", newActionValueString)
 	local uiActionTypeId = CSPM.db.preset[uiPresetId].slot[uiSlotId].type
 	-- NOTE : the meaning of ActionValue is different for each ActionType, and they are not mutually compatible.
-	CSPM.db.preset[uiPresetId].slot[uiSlotId].value = tonumber(newActionValueString)
+	if uiActionTypeId == CSPM_ACTION_TYPE_CHAT_COMMAND then 
+		CSPM.db.preset[uiPresetId].slot[uiSlotId].value = newActionValueString
+	else
+		CSPM.db.preset[uiPresetId].slot[uiSlotId].value = tonumber(newActionValueString)
+	end
 end
 
+local function OnSlotNameEditboxChanged(newSlotName)
+	CSPM.LDL:Debug("OnSlotNameEditboxChanged : %s", newSlotName)
+	if newSlotName == "" then
+		CSPM.db.preset[uiPresetId].slot[uiSlotId].name = nil
+	else
+		CSPM.db.preset[uiPresetId].slot[uiSlotId].name = newSlotName
+	end
+end
 
 local function DoTestButton()
 	ChangePanelPresetState(1)
@@ -257,8 +275,8 @@ function CSPM:InitializeUI()
 
 	ui.slotChoices, ui.slotChoicesValues = RebuildSlotSelectionChoices(CSPM_MENU_ITEMS_COUNT_DEFAULT)
 
-	ui.actionTypeChoices = { "Nothing", "Collectible", "Emote", } 
-	ui.actionTypeChoicesValues = { CSPM_ACTION_TYPE_NOTHING, CSPM_ACTION_TYPE_COLLECTIBLE, CSPM_ACTION_TYPE_EMOTE, }
+	ui.actionTypeChoices = { "Nothing", "Collectible", "Emote", "Chat Command", } 
+	ui.actionTypeChoicesValues = { CSPM_ACTION_TYPE_NOTHING, CSPM_ACTION_TYPE_COLLECTIBLE, CSPM_ACTION_TYPE_EMOTE, CSPM_ACTION_TYPE_CHAT_COMMAND, }
 
 	ui.categoryChoices = {}
 	ui.categoryChoicesValues = {}
@@ -308,6 +326,14 @@ function CSPM:InitializeUI()
 		CSPM_CATEGORY_E_PROP, 
 		CSPM_CATEGORY_E_SOCIAL, 
 		CSPM_CATEGORY_E_COLLECTED, 
+	}
+	ui.categoryChoices[CSPM_ACTION_TYPE_CHAT_COMMAND] = {
+		"Nothing", 
+		"Immediate Value", 
+	}
+	ui.categoryChoicesValues[CSPM_ACTION_TYPE_CHAT_COMMAND] = {
+		CSPM_CATEGORY_NOTHING, 
+		CSPM_CATEGORY_IMMEDIATE_VALUE, 
 	}
 
 	ui.actionValueChoices = {}
@@ -451,6 +477,21 @@ function CSPM:CreateSettingsWindow()
 		width = "full", 
 		height = 10, 
 		alpha = 0.25, 
+	}
+	optionsData[#optionsData + 1] = {
+		type = "editbox", 
+		name = "Slot Name Override", 
+--		tooltip = nil, 
+		getFunc = function() return CSPM.db.preset[uiPresetId].slot[uiSlotId].name end, 
+		setFunc = OnSlotNameEditboxChanged, 
+		isMultiline = false, 
+		isExtraWide = false, 
+--		maxChars = 3000, 
+--		textType = TEXT_TYPE_NUMERIC, -- number (optional) or function returning a number. Valid TextType numbers: TEXT_TYPE_ALL, TEXT_TYPE_ALPHABETIC, TEXT_TYPE_ALPHABETIC_NO_FULLWIDTH_LATIN, TEXT_TYPE_NUMERIC, TEXT_TYPE_NUMERIC_UNSIGNED_INT, TEXT_TYPE_PASSWORD
+		width = "full", 
+--		disabled = true, 
+		default = "", 
+		reference = "CSPM_UI_SlotNameEditbox", 
 	}
 --[[
 	optionsData[#optionsData + 1] = {

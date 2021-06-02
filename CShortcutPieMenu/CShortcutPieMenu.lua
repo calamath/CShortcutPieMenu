@@ -17,7 +17,7 @@ CShortcutPieMenu = CShortcutPieMenu or {}
 
 local CSPM = CShortcutPieMenu
 CSPM.name = "CShortcutPieMenu"
-CSPM.version = "0.2.1"
+CSPM.version = "0.3.0"
 CSPM.author = "Calamath"
 CSPM.savedVars = "CShortcutPieMenuDB"
 CSPM.savedVarsVersion = 1
@@ -30,6 +30,7 @@ CSPM.const = {
 	CSPM_ACTION_TYPE_NOTHING					= 0, 
 	CSPM_ACTION_TYPE_COLLECTIBLE				= 1, 
 	CSPM_ACTION_TYPE_EMOTE						= 2, 
+	CSPM_ACTION_TYPE_CHAT_COMMAND				= 3, 
 	CSPM_CATEGORY_NOTHING						= 0, 
 	CSPM_CATEGORY_IMMEDIATE_VALUE				= 1, 
 	CSPM_CATEGORY_C_ASSISTANT					= 11, 
@@ -54,6 +55,7 @@ local CSPM_MENU_ITEMS_COUNT_DEFAULT				= CSPM.const.CSPM_MENU_ITEMS_COUNT_DEFAUL
 local CSPM_ACTION_TYPE_NOTHING					= CSPM.const.CSPM_ACTION_TYPE_NOTHING
 local CSPM_ACTION_TYPE_COLLECTIBLE				= CSPM.const.CSPM_ACTION_TYPE_COLLECTIBLE
 local CSPM_ACTION_TYPE_EMOTE					= CSPM.const.CSPM_ACTION_TYPE_EMOTE
+local CSPM_ACTION_TYPE_CHAT_COMMAND				= CSPM.const.CSPM_ACTION_TYPE_CHAT_COMMAND
 local CSPM_CATEGORY_NOTHING						= CSPM.const.CSPM_CATEGORY_NOTHING
 local CSPM_CATEGORY_IMMEDIATE_VALUE				= CSPM.const.CSPM_CATEGORY_IMMEDIATE_VALUE
 local CSPM_CATEGORY_C_ASSISTANT					= CSPM.const.CSPM_CATEGORY_C_ASSISTANT
@@ -121,11 +123,6 @@ local CSPM_LUT_CATEGORY_E_CSPM_TO_ZOS			= CSPM.lut.CSPM_LUT_CATEGORY_E_CSPM_TO_Z
 local CSPM_LUT_CATEGORY_E_CSPM_TO_ICON			= CSPM.lut.CSPM_LUT_CATEGORY_E_CSPM_TO_ICON
 
 -- ---------------------------------------------------------------------------------------
-CSPM.const.emoteCategoryIcons = {
-	
-}
--- ---------------------------------------------------------------------------------------
-
 -- CShortcutPieMenu savedata (default)
 local CSPM_SLOT_DATA_DEFAULT = {
 	type = 0, 
@@ -239,8 +236,19 @@ function CSPM_PieMenu:PopulateMenu()
 				inactiveIcon = activeIcon
 				found = true
 			end
+		elseif actionType == CSPM_ACTION_TYPE_CHAT_COMMAND then
+			-- actionValue : chatCommandString
+			name = tostring(actionValue)
+			activeIcon = "EsoUI/Art/Icons/crafting_dwemer_shiny_cog.dds"
+			inactiveIcon = activeIcon
+			found = name ~= ""
 		end
 		if found then
+			-- override the display name, if slot name data exists
+			if type(data.name) == "string" and data.name ~= "" then
+				name = data.name
+			end
+
 --			function ZO_RadialMenu:AddEntry(name, inactiveIcon, activeIcon, callback, data)
 			self.menu:AddEntry(name, inactiveIcon, activeIcon, function() CSPM:OnSelectionExecutionCallback(data) end, data)
 		else
@@ -267,6 +275,15 @@ function CSPM:OnSelectionExecutionCallback(slotData)
 			if emoteIndex then
 				PlayEmoteByIndex(emoteIndex)
 			end
+		end
+	elseif actionType == CSPM_ACTION_TYPE_CHAT_COMMAND then
+		-- actionValue : chatCommandString
+		local command, args = string.match(actionValue, "^(%S+)% *(.*)")
+		CSPM.LDL:Debug("chat command : %s, argments : %s", tostring(command), tostring(args))
+		if SLASH_COMMANDS[command] then
+			SLASH_COMMANDS[command](args)
+		else
+			CSPM.LDL:Debug("[CSPM] error : slash command '%s' not found", tostring(command))
 		end
 	end
 end
