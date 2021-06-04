@@ -21,6 +21,7 @@ local CSPM_ACTION_TYPE_NOTHING					= CSPM.const.CSPM_ACTION_TYPE_NOTHING
 local CSPM_ACTION_TYPE_COLLECTIBLE				= CSPM.const.CSPM_ACTION_TYPE_COLLECTIBLE
 local CSPM_ACTION_TYPE_EMOTE					= CSPM.const.CSPM_ACTION_TYPE_EMOTE
 local CSPM_ACTION_TYPE_CHAT_COMMAND				= CSPM.const.CSPM_ACTION_TYPE_CHAT_COMMAND
+local CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE			= CSPM.const.CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE
 local CSPM_CATEGORY_NOTHING						= CSPM.const.CSPM_CATEGORY_NOTHING
 local CSPM_CATEGORY_IMMEDIATE_VALUE				= CSPM.const.CSPM_CATEGORY_IMMEDIATE_VALUE
 local CSPM_CATEGORY_C_ASSISTANT					= CSPM.const.CSPM_CATEGORY_C_ASSISTANT
@@ -38,6 +39,9 @@ local CSPM_CATEGORY_E_POSES_AND_FIDGETS			= CSPM.const.CSPM_CATEGORY_E_POSES_AND
 local CSPM_CATEGORY_E_PROP						= CSPM.const.CSPM_CATEGORY_E_PROP
 local CSPM_CATEGORY_E_SOCIAL					= CSPM.const.CSPM_CATEGORY_E_SOCIAL
 local CSPM_CATEGORY_E_COLLECTED					= CSPM.const.CSPM_CATEGORY_E_COLLECTED
+local CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE		= CSPM.const.CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE
+local CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE	= CSPM.const.CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE
+local CSPM_ACTION_VALUE_PRIMARY_HOUSE_ID		= CSPM.const.CSPM_ACTION_VALUE_PRIMARY_HOUSE_ID
 
 local CSPM_SLOT_DATA_DEFAULT 					= CSPM.const.CSPM_SLOT_DATA_DEFAULT
 
@@ -110,6 +114,26 @@ local function RebuildEmoteSelectionChoicesByEmoteCategory(emoteCategory)
 		choices[#choices + 1] = ZO_CachedStrFormat("<<1>>", PLAYER_EMOTE_MANAGER:GetEmoteItemInfo(emoteId).displayName)
 	end
 	-- In overridden custom tooltip functions, the ChoicesTooltips table uses the emoteId value instead of a string.
+	return choices, choicesValues, choicesValues
+end
+
+local function RebuildHouseSelectionChoices(unlockedOnly)
+	local choices = {}
+	local choicesValues = {}
+	local currentPrimaryHouseId = GetHousingPrimaryHouse()
+	unlockedOnly = unlockedOnly or false
+	if currentPrimaryHouseId ~= 0 then
+		choices[#choices + 1] = 		L(SI_HOUSING_FURNITURE_SETTINGS_GENERAL_PRIMARY_RESIDENCE_TEXT) -- Primary Residence
+		choicesValues[#choicesValues + 1] = CSPM_ACTION_VALUE_PRIMARY_HOUSE_ID
+	end
+	for index = 1, GetTotalCollectiblesByCategoryType(COLLECTIBLE_CATEGORY_TYPE_HOUSE) do
+		local collectibleId = GetCollectibleIdFromType(COLLECTIBLE_CATEGORY_TYPE_HOUSE, index)
+		if not unlockedOnly or IsCollectibleUnlocked(collectibleId) then
+			choices[#choices + 1] = ZO_CachedStrFormat("<<1>>", GetCollectibleName(collectibleId))
+			choicesValues[#choicesValues + 1] = GetCollectibleReferenceId(collectibleId)
+		end
+	end
+	-- In overridden custom tooltip functions, the ChoicesTooltips table uses the houseId value instead of a string.
 	return choices, choicesValues, choicesValues
 end
 
@@ -246,6 +270,10 @@ local function OnLAMPanelControlsCreated(panel)
 					ItemTooltipTopLevel:BringWindowToTop()
 				elseif uiActionTypeId == CSPM_ACTION_TYPE_EMOTE then
 					
+				elseif uiActionTypeId == CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE then
+					InitializeTooltip(ItemTooltip, control, TOPLEFT, 0, 0, BOTTOMRIGHT)
+			        ItemTooltip:SetCollectible(GetCollectibleIdForHouse(control.m_data.tooltip), SHOW_NICKNAME, SHOW_PURCHASABLE_HINT, SHOW_BLOCK_REASON, GAMEPLAY_ACTOR_CATEGORY_PLAYER)
+					ItemTooltipTopLevel:BringWindowToTop()
 				else
 					InitializeTooltip(InformationTooltip, control, TOPLEFT, 0, 0, BOTTOMRIGHT)
 					SetTooltipText(InformationTooltip, LAM.util.GetStringFromValue(control.m_data.tooltip))
@@ -261,6 +289,8 @@ local function OnLAMPanelControlsCreated(panel)
 					ClearTooltip(ItemTooltip)
 				elseif uiActionTypeId == CSPM_ACTION_TYPE_EMOTE then
 					
+				elseif uiActionTypeId == CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE then
+					ClearTooltip(ItemTooltip)
 				else
 					ClearTooltip(InformationTooltip)
 				end
@@ -277,8 +307,8 @@ function CSPM:InitializeUI()
 
 	ui.slotChoices, ui.slotChoicesValues = RebuildSlotSelectionChoices(CSPM_MENU_ITEMS_COUNT_DEFAULT)
 
-	ui.actionTypeChoices = { "Nothing", "Collectible", "Emote", "Chat Command", } 
-	ui.actionTypeChoicesValues = { CSPM_ACTION_TYPE_NOTHING, CSPM_ACTION_TYPE_COLLECTIBLE, CSPM_ACTION_TYPE_EMOTE, CSPM_ACTION_TYPE_CHAT_COMMAND, }
+	ui.actionTypeChoices = { "Nothing", "Collectible", "Emote", "Chat Command", "Travel to house", } 
+	ui.actionTypeChoicesValues = { CSPM_ACTION_TYPE_NOTHING, CSPM_ACTION_TYPE_COLLECTIBLE, CSPM_ACTION_TYPE_EMOTE, CSPM_ACTION_TYPE_CHAT_COMMAND, CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE, }
 
 	ui.categoryChoices = {}
 	ui.categoryChoicesValues = {}
@@ -337,6 +367,16 @@ function CSPM:InitializeUI()
 		CSPM_CATEGORY_NOTHING, 
 		CSPM_CATEGORY_IMMEDIATE_VALUE, 
 	}
+	ui.categoryChoices[CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE] = {
+		"Nothing", 
+		"My House (inside)", 
+		"My House (outside)", 
+	}
+	ui.categoryChoicesValues[CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE] = {
+		CSPM_CATEGORY_NOTHING, 
+		CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE, 
+		CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE, 
+	}
 
 	ui.actionValueChoices = {}
 	ui.actionValueChoicesValues = {}
@@ -349,6 +389,8 @@ function CSPM:InitializeUI()
 	for cspmEmoteCategory, zosEmoteCategory in pairs(CSPM_LUT_CATEGORY_E_CSPM_TO_ZOS) do
 		ui.actionValueChoices[cspmEmoteCategory], ui.actionValueChoicesValues[cspmEmoteCategory], ui.actionValueChoicesTooltips[cspmEmoteCategory] = RebuildEmoteSelectionChoicesByEmoteCategory(zosEmoteCategory) 
 	end
+	ui.actionValueChoices[CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE], ui.actionValueChoicesValues[CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE], ui.actionValueChoicesTooltips[CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE] = RebuildHouseSelectionChoices(true)
+	ui.actionValueChoices[CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE], ui.actionValueChoicesValues[CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE], ui.actionValueChoicesTooltips[CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE] = RebuildHouseSelectionChoices(true)
 end
 
 function CSPM:CreateSettingsWindow()
@@ -502,11 +544,27 @@ function CSPM:CreateSettingsWindow()
 		func = function()
 			local newSlotName = ""
 			local uiActionTypeId = CSPM.db.preset[uiPresetId].slot[uiSlotId].type
+			local uiActionValue = CSPM.db.preset[uiPresetId].slot[uiSlotId].value
 			if uiActionTypeId == CSPM_ACTION_TYPE_COLLECTIBLE then
 				newSlotName = ZO_CachedStrFormat("<<1>>", GetCollectibleName(CSPM.db.preset[uiPresetId].slot[uiSlotId].value or ""))
 			elseif uiActionTypeId == CSPM_ACTION_TYPE_EMOTE then
 				local emoteItemInfo = PLAYER_EMOTE_MANAGER:GetEmoteItemInfo(CSPM.db.preset[uiPresetId].slot[uiSlotId].value)
 				newSlotName = ZO_CachedStrFormat("<<1>>", emoteItemInfo and emoteItemInfo.displayName or "")
+			elseif uiActionTypeId == CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE then
+				local houseName
+				if uiActionValue == CSPM_ACTION_VALUE_PRIMARY_HOUSE_ID then
+					houseName = L(SI_HOUSING_FURNITURE_SETTINGS_GENERAL_PRIMARY_RESIDENCE_TEXT)		-- "Primary Residence"
+				else
+					houseName = GetCollectibleName(GetCollectibleIdForHouse(uiActionValue))
+				end
+				if uiActionValue ~= 0 then
+					local uiCategoryId = CSPM.db.preset[uiPresetId].slot[uiSlotId].category
+					if uiCategoryId == CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE then
+						newSlotName = ZO_CachedStrFormat(L(SI_GAMEPAD_WORLD_MAP_TRAVEL_TO_HOUSE_INSIDE), houseName)		-- "<<1>> (inside)"
+					elseif uiCategoryId == CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE then
+						newSlotName = ZO_CachedStrFormat(L(SI_GAMEPAD_WORLD_MAP_TRAVEL_TO_HOUSE_OUTSIDE), houseName)		-- "<<1>> (outside)"
+					end
+				end
 			end
 			CSPM.LDL:Debug("Got SlotName : ", tostring(newSlotName))
 			CSPM_UI_SlotNameEditbox:UpdateValue(false, newSlotName)
@@ -515,7 +573,7 @@ function CSPM:CreateSettingsWindow()
 --		disabled = true, 
 		disabled = function()
 			local uiActionTypeId = CSPM.db.preset[uiPresetId].slot[uiSlotId].type
-			if uiActionTypeId == CSPM_ACTION_TYPE_COLLECTIBLE or uiActionTypeId == CSPM_ACTION_TYPE_EMOTE then
+			if uiActionTypeId == CSPM_ACTION_TYPE_COLLECTIBLE or uiActionTypeId == CSPM_ACTION_TYPE_EMOTE or CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE then
 				return false
 			else
 				return true

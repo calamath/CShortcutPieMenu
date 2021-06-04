@@ -17,7 +17,7 @@ CShortcutPieMenu = CShortcutPieMenu or {}
 
 local CSPM = CShortcutPieMenu
 CSPM.name = "CShortcutPieMenu"
-CSPM.version = "0.3.1"
+CSPM.version = "0.4.0"
 CSPM.author = "Calamath"
 CSPM.savedVars = "CShortcutPieMenuDB"
 CSPM.savedVarsVersion = 1
@@ -31,6 +31,7 @@ CSPM.const = {
 	CSPM_ACTION_TYPE_COLLECTIBLE				= 1, 
 	CSPM_ACTION_TYPE_EMOTE						= 2, 
 	CSPM_ACTION_TYPE_CHAT_COMMAND				= 3, 
+	CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE			= 4, 
 	CSPM_CATEGORY_NOTHING						= 0, 
 	CSPM_CATEGORY_IMMEDIATE_VALUE				= 1, 
 	CSPM_CATEGORY_C_ASSISTANT					= 11, 
@@ -48,6 +49,9 @@ CSPM.const = {
 	CSPM_CATEGORY_E_PROP						= 39, 
 	CSPM_CATEGORY_E_SOCIAL						= 40, 
 	CSPM_CATEGORY_E_COLLECTED					= 41, 
+	CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE		= 51, 
+	CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE		= 52, 
+	CSPM_ACTION_VALUE_PRIMARY_HOUSE_ID			= -1, 
 }
 -- ---------------------------------------------------------------------------------------
 -- Aliases of constants
@@ -56,6 +60,7 @@ local CSPM_ACTION_TYPE_NOTHING					= CSPM.const.CSPM_ACTION_TYPE_NOTHING
 local CSPM_ACTION_TYPE_COLLECTIBLE				= CSPM.const.CSPM_ACTION_TYPE_COLLECTIBLE
 local CSPM_ACTION_TYPE_EMOTE					= CSPM.const.CSPM_ACTION_TYPE_EMOTE
 local CSPM_ACTION_TYPE_CHAT_COMMAND				= CSPM.const.CSPM_ACTION_TYPE_CHAT_COMMAND
+local CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE			= CSPM.const.CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE
 local CSPM_CATEGORY_NOTHING						= CSPM.const.CSPM_CATEGORY_NOTHING
 local CSPM_CATEGORY_IMMEDIATE_VALUE				= CSPM.const.CSPM_CATEGORY_IMMEDIATE_VALUE
 local CSPM_CATEGORY_C_ASSISTANT					= CSPM.const.CSPM_CATEGORY_C_ASSISTANT
@@ -73,11 +78,15 @@ local CSPM_CATEGORY_E_POSES_AND_FIDGETS			= CSPM.const.CSPM_CATEGORY_E_POSES_AND
 local CSPM_CATEGORY_E_PROP						= CSPM.const.CSPM_CATEGORY_E_PROP
 local CSPM_CATEGORY_E_SOCIAL					= CSPM.const.CSPM_CATEGORY_E_SOCIAL
 local CSPM_CATEGORY_E_COLLECTED					= CSPM.const.CSPM_CATEGORY_E_COLLECTED
+local CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE		= CSPM.const.CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE
+local CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE	= CSPM.const.CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE
+local CSPM_ACTION_VALUE_PRIMARY_HOUSE_ID		= CSPM.const.CSPM_ACTION_VALUE_PRIMARY_HOUSE_ID
 
 local CSPM_SLOT_DATA_DEFAULT 					= CSPM.const.CSPM_SLOT_DATA_DEFAULT
 
 -- =======================================================================================
 -- CShortcutPieMenu local definitions
+local L = GetString
 
 -- look up table
 CSPM.lut = {
@@ -242,6 +251,24 @@ function CSPM_PieMenu:PopulateMenu()
 			activeIcon = "EsoUI/Art/Icons/crafting_dwemer_shiny_cog.dds"
 			inactiveIcon = activeIcon
 			found = name ~= ""
+		elseif actionType == CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE then
+			-- actionValue : houseId
+			local houseId = (actionValue == CSPM_ACTION_VALUE_PRIMARY_HOUSE_ID) and GetHousingPrimaryHouse() or actionValue
+			if houseId ~= 0 then
+				local houseCollectibleId = GetCollectibleIdForHouse(houseId)
+				local houseName = GetCollectibleName(houseCollectibleId)
+				if actionValue == CSPM_ACTION_VALUE_PRIMARY_HOUSE_ID then
+					houseName = ZO_CachedStrFormat(L(SI_HOUSING_BOOK_PRIMARY_RESIDENCE_FORMATTER), houseName)		-- "Primary Residence: |cffffff<<1>>|r"
+				end
+				if cspmCategoryId == CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE then
+					name = ZO_CachedStrFormat(L(SI_GAMEPAD_WORLD_MAP_TRAVEL_TO_HOUSE_INSIDE), houseName)		-- "<<1>> (inside)"
+				elseif cspmCategoryId == CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE then
+					name = ZO_CachedStrFormat(L(SI_GAMEPAD_WORLD_MAP_TRAVEL_TO_HOUSE_OUTSIDE), houseName)		-- "<<1>> (outside)"
+				end
+				activeIcon = GetCollectibleIcon(houseCollectibleId)
+				inactiveIcon = activeIcon
+				found = houseName ~= ""
+			end
 		end
 		if found then
 			-- override the display name, if slot name data exists
@@ -285,6 +312,17 @@ function CSPM:OnSelectionExecutionCallback(slotData)
 		else
 			CSPM.LDL:Debug("[CSPM] error : slash command '%s' not found", tostring(command))
 		end
+	elseif actionType == CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE then
+		-- actionValue : houseId
+		local houseId = actionValue
+		local jumpOutside = false
+		if actionValue == CSPM_ACTION_VALUE_PRIMARY_HOUSE_ID then
+			houseId = GetHousingPrimaryHouse()
+		end
+		if slotData.category == CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE then
+			jumpOutside = true
+		end
+		RequestJumpToHouse(houseId, jumpOutside)
 	end
 end
 

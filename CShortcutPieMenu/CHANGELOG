@@ -1,3 +1,6 @@
+V0.4.0: [V400] by Calamath
+- Travel to house support in Shortcut Pie Menu.
+
 V0.3.1: [V301] by Calamath
 - Added a UI button near the edit box to enter the default slot name to help when overriding the slot name. 
 - Fixed an issue where the override slot name was not initialized when the user changed the action value selection in the settings menu.
