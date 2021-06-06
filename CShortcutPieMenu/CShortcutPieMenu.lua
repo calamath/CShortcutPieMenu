@@ -17,7 +17,7 @@ CShortcutPieMenu = CShortcutPieMenu or {}
 
 local CSPM = CShortcutPieMenu
 CSPM.name = "CShortcutPieMenu"
-CSPM.version = "0.4.1"
+CSPM.version = "0.5.0"
 CSPM.author = "Calamath"
 CSPM.savedVars = "CShortcutPieMenuDB"
 CSPM.savedVarsVersion = 1
@@ -180,15 +180,90 @@ if not LAM then d("[CSPM] Error : 'LibAddonMenu-2.0' not found.") return end
 
 -- ------------------------------------------------
 
--- Class
-local CSPM_PieMenu = ZO_InteractiveRadialMenuController:Subclass()
+-- Template
+function CSPM_SelectableItemRadialMenuEntryTemplate_OnInitialized(self)
+	self.glow = self:GetNamedChild("Glow")
+	self.icon = self:GetNamedChild("Icon")
+	self.count = self:GetNamedChild("CountText")
+	self.cooldown = self:GetNamedChild("Cooldown")
 
-function CSPM_PieMenu:New(...)
+	self.frame = self:GetNamedChild("Frame")
+	self.label = self:GetNamedChild("Label")
+	self.status = self:GetNamedChild("StatusText")
+end
+
+function CSPM_SetupSelectableItemRadialMenuEntryTemplate(template, selected, itemCount, showIconFrame, slotLabel, statusLabel)
+	if showIconFrame then
+		template.frame:SetHidden(false)
+	else
+		template.frame:SetHidden(true)
+	end
+
+	template.label:SetText(slotLabel)
+	template.status:SetText(statusLabel)
+
+	if itemCount then
+		template.count:SetHidden(false)
+		template.count:SetText(itemCount)
+
+		if itemCount == 0 then
+			template.icon:SetDesaturation(1)
+		else
+			template.icon:SetDesaturation(0)
+		end
+	else
+		template.count:SetHidden(true)
+		template.icon:SetDesaturation(0)
+	end
+
+	if selected then
+		if template.glow then
+			template.glow:SetAlpha(1)
+		end
+		template.animation:GetLastAnimation():SetAnimatedControl(nil)
+	else
+		if template.glow then
+			template.glow:SetAlpha(0)
+		end
+		template.animation:GetLastAnimation():SetAnimatedControl(template.glow)
+	end
+end
+
+function CSPM_SelectableItemRadialMenuEntryTemplate_UpdateStatus(template, statusLabel)
+	template.status:SetText(statusLabel)
+end
+
+-- ------------------------------------------------
+-- Class
+local CSPM_PieMenuController = ZO_InteractiveRadialMenuController:Subclass()
+
+function CSPM_PieMenuController:New(...)
     return ZO_InteractiveRadialMenuController.New(self, ...)
 end
 
+function CSPM_PieMenuController:Initialize(control, entryTemplate, animationTemplate, entryAnimationTemplate)
+	ZO_InteractiveRadialMenuController.Initialize(self, control, entryTemplate, animationTemplate, entryAnimationTemplate)
+	self.menu.presetLabel = self.menuControl:GetNamedChild("PresetName")
+	self.menu.trackQuickslot = self.menuControl:GetNamedChild("TrackQuickslot")
+	self.menu.trackGamepad = self.menuControl:GetNamedChild("TrackGamepad")
+end
+
+function CSPM_PieMenuController:SetupPieMenuVisual(presetName, showQuickslotRadialTrack, showGamepadRadialTrack)
+	self.menu.presetLabel:SetText(presetName)
+
+	if type(showQuickslotRadialTrack) == "boolean" then
+		showQuickslotRadialTrack = showQuickslotRadialTrack and 1.0 or 0.0
+	end
+	self.menu.trackQuickslot:SetAlpha(showQuickslotRadialTrack or 0.0)
+
+	if type(showGamepadRadialTrack) == "boolean" then
+		showGamepadRadialTrack = showGamepadRadialTrack and 0.8 or 0.0
+	end
+	self.menu.trackGamepad:SetAlpha(showGamepadRadialTrack or 0.0)
+end
+
 -- Overridden from base class
-function CSPM_PieMenu:PrepareForInteraction()
+function CSPM_PieMenuController:PrepareForInteraction()
 	CSPM.LDL:Debug("PrepareForInteraction()")
     if not SCENE_MANAGER:IsInUIMode() then
 	    return true
@@ -196,25 +271,28 @@ function CSPM_PieMenu:PrepareForInteraction()
     return false
 end
 
-function CSPM_PieMenu:SetupEntryControl(entryControl, data)
+function CSPM_PieMenuController:SetupEntryControl(entryControl, data)
 	if not data then return end
 --	CSPM.LDL:Debug("SetupEntryControl(_, %s)", tostring(data.name))
 	local selected = false
 	local itemCount = data.id
-	-- function ZO_SetupSelectableItemRadialMenuEntryTemplate(template, selected, itemCount)
-	ZO_SetupSelectableItemRadialMenuEntryTemplate(entryControl, selected, itemCount)
+
+	-- function CSPM_SetupSelectableItemRadialMenuEntryTemplate(template, selected, itemCount, showIconFrame, slotLabel, statusLabel)
+	CSPM_SetupSelectableItemRadialMenuEntryTemplate(entryControl, selected, itemCount, true)
 end
 
-function CSPM_PieMenu:OnSelectionChangedCallback(selectedEntry)
+function CSPM_PieMenuController:OnSelectionChangedCallback(selectedEntry)
 	if not selectedEntry then return end
 	CSPM.LDL:Debug("OnSelectionChangedCallback : %s", selectedEntry.name)
 end
 
-function CSPM_PieMenu:PopulateMenu()
+function CSPM_PieMenuController:PopulateMenu()
 	CSPM.LDL:Debug("PopulateMenu()")
 	self.selectedSlotNum = 0
 
 	local presetData = CSPM:GetMenuPresetData()
+	self:SetupPieMenuVisual(nil, false, true)
+
 --	for i, data in ipairs(presetData.slot) do
 	for i = 1, presetData.menuItemsCount do
 		local data = presetData.slot[i] or {}
@@ -330,23 +408,17 @@ function CSPM:OnSelectionExecutionCallback(slotData)
 end
 
 function CSPM:StartInteraction()
---	CSPM.LDL:Debug("StartInteraction()")
-    self.isGamepad = IsInGamepadPreferredMode()
-    if self.isGamepad then
-        return self.gamepadMenu:StartInteraction()
-    else
-        return self.keyboardMenu:StartInteraction()
-    end
+	CSPM.LDL:Debug("StartInteraction()")
+	local ret = self.rootMenu:StartInteraction()
+	CSPM.LDL:Debug("StartInteraction result : ", tostring(ret))
+	return ret
 end
 
 function CSPM:StopInteraction()
 --	CSPM.LDL:Debug("StopInteraction()")
-	-- isGamepad is expected to be the same value as when the CSPM:StartInteraction() was last called.
-    if self.isGamepad then
-        return self.gamepadMenu:StopInteraction()
-    else
-        return self.keyboardMenu:StopInteraction()
-    end
+	local ret = self.rootMenu:StopInteraction()
+	CSPM.LDL:Debug("StopInteraction result : ", tostring(ret))
+	return ret
 end
 
 
@@ -356,8 +428,7 @@ function CSPM:Initialize()
 	self.activePresetId = 1
 	self.db = ZO_SavedVars:NewAccountWide(self.savedVars, 1, nil, CSPM_DB_DEFAULT)
 
-	self.keyboardMenu = CSPM_PieMenu:New(CSPM_UI_Root_Keyboard, "ZO_SelectableItemRadialMenuEntryTemplate", "DefaultRadialMenuAnimation", "SelectableItemRadialMenuEntryAnimation")
-	self.gamepadMenu = CSPM_PieMenu:New(CSPM_UI_Root_Gamepad, "ZO_GamepadSelectableItemRadialMenuEntryTemplate", "DefaultRadialMenuAnimation", "SelectableItemRadialMenuEntryAnimation")
+	self.rootMenu = CSPM_PieMenuController:New(CSPM_UI_Root_Pie, "CSPM_SelectableItemRadialMenuEntryTemplate", "DefaultRadialMenuAnimation", "SelectableItemRadialMenuEntryAnimation")
 
 	self:InitializeUI()
 	CSPM.LDL:Debug("Initialized")

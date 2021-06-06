@@ -1,3 +1,8 @@
+V0.5.0: [V500] by Calamath
+- Implemented the official version of the UI design template for the Pie menu.
+- Changed the design policy to share the pie menu controls between both keyboard and gamepad modes in order to save control resources.
+- Note : the UI configuration feature to customize the visual design of the pie menu will be implemented in a future version.
+
 V0.4.1: [V401] by Calamath
 - Improved the settings menu in the UI so that you can select your favorite mount from the pie menu.
 
