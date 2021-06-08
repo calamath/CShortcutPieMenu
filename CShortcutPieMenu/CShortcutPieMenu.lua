@@ -137,15 +137,24 @@ local CSPM_LUT_CATEGORY_E_CSPM_TO_ICON			= CSPM.lut.CSPM_LUT_CATEGORY_E_CSPM_TO_
 -- ---------------------------------------------------------------------------------------
 -- CShortcutPieMenu savedata (default)
 local CSPM_SLOT_DATA_DEFAULT = {
-	type = 0, 
-	category = 0, 
+	type = CSPM_ACTION_TYPE_NOTHING, 
+	category = CSPM_CATEGORY_NOTHING, 
 	value = 0, 
 } 
 
 local CSPM_DB_DEFAULT = {
 	preset = {
 		[1] = {
+			id = 1, 
+			name = "", 
 			menuItemsCount = CSPM_MENU_ITEMS_COUNT_DEFAULT, 
+			visual = {
+				showIconFrame = true, 
+				showSlotLabel = false, 
+				showPresetName = false, 
+				showTrackQuickslot = false, 
+				showTrackGamepad = true, 
+			}, 
 			slot = {
 				[1] = ZO_ShallowTableCopy(CSPM_SLOT_DATA_DEFAULT), 
 				[2] = ZO_ShallowTableCopy(CSPM_SLOT_DATA_DEFAULT), 
@@ -192,15 +201,22 @@ function CSPM_SelectableItemRadialMenuEntryTemplate_OnInitialized(self)
 	self.status = self:GetNamedChild("StatusText")
 end
 
-function CSPM_SetupSelectableItemRadialMenuEntryTemplate(template, selected, itemCount, showIconFrame, slotLabel, statusLabel)
+function CSPM_SelectableItemRadialMenuEntryTemplate_UpdateStatus(template, statusLabelText)
+	statusLabelText = statusLabelText or ""
+	template.status:SetText(statusLabelText)
+end
+
+function CSPM_SetupSelectableItemRadialMenuEntryTemplate(template, selected, itemCount, showIconFrame, slotLabelText, statusLabelText)
 	if showIconFrame then
 		template.frame:SetHidden(false)
 	else
 		template.frame:SetHidden(true)
 	end
 
-	template.label:SetText(slotLabel)
-	template.status:SetText(statusLabel)
+	slotLabelText = slotLabelText or ""
+	template.label:SetText(slotLabelText)
+
+	CSPM_SelectableItemRadialMenuEntryTemplate_UpdateStatus(template, statusLabelText)
 
 	if itemCount then
 		template.count:SetHidden(false)
@@ -229,10 +245,6 @@ function CSPM_SetupSelectableItemRadialMenuEntryTemplate(template, selected, ite
 	end
 end
 
-function CSPM_SelectableItemRadialMenuEntryTemplate_UpdateStatus(template, statusLabel)
-	template.status:SetText(statusLabel)
-end
-
 -- ------------------------------------------------
 -- Class
 local CSPM_PieMenuController = ZO_InteractiveRadialMenuController:Subclass()
@@ -248,8 +260,15 @@ function CSPM_PieMenuController:Initialize(control, entryTemplate, animationTemp
 	self.menu.trackGamepad = self.menuControl:GetNamedChild("TrackGamepad")
 end
 
-function CSPM_PieMenuController:SetupPieMenuVisual(presetName, showQuickslotRadialTrack, showGamepadRadialTrack)
+function CSPM_PieMenuController:SetupPieMenuVisual(presetName, showPresetName, showQuickslotRadialTrack, showGamepadRadialTrack)
+	presetName = presetName or ""
 	self.menu.presetLabel:SetText(presetName)
+
+	if showPresetName then
+		self.menu.presetLabel:SetHidden(false)
+	else
+		self.menu.presetLabel:SetHidden(true)
+	end
 
 	if type(showQuickslotRadialTrack) == "boolean" then
 		showQuickslotRadialTrack = showQuickslotRadialTrack and 1.0 or 0.0
@@ -275,10 +294,18 @@ function CSPM_PieMenuController:SetupEntryControl(entryControl, data)
 	if not data then return end
 --	CSPM.LDL:Debug("SetupEntryControl(_, %s)", tostring(data.name))
 	local selected = false
-	local itemCount = data.id
-
-	-- function CSPM_SetupSelectableItemRadialMenuEntryTemplate(template, selected, itemCount, showIconFrame, slotLabel, statusLabel)
-	CSPM_SetupSelectableItemRadialMenuEntryTemplate(entryControl, selected, itemCount, true)
+	local itemCount
+	local slotLabelText
+	local statusLabelText = data.statusLabelText or ""
+	
+	if data.showSlotLabel then
+		slotLabelText = data.slotLabelText
+	else
+		slotLabelText = ""
+	end
+	
+	-- function CSPM_SetupSelectableItemRadialMenuEntryTemplate(template, selected, itemCount, showIconFrame, slotLabelText, statusLabelText)
+	CSPM_SetupSelectableItemRadialMenuEntryTemplate(entryControl, selected, itemCount, data.showIconFrame, slotLabelText, statusLabelText)
 end
 
 function CSPM_PieMenuController:OnSelectionChangedCallback(selectedEntry)
@@ -291,15 +318,23 @@ function CSPM_PieMenuController:PopulateMenu()
 	self.selectedSlotNum = 0
 
 	local presetData = CSPM:GetMenuPresetData()
-	self:SetupPieMenuVisual(nil, false, true)
+	local visualData = presetData.visual or {}
+	self:SetupPieMenuVisual(presetData.name, visualData.showPresetName, visualData.showTrackQuickslot, visualData.showTrackGamepad)
 
---	for i, data in ipairs(presetData.slot) do
+	-- Entry User 
 	for i = 1, presetData.menuItemsCount do
-		local data = presetData.slot[i] or {}
+		local data = {
+			index = i, 
+			showIconFrame = visualData.showIconFrame, 
+			showSlotLabel = visualData.showSlotLabel, 
+			slotLabelText = "", 
+			statusLabelText = "", 
+			slotData = presetData.slot[i] or {}, 
+		}
         local found = false
-		local actionType = data.type
-		local cspmCategoryId = data.category
-		local actionValue = data.value or 0
+		local actionType = data.slotData.type
+		local cspmCategoryId = data.slotData.category
+		local actionValue = data.slotData.value or 0
 		local name, inactiveIcon, activeIcon
 		if actionType == CSPM_ACTION_TYPE_COLLECTIBLE then
 			-- actionValue : collectibleId
@@ -353,22 +388,38 @@ function CSPM_PieMenuController:PopulateMenu()
 		end
 		if found then
 			-- override the display name, if slot name data exists
-			if type(data.name) == "string" and data.name ~= "" then
-				name = data.name
+			if type(data.slotData.name) == "string" and data.slotData.name ~= "" then
+				name = data.slotData.name
 			end
+			data.slotLabelText = name
 
 --			function ZO_RadialMenu:AddEntry(name, inactiveIcon, activeIcon, callback, data)
 			self.menu:AddEntry(name, inactiveIcon, activeIcon, function() CSPM:OnSelectionExecutionCallback(data) end, data)
 		else
-			self.menu:AddEntry(GetString(SI_QUICKSLOTS_EMPTY), "EsoUI/Art/Quickslots/quickslot_emptySlot.dds", "EsoUI/Art/Quickslots/quickslot_emptySlot.dds", nil, data)
+			name = L(SI_QUICKSLOTS_EMPTY)
+			data.slotLabelText = name
+			data.showSlotLabel = false
+			self.menu:AddEntry(name, "EsoUI/Art/Quickslots/quickslot_emptySlot.dds", "EsoUI/Art/Quickslots/quickslot_emptySlot.dds", nil, data)
 		end
 	end
-	self.menu:AddEntry(GetString(SI_RADIAL_MENU_CANCEL_BUTTON), "EsoUI/Art/HUD/Gamepad/gp_radialIcon_cancel_down.dds", "EsoUI/Art/HUD/Gamepad/gp_radialIcon_cancel_down.dds", nil, {})
+
+	-- Entry Cancel Slot
+	name = L(SI_RADIAL_MENU_CANCEL_BUTTON)
+	local cancelButtonData = {
+		index = presetData.menuItemsCount + 1, 
+		showIconFrame = visualData.showIconFrame, 
+		showSlotLabel = false, 
+		slotLabelText = name, 
+		statusLabelText = "", 
+		slotData = nil, 
+	}
+	self.menu:AddEntry(name, "EsoUI/Art/HUD/Gamepad/gp_radialIcon_cancel_down.dds", "EsoUI/Art/HUD/Gamepad/gp_radialIcon_cancel_down.dds", nil, cancelButtonData)
 end
 
 -- ------------------------------------------------
 
-function CSPM:OnSelectionExecutionCallback(slotData)
+function CSPM:OnSelectionExecutionCallback(data)
+	local slotData = data.slotData or {}
 	local actionType = slotData.type
 	local actionValue = slotData.value or 0
 	if actionType == CSPM_ACTION_TYPE_COLLECTIBLE then
@@ -421,12 +472,27 @@ function CSPM:StopInteraction()
 	return ret
 end
 
+function CSPM:ValidateConfigData()
+	for k, v in pairs(self.db.preset) do
+		if v.id == nil							then v.id = k 														end
+		if v.name == nil						then v.name = ""													end
+		if v.menuItemsCount == nil				then v.menuItemsCount = CSPM_MENU_ITEMS_COUNT_DEFAULT				end
+		if v.visual == nil						then v.visual = {}													end
+		if v.visual.showIconFrame == nil		then v.visual.showIconFrame			= CSPM_DB_DEFAULT.preset[1].visual.showIconFrame		end
+		if v.visual.showSlotLabel == nil		then v.visual.showSlotLabel			= CSPM_DB_DEFAULT.preset[1].visual.showSlotLabel		end
+		if v.visual.showPresetName == nil		then v.visual.showPresetName		= CSPM_DB_DEFAULT.preset[1].visual.showPresetName		end
+		if v.visual.showTrackQuickslot == nil	then v.visual.showTrackQuickslot	= CSPM_DB_DEFAULT.preset[1].visual.showTrackQuickslot	end
+		if v.visual.showTrackGamepad == nil		then v.visual.showTrackGamepad		= CSPM_DB_DEFAULT.preset[1].visual.showTrackGamepad		end
+		if v.slot == nil						then v.slot = ZO_ShallowTableCopy(CSPM_DB_DEFAULT.prest[1].slot)	end
+	end
+end
 
 function CSPM:Initialize()
 	self.lang = GetCVar("Language.2")
 	self.isGamepad = IsInGamepadPreferredMode()
 	self.activePresetId = 1
 	self.db = ZO_SavedVars:NewAccountWide(self.savedVars, 1, nil, CSPM_DB_DEFAULT)
+	self:ValidateConfigData()
 
 	self.rootMenu = CSPM_PieMenuController:New(CSPM_UI_Root_Pie, "CSPM_SelectableItemRadialMenuEntryTemplate", "DefaultRadialMenuAnimation", "SelectableItemRadialMenuEntryAnimation")
 
