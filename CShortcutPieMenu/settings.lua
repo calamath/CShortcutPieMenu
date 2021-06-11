@@ -411,6 +411,70 @@ function CSPM:CreateSettingsWindow()
 	}
 	ui.panel = LAM:RegisterAddonPanel("CSPM_OptionsMenu", panelData)
 
+	local submenuPieVisual = {}
+	submenuPieVisual[#submenuPieVisual + 1] = {
+		type = "checkbox",
+		name = "Quickslot radial menu style", 
+		getFunc = function() return CSPM.db.preset[uiPresetId].visual.showTrackQuickslot end, 
+		setFunc = function(newValue)
+			CSPM.db.preset[uiPresetId].visual.showTrackQuickslot = newValue
+			CSPM.db.preset[uiPresetId].visual.showTrackGamepad = not newValue
+		end, 
+		tooltip = "Apply a background design like a quick slot radial menu.", 
+		width = "full", 
+		default = false, 
+--		reference = "MyAddonCheckbox", 
+	}
+	submenuPieVisual[#submenuPieVisual + 1] = {
+		type = "checkbox",
+		name = "Gamepad mode radial menu style", 
+		getFunc = function() return CSPM.db.preset[uiPresetId].visual.showTrackGamepad end, 
+		setFunc = function(newValue)
+			CSPM.db.preset[uiPresetId].visual.showTrackGamepad = newValue
+			CSPM.db.preset[uiPresetId].visual.showTrackQuickslot = not newValue
+		end, 
+		tooltip = "Apply a background design like a radial menu in gamepad mode.", 
+		width = "full", 
+		default = true, 
+--		reference = "MyAddonCheckbox", 
+	}
+	submenuPieVisual[#submenuPieVisual + 1] = {
+		type = "divider", 
+		width = "full", 
+		height = 10, 
+		alpha = 0.5, 
+	}
+	submenuPieVisual[#submenuPieVisual + 1] = {
+		type = "checkbox",
+		name = "Show preset name", 
+		getFunc = function() return CSPM.db.preset[uiPresetId].visual.showPresetName end, 
+		setFunc = function(newValue) CSPM.db.preset[uiPresetId].visual.showPresetName = newValue end, 
+		tooltip = "Whether to show the preset name under the pie menu.", 
+		width = "full", 
+		default = false, 
+--		reference = "MyAddonCheckbox", 
+	}
+	submenuPieVisual[#submenuPieVisual + 1] = {
+		type = "checkbox",
+		name = "Show slot name", 
+		getFunc = function() return CSPM.db.preset[uiPresetId].visual.showSlotLabel end, 
+		setFunc = function(newValue) CSPM.db.preset[uiPresetId].visual.showSlotLabel = newValue end, 
+		tooltip = "Whether to show the name of each slot around the pie menu.", 
+		width = "full", 
+		default = false, 
+--		reference = "MyAddonCheckbox", 
+	}
+	submenuPieVisual[#submenuPieVisual + 1] = {
+		type = "checkbox",
+		name = "Show icon frame", 
+		getFunc = function() return CSPM.db.preset[uiPresetId].visual.showIconFrame end, 
+		setFunc = function(newValue) CSPM.db.preset[uiPresetId].visual.showIconFrame = newValue end, 
+		tooltip = "Whether to show the icon frame for each slot in the pie menu.", 
+		width = "full", 
+		default = true, 
+--		reference = "MyAddonCheckbox", 
+	}
+
 	local optionsData = {}
 	optionsData[#optionsData + 1] = {
 			type = "description", 
@@ -428,6 +492,17 @@ function CSPM:CreateSettingsWindow()
 			clampInput = false, 
 			default = CSPM_MENU_ITEMS_COUNT_DEFAULT, 
 			reference = "CSPM_UI_MenuItemsCountSlider", 
+	}
+	optionsData[#optionsData + 1] = {
+		type = "submenu",
+		name = "Visual Design Options", 
+--		icon = "path/to/my/icon.dds", -- or function returning a string (optional)
+--		iconTextureCoords = {left, right, top, bottom}, -- or function returning a table (optional)
+--		tooltip = "My submenu tooltip", -- or string id or function returning a string (optional)
+--		disabled = function() return db.someBooleanSetting end, -- or boolean (optional)
+--		disabledLabel = function() return db.someBooleanSetting end, -- or boolean (optional)
+--		reference = "MyAddonSubmenu" ,
+		controls = submenuPieVisual, 
 	}
 	optionsData[#optionsData + 1] = {
 			type = "dropdown", 
