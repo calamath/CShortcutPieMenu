@@ -496,7 +496,7 @@ function CSPM:Initialize()
 
 	self.rootMenu = CSPM_PieMenuController:New(CSPM_UI_Root_Pie, "CSPM_SelectableItemRadialMenuEntryTemplate", "DefaultRadialMenuAnimation", "SelectableItemRadialMenuEntryAnimation")
 
-	self:InitializeUI()
+	self:InitializeMenuEditorUI()
 	CSPM.LDL:Debug("Initialized")
 end
 
@@ -553,7 +553,7 @@ local function OnPlayerActivated(event, initial)
 	EVENT_MANAGER:UnregisterForEvent(CSPM.name, EVENT_PLAYER_ACTIVATED)		-- Only after the first login/reloadUI.
 
 	-- UI setting panel initialization
-	CSPM:CreateSettingsWindow()
+	CSPM:CreateMenuEditorPanel()
 end
 EVENT_MANAGER:RegisterForEvent(CSPM.name, EVENT_PLAYER_ACTIVATED, OnPlayerActivated)
 

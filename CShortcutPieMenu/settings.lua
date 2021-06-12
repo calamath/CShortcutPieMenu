@@ -57,15 +57,32 @@ if not LAM then d("[CSPM] Error : 'LibAddonMenu' not found.") return end
 
 local L = GetString
 local strings = {
-	SI_CSPM_UI_PANEL_HEADER1_TEXT =		"This add-on provides a pie menu for shortcuts to various UI operations.", 
-	SI_CSPM_UI_SLOT_SELECT_MENU_NAME =	"Select slot", 
-	SI_CSPM_UI_SLOT_SELECT_MENU_TIPS =	"First, please select the slot number you want to configure.", 
-	SI_CSPM_UI_ACTION_TYPE_MENU_NAME =	"Action Type", 
-	SI_CSPM_UI_ACTION_TYPE_MENU_TIPS =	"Select the type of operation for this slot.", 
-	SI_CSPM_UI_CATEGORY_MENU_NAME =		"Category", 
-	SI_CSPM_UI_CATEGORY_MENU_TIPS =		"<Category menu tips>", 
-	SI_CSPM_UI_ACTION_VALUE_MENU_NAME =	"Value", 
-	SI_CSPM_UI_ACTION_VALUE_MENU_TIPS =	"<Action Value tips>"
+	SI_CSPM_COMMON_SLOT =							"Slot", 
+	SI_CSPM_COMMON_UNSELECTED =						"<Unselected>", 
+	SI_CSPM_COMMON_UNREGISTERED =					"<Unregistered>", 
+	SI_CSPM_COMMON_IMMEDIATE_VALUE =				"(Immediate Value)", 
+	SI_CSPM_COMMON_COLLECTIBLE =					"Collectible", 
+	SI_CSPM_COMMON_EMOTE =							"Emote", 
+	SI_CSPM_COMMON_CHAT_COMMAND =					"Chat Command", 
+	SI_CSPM_COMMON_TRAVEL_TO_HOUSE =				"Travel to house", 
+	SI_CSPM_COMMON_MY_HOUSE_INSIDE =				"My House (inside)", 
+	SI_CSPM_COMMON_MY_HOUSE_OUTSIDE =				"My House (outside)", 
+	SI_CSPM_UI_PANEL_HEADER1_TEXT =					"This add-on provides a pie menu for shortcuts to various UI operations.", 
+	SI_CSPM_UI_PRESET_SELECT_MENU_NAME =			"Select preset", 
+	SI_CSPM_UI_PRESET_SELECT_MENU_TIPS =			"Please select the preset number you want to configure.", 
+	SI_CSPM_UI_SLOT_SELECT_MENU_NAME =				"Select slot", 
+	SI_CSPM_UI_SLOT_SELECT_MENU_TIPS =				"Please select the slot number you want to configure.", 
+	SI_CSPM_UI_ACTION_TYPE_MENU_NAME =				"Action Type", 
+	SI_CSPM_UI_ACTION_TYPE_MENU_TIPS =				"Select the type of operation for this slot.", 
+	SI_CSPM_UI_ACTION_TYPE_NOTHING_TIPS =			"", 
+	SI_CSPM_UI_ACTION_TYPE_COLLECTIBLE_TIPS =		"Use unlocked collectible.", 
+	SI_CSPM_UI_ACTION_TYPE_EMOTE_TIPS =				"Play unlocked emote.", 
+	SI_CSPM_UI_ACTION_TYPE_CHAT_COMMAND_TIPS =		"Execute the chat command.", 
+	SI_CSPM_UI_ACTION_TYPE_TRAVEL_TO_HOUSE_TIPS =	"Jump to your home already unlocked", 
+	SI_CSPM_UI_CATEGORY_MENU_NAME =					"Category", 
+	SI_CSPM_UI_CATEGORY_MENU_TIPS =					"<Category menu tips>", 
+	SI_CSPM_UI_ACTION_VALUE_MENU_NAME =				"Value", 
+	SI_CSPM_UI_ACTION_VALUE_MENU_TIPS =				"<Action Value tips>", 
 }
 for stringId, stringToAdd in pairs(strings) do
    ZO_CreateStringId(stringId, stringToAdd)
@@ -80,18 +97,93 @@ local uiSlotId = 1
 local function DoSetupDefault(slotId)
 end
 
+local function GetDefaultSlotName(actionTypeId, categoryId, actionValue)
+	local slotName = ""
+	if actionTypeId == CSPM_ACTION_TYPE_COLLECTIBLE then
+		slotName = ZO_CachedStrFormat("<<1>>", GetCollectibleName(actionValue or ""))
+	elseif actionTypeId == CSPM_ACTION_TYPE_EMOTE then
+		local emoteItemInfo = PLAYER_EMOTE_MANAGER:GetEmoteItemInfo(actionValue)
+		slotName = ZO_CachedStrFormat("<<1>>", emoteItemInfo and emoteItemInfo.displayName or "")
+	elseif actionTypeId == CSPM_ACTION_TYPE_CHAT_COMMAND then
+		slotName = actionValue
+	elseif actionTypeId == CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE then
+		local houseName
+		if actionValue == CSPM_ACTION_VALUE_PRIMARY_HOUSE_ID then
+			houseName = L(SI_HOUSING_FURNITURE_SETTINGS_GENERAL_PRIMARY_RESIDENCE_TEXT)		-- "Primary Residence"
+		else
+			houseName = GetCollectibleName(GetCollectibleIdForHouse(actionValue))
+		end
+		if actionValue ~= 0 then
+			if categoryId == CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE then
+				slotName = ZO_CachedStrFormat(L(SI_GAMEPAD_WORLD_MAP_TRAVEL_TO_HOUSE_INSIDE), houseName)		-- "<<1>> (inside)"
+			elseif categoryId == CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE then
+				slotName = ZO_CachedStrFormat(L(SI_GAMEPAD_WORLD_MAP_TRAVEL_TO_HOUSE_OUTSIDE), houseName)		-- "<<1>> (outside)"
+			end
+		end
+	end
+--	CSPM.LDL:Debug("SlotName : ", tostring(slotName))
+	return slotName
+end
+
+local function GetSlotDisplayNameBySlotId(slotId)
+	local slotName = ""
+	local savedSlotData = CSPM:GetMenuSlotData(uiPresetId, slotId)
+	if savedSlotData then
+		if type(savedSlotData.name) == "string" and savedSlotData.name ~= "" then
+			slotName = savedSlotData.name
+		else
+			slotName = GetDefaultSlotName(savedSlotData.type, savedSlotData.category, savedSlotData.value)
+		end
+	end
+	if slotName == "" then
+		slotName = L(SI_CSPM_COMMON_UNREGISTERED)
+	end
+	return slotName
+end
+
+local function RefreshPanelDueToSlotDisplayNameChange()
+-- This function assumes that the slot display name of the currently open preset and slot has just changed.
+	CSPM.LDL:Debug("RefreshPanelDueToSlotDisplayNameChange : ")
+	
+	-- NOTE : Since the slot display name has been changed, the slot selection choices and the slot name tab header will also be updated here.
+	ui.slotChoices[uiSlotId] = table.concat({ L(SI_CSPM_COMMON_SLOT), " ", uiSlotId, " : ", ui.slotDisplayName[uiSlotId] or L(SI_CSPM_COMMON_UNREGISTERED), })
+	CSPM_UI_SlotSelectMenu:UpdateChoices(ui.slotChoices, ui.slotChoicesValues)
+	CSPM_UI_SlotSelectMenu:UpdateValue()		-- Note : When called with no arguments, getFunc will be called, and setFunc will NOT be called.
+
+	CSPM_UI_TabHeader.data.name = ui.slotChoices[uiSlotId]
+	CSPM_UI_TabHeader:UpdateValue()
+end
+
+local function UpdateSlotDisplayNameTableForSpecificSlot(slotId)
+	ui.slotDisplayName[slotId] = GetSlotDisplayNameBySlotId(slotId)
+	if slotId == uiSlotId then
+		RefreshPanelDueToSlotDisplayNameChange()
+	end
+end
+
+local function RebuildSlotDisplayNameTable(presetId)
+	presetId = presetId or uiPresetId
+	local displayNameTable = {}
+	local savedPresetData = CSPM:GetMenuPresetData(presetId)
+	if not savedPresetData then return end
+	for i = 1, savedPresetData.menuItemsCount do
+		displayNameTable[i] = GetSlotDisplayNameBySlotId(i)
+	end
+	return displayNameTable
+end
 
 local function RebuildSlotSelectionChoices(menuItemsCount)
 	local choices = {}
 	local choicesValues = {}
 	for i = 1, menuItemsCount do
-		choices[i] = table.concat({"Slot ", i})
+		choices[i] = table.concat({ L(SI_CSPM_COMMON_SLOT), " ", i, " : ", ui.slotDisplayName[i] or L(SI_CSPM_COMMON_UNREGISTERED), })
 		choicesValues[i] = i
 	end
 	return choices, choicesValues
 end
 
 local function RebuildCollectibleSelectionChoicesByCategoryType(categoryId, unlockedOnly)
+--	unlockedOnly : return only the unlocked ones or the whole set
 	local choices = {}
 	local choicesValues = {}
 	unlockedOnly = unlockedOnly or false
@@ -119,6 +211,7 @@ local function RebuildEmoteSelectionChoicesByEmoteCategory(emoteCategory)
 end
 
 local function RebuildHouseSelectionChoices(unlockedOnly)
+--	unlockedOnly : return only the unlocked ones or the whole set
 	local choices = {}
 	local choicesValues = {}
 	local currentPrimaryHouseId = GetHousingPrimaryHouse()
@@ -152,6 +245,7 @@ local function ChangePanelPresetState(presetId)
 		return
 	end
 	uiPresetId = presetId
+	ui.slotDisplayName = RebuildSlotDisplayNameTable(uiPresetId)
 	CSPM_UI_MenuItemsCountSlider:UpdateValue(false, CSPM.db.preset[uiPresetId].menuItemsCount)
 	ChangePanelSlotState(1)
 end
@@ -161,7 +255,7 @@ local function OnMenuItemCountChanged(newMenuItemsCount)
 	CSPM.db.preset[uiPresetId].menuItemsCount = newMenuItemsCount
 	ui.slotChoices, ui.slotChoicesValues = RebuildSlotSelectionChoices(newMenuItemsCount)
 	CSPM_UI_SlotSelectMenu:UpdateChoices(ui.slotChoices, ui.slotChoicesValues)
-	CSPM_UI_SlotSelectMenu:UpdateValue()
+	CSPM_UI_SlotSelectMenu:UpdateValue()		-- Note : When called with no arguments, getFunc will be called, and setFunc will NOT be called.
 
 	if uiSlotId > newMenuItemsCount then
 		ChangePanelSlotState(newMenuItemsCount)
@@ -185,8 +279,8 @@ local function OnSlotIdSelectionChanged(newSlotId)
 	local uiCategoryId = savedSlotData.category or CSPM_CATEGORY_NOTHING
 --	local uiActionValue = savedSlotData.value or 0
 
-	CSPM_UI_TabHeader.data.name = ui.slotChoices[uiSlotId] .. " :", 
-	CSPM_UI_TabHeader:UpdateValue()		-- Note : When called with no arguments, getFunc will be called, and setFunc will NOT be called..
+	CSPM_UI_TabHeader.data.name = ui.slotChoices[uiSlotId]
+	CSPM_UI_TabHeader:UpdateValue()		-- Note : When called with no arguments, getFunc will be called, and setFunc will NOT be called.
 
 	CSPM_UI_ActionTypeMenu:UpdateValue()
 	CSPM_UI_CategoryMenu:UpdateChoices(ui.categoryChoices[uiActionTypeId], ui.categoryChoicesValues[uiActionTypeId])
@@ -240,6 +334,10 @@ local function OnActionValueEditboxChanged(newActionValueString)
 	else
 		CSPM.db.preset[uiPresetId].slot[uiSlotId].value = tonumber(newActionValueString)
 	end
+
+	-- The slot display name will be changed and the UI panel will be updated here.
+	-- When the ActionValue selection is changed, this edit box will be initialized, so the slot display name will be updated here as well.
+	UpdateSlotDisplayNameTableForSpecificSlot(uiSlotId)
 end
 
 local function OnSlotNameEditboxChanged(newSlotName)
@@ -249,6 +347,8 @@ local function OnSlotNameEditboxChanged(newSlotName)
 	else
 		CSPM.db.preset[uiPresetId].slot[uiSlotId].name = newSlotName
 	end
+
+	UpdateSlotDisplayNameTableForSpecificSlot(uiSlotId)
 end
 
 local function DoTestButton()
@@ -303,20 +403,39 @@ local function OnLAMPanelControlsCreated(panel)
 	ui.panelInitialized = true
 end
 
-function CSPM:InitializeUI()
+function CSPM:InitializeMenuEditorUI()
 	ui.panelInitialized = false
-
+	ui.slotDisplayName = {}
 	ui.slotChoices, ui.slotChoicesValues = RebuildSlotSelectionChoices(CSPM_MENU_ITEMS_COUNT_DEFAULT)
 
-	ui.actionTypeChoices = { "Nothing", "Collectible", "Emote", "Chat Command", "Travel to house", } 
-	ui.actionTypeChoicesValues = { CSPM_ACTION_TYPE_NOTHING, CSPM_ACTION_TYPE_COLLECTIBLE, CSPM_ACTION_TYPE_EMOTE, CSPM_ACTION_TYPE_CHAT_COMMAND, CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE, }
+	ui.actionTypeChoices = {
+		L(SI_CSPM_COMMON_UNSELECTED), 
+		L(SI_CSPM_COMMON_COLLECTIBLE), 
+		L(SI_CSPM_COMMON_EMOTE), 
+		L(SI_CSPM_COMMON_CHAT_COMMAND), 
+		L(SI_CSPM_COMMON_TRAVEL_TO_HOUSE), 
+	} 
+	ui.actionTypeChoicesValues = {
+		CSPM_ACTION_TYPE_NOTHING, 
+		CSPM_ACTION_TYPE_COLLECTIBLE, 
+		CSPM_ACTION_TYPE_EMOTE, 
+		CSPM_ACTION_TYPE_CHAT_COMMAND, 
+		CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE, 
+	}
+	ui.actionTypeChoicesTooltips = {
+		L(SI_CSPM_UI_ACTION_TYPE_NOTHING_TIPS), 
+		L(SI_CSPM_UI_ACTION_TYPE_COLLECTIBLE_TIPS), 
+		L(SI_CSPM_UI_ACTION_TYPE_EMOTE_TIPS), 
+		L(SI_CSPM_UI_ACTION_TYPE_CHAT_COMMAND_TIPS), 
+		L(SI_CSPM_UI_ACTION_TYPE_TRAVEL_TO_HOUSE_TIPS), 
+	}
 
 	ui.categoryChoices = {}
 	ui.categoryChoicesValues = {}
 	ui.categoryChoices[CSPM_ACTION_TYPE_NOTHING], ui.categoryChoicesValues[CSPM_ACTION_TYPE_NOTHING] = {}, {}
 	ui.categoryChoices[CSPM_ACTION_TYPE_COLLECTIBLE] = {
-		"Nothing", 
-		"Immediate Value", 
+		L(SI_CSPM_COMMON_UNSELECTED), 
+		L(SI_CSPM_COMMON_IMMEDIATE_VALUE), 
 		L(SI_COLLECTIBLECATEGORYTYPE8), 	-- "Assistant", 
 		L(SI_COLLECTIBLECATEGORYTYPE27), 	-- "Companion", 
 		L(SI_COLLECTIBLECATEGORYTYPE5), 	-- "Memento", 
@@ -333,8 +452,8 @@ function CSPM:InitializeUI()
 		CSPM_CATEGORY_C_MOUNT, 
 	}
 	ui.categoryChoices[CSPM_ACTION_TYPE_EMOTE] = {
-		"Nothing", 
-		"Immediate Value", 
+		L(SI_CSPM_COMMON_UNSELECTED), 
+		L(SI_CSPM_COMMON_IMMEDIATE_VALUE), 
 		L(SI_EMOTECATEGORY1), 	-- "Ceremonial"
 		L(SI_EMOTECATEGORY2), 	-- "Cheers and Jeers"
 		L(SI_EMOTECATEGORY4), 	-- "Emotion"
@@ -363,17 +482,17 @@ function CSPM:InitializeUI()
 		CSPM_CATEGORY_E_COLLECTED, 
 	}
 	ui.categoryChoices[CSPM_ACTION_TYPE_CHAT_COMMAND] = {
-		"Nothing", 
-		"Immediate Value", 
+		L(SI_CSPM_COMMON_UNSELECTED), 
+		L(SI_CSPM_COMMON_IMMEDIATE_VALUE), 
 	}
 	ui.categoryChoicesValues[CSPM_ACTION_TYPE_CHAT_COMMAND] = {
 		CSPM_CATEGORY_NOTHING, 
 		CSPM_CATEGORY_IMMEDIATE_VALUE, 
 	}
 	ui.categoryChoices[CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE] = {
-		"Nothing", 
-		"My House (inside)", 
-		"My House (outside)", 
+		L(SI_CSPM_COMMON_UNSELECTED), 
+		L(SI_CSPM_COMMON_MY_HOUSE_INSIDE), 
+		L(SI_CSPM_COMMON_MY_HOUSE_OUTSIDE), 
 	}
 	ui.categoryChoicesValues[CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE] = {
 		CSPM_CATEGORY_NOTHING, 
@@ -396,22 +515,27 @@ function CSPM:InitializeUI()
 	ui.actionValueChoices[CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE], ui.actionValueChoicesValues[CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE], ui.actionValueChoicesTooltips[CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE] = RebuildHouseSelectionChoices(true)
 end
 
-function CSPM:CreateSettingsWindow()
+function CSPM:CreateMenuEditorPanel()
 	local panelData = {
 		type = "panel", 
 		name = "Shortcut PieMenu", 
 		displayName = "Calamath's Shortcut Pie Menu", 
 		author = CSPM.author, 
 		version = CSPM.version, 
-		website = "", 
+		website = "https://www.esoui.com/downloads/info3088-CalamathsShortcutPieMenu.html", 
 		slashCommand = "/cspm.settings", 
 		registerForRefresh = true, 
 --		registerForDefaults = true, 
 --		resetFunc = nil, 
 	}
-	ui.panel = LAM:RegisterAddonPanel("CSPM_OptionsMenu", panelData)
+	ui.panel = LAM:RegisterAddonPanel("CSPM_OptionsMenuEditor", panelData)
+	self.panelMenuEditor = ui.panel
 
 	local submenuPieVisual = {}
+	submenuPieVisual[#submenuPieVisual + 1] = {
+		type = "header", 
+		name = "Visual Design Options", 
+	}
 	submenuPieVisual[#submenuPieVisual + 1] = {
 		type = "checkbox",
 		name = "Quickslot radial menu style", 
@@ -423,7 +547,6 @@ function CSPM:CreateSettingsWindow()
 		tooltip = "Apply a background design like a quick slot radial menu.", 
 		width = "full", 
 		default = false, 
---		reference = "MyAddonCheckbox", 
 	}
 	submenuPieVisual[#submenuPieVisual + 1] = {
 		type = "checkbox",
@@ -436,7 +559,6 @@ function CSPM:CreateSettingsWindow()
 		tooltip = "Apply a background design like a radial menu in gamepad mode.", 
 		width = "full", 
 		default = true, 
---		reference = "MyAddonCheckbox", 
 	}
 	submenuPieVisual[#submenuPieVisual + 1] = {
 		type = "divider", 
@@ -452,7 +574,6 @@ function CSPM:CreateSettingsWindow()
 		tooltip = "Whether to show the preset name under the pie menu.", 
 		width = "full", 
 		default = false, 
---		reference = "MyAddonCheckbox", 
 	}
 	submenuPieVisual[#submenuPieVisual + 1] = {
 		type = "checkbox",
@@ -462,7 +583,6 @@ function CSPM:CreateSettingsWindow()
 		tooltip = "Whether to show the name of each slot around the pie menu.", 
 		width = "full", 
 		default = false, 
---		reference = "MyAddonCheckbox", 
 	}
 	submenuPieVisual[#submenuPieVisual + 1] = {
 		type = "checkbox",
@@ -472,109 +592,109 @@ function CSPM:CreateSettingsWindow()
 		tooltip = "Whether to show the icon frame for each slot in the pie menu.", 
 		width = "full", 
 		default = true, 
---		reference = "MyAddonCheckbox", 
 	}
 
 	local optionsData = {}
 	optionsData[#optionsData + 1] = {
-			type = "description", 
-			title = "", 
-			text = L(SI_CSPM_UI_PANEL_HEADER1_TEXT), 
-	}
-	optionsData[#optionsData + 1] = {
-			type = "slider", 
-			name = "Menu items count", 
-			min = 2,
-			max = 11,
-			step = 1, 
-			getFunc = function() return CSPM.db.preset[uiPresetId].menuItemsCount end, 
-			setFunc = OnMenuItemCountChanged,
-			clampInput = false, 
-			default = CSPM_MENU_ITEMS_COUNT_DEFAULT, 
-			reference = "CSPM_UI_MenuItemsCountSlider", 
+		type = "description", 
+		title = "", 
+		text = L(SI_CSPM_UI_PANEL_HEADER1_TEXT), 
 	}
 	optionsData[#optionsData + 1] = {
 		type = "submenu",
-		name = "Visual Design Options", 
+		name = "Preset " .. uiPresetId .. " : ", 
 --		icon = "path/to/my/icon.dds", -- or function returning a string (optional)
 --		iconTextureCoords = {left, right, top, bottom}, -- or function returning a table (optional)
---		tooltip = "My submenu tooltip", -- or string id or function returning a string (optional)
+		tooltip = "Adjust the visual design of the pie menu. (optional)", 
 --		disabled = function() return db.someBooleanSetting end, -- or boolean (optional)
 --		disabledLabel = function() return db.someBooleanSetting end, -- or boolean (optional)
 --		reference = "MyAddonSubmenu" ,
 		controls = submenuPieVisual, 
 	}
 	optionsData[#optionsData + 1] = {
-			type = "dropdown", 
-			name = L(SI_CSPM_UI_SLOT_SELECT_MENU_NAME), 
-			tooltip = L(SI_CSPM_UI_SLOT_SELECT_MENU_TIPS), 
-			choices = ui.slotChoices, 	-- If choicesValue is defined, choices table is only used for UI display!
-			choicesValues = ui.slotChoicesValues, 
---			choicesTooltips = ui.slotChoicesTooltips, 
-			getFunc = function() return uiSlotId end, 
-			setFunc = OnSlotIdSelectionChanged, 
---			sort = "name-up", --or "name-down", "numeric-up", "numeric-down", "value-up", "value-down", "numericvalue-up", "numericvalue-down" 
-			width = "half", 
---			scrollable = true, 
-			default = 1, 
-			reference = "CSPM_UI_SlotSelectMenu", 
+		type = "slider", 
+		name = "Menu items count", 
+		tooltip = "Select the number of slots to be displayed in the pie menu.", 
+		min = 2,
+		max = 11,
+		step = 1, 
+		getFunc = function() return CSPM.db.preset[uiPresetId].menuItemsCount end, 
+		setFunc = OnMenuItemCountChanged,
+		clampInput = false, 
+		default = CSPM_MENU_ITEMS_COUNT_DEFAULT, 
+		reference = "CSPM_UI_MenuItemsCountSlider", 
 	}
 	optionsData[#optionsData + 1] = {
-			type = "description", 
-			title = " ", 
-			text = " ", 
-			width = "half", 
+		type = "dropdown", 
+		name = L(SI_CSPM_UI_SLOT_SELECT_MENU_NAME), 
+		tooltip = L(SI_CSPM_UI_SLOT_SELECT_MENU_TIPS), 
+		choices = ui.slotChoices, 	-- If choicesValue is defined, choices table is only used for UI display!
+		choicesValues = ui.slotChoicesValues, 
+--		choicesTooltips = ui.slotChoicesTooltips, 
+		getFunc = function() return uiSlotId end, 
+		setFunc = OnSlotIdSelectionChanged, 
+--		sort = "name-up", --or "name-down", "numeric-up", "numeric-down", "value-up", "value-down", "numericvalue-up", "numericvalue-down" 
+		width = "half", 
+--		scrollable = true, 
+		default = 1, 
+		reference = "CSPM_UI_SlotSelectMenu", 
 	}
 	optionsData[#optionsData + 1] = {
-			type = "header", 
-			name = "Slot " .. uiSlotId .. " :", 
-			reference = "CSPM_UI_TabHeader", 
+		type = "description", 
+		title = " ", 
+		text = " ", 
+		width = "half", 
 	}
 	optionsData[#optionsData + 1] = {
-			type = "dropdown", 
-			name = L(SI_CSPM_UI_ACTION_TYPE_MENU_NAME), 
-			tooltip = L(SI_CSPM_UI_ACTION_TYPE_MENU_TIPS), 
-			choices = ui.actionTypeChoices, 	-- If choicesValue is defined, choices table is only used for UI display!
-			choicesValues = ui.actionTypeChoicesValues, 
---			choicesTooltips = ui.actionTypeChoicesTooltips, 
-			getFunc = function() return CSPM.db.preset[uiPresetId].slot[uiSlotId].type end, 
-			setFunc = OnActionTypeSelectionChanged, 
---			sort = "name-up", --or "name-down", "numeric-up", "numeric-down", "value-up", "value-down", "numericvalue-up", "numericvalue-down" 
---			width = "half", 
---			scrollable = true, 
-			default = CSPM_ACTION_TYPE_NOTHING, 
-			reference = "CSPM_UI_ActionTypeMenu", 
+		type = "header", 
+		name = "Slot " .. uiSlotId .. " :", 
+		reference = "CSPM_UI_TabHeader", 
 	}
 	optionsData[#optionsData + 1] = {
-			type = "dropdown", 
-			name = L(SI_CSPM_UI_CATEGORY_MENU_NAME), 
---			tooltip = L(SI_CSPM_UI_CATEGORY_MENU_TIPS), 
-			choices = ui.categoryChoices[CSPM.db.preset[uiPresetId].slot[uiSlotId].type], 	-- If choicesValue is defined, choices table is only used for UI display!
-			choicesValues = ui.categoryChoicesValues[CSPM.db.preset[uiPresetId].slot[uiSlotId].type], 
---			choicesTooltips = ui.categoryChoicesTooltips[CSPM.db.preset[uiPresetId].slot[uiSlotId].type], 
-			getFunc = function() return CSPM.db.preset[uiPresetId].slot[uiSlotId].category end, 
-			setFunc = OnCategorySelectionChanged, 
---			sort = "name-up", --or "name-down", "numeric-up", "numeric-down", "value-up", "value-down", "numericvalue-up", "numericvalue-down" 
---			width = "half", 
---			scrollable = true, 
-			default = CSPM_CATEGORY_NOTHING, 
-			reference = "CSPM_UI_CategoryMenu", 
+		type = "dropdown", 
+		name = L(SI_CSPM_UI_ACTION_TYPE_MENU_NAME), 
+		tooltip = L(SI_CSPM_UI_ACTION_TYPE_MENU_TIPS), 
+		choices = ui.actionTypeChoices, 	-- If choicesValue is defined, choices table is only used for UI display!
+		choicesValues = ui.actionTypeChoicesValues, 
+		choicesTooltips = ui.actionTypeChoicesTooltips, 
+		getFunc = function() return CSPM.db.preset[uiPresetId].slot[uiSlotId].type end, 
+		setFunc = OnActionTypeSelectionChanged, 
+--		sort = "name-up", --or "name-down", "numeric-up", "numeric-down", "value-up", "value-down", "numericvalue-up", "numericvalue-down" 
+--		width = "half", 
+--		scrollable = true, 
+		default = CSPM_ACTION_TYPE_NOTHING, 
+		reference = "CSPM_UI_ActionTypeMenu", 
 	}
 	optionsData[#optionsData + 1] = {
-			type = "dropdown", 
-			name = L(SI_CSPM_UI_ACTION_VALUE_MENU_NAME), 
---			tooltip = L(SI_CSPM_UI_ACTION_VALUE_MENU_TIPS), 
-			choices = ui.actionValueChoices[CSPM.db.preset[uiPresetId].slot[uiSlotId].category], 	-- If choicesValue is defined, choices table is only used for UI display!
-			choicesValues = ui.actionValueChoicesValues[CSPM.db.preset[uiPresetId].slot[uiSlotId].category], 
-			choicesTooltips = ui.actionValueChoicesTooltips[CSPM.db.preset[uiPresetId].slot[uiSlotId].category], 
-			getFunc = function() return CSPM.db.preset[uiPresetId].slot[uiSlotId].value end, 
-			setFunc = OnActionValueSelectionChanged, 
---			sort = "name-up", --or "name-down", "numeric-up", "numeric-down", "value-up", "value-down", "numericvalue-up", "numericvalue-down" 
-			sort = "name-up", 
---			width = "half", 
-			scrollable = 15, 
-			default = 0, 
-			reference = "CSPM_UI_ActionValueMenu", 
+		type = "dropdown", 
+		name = L(SI_CSPM_UI_CATEGORY_MENU_NAME), 
+--		tooltip = L(SI_CSPM_UI_CATEGORY_MENU_TIPS), 
+		choices = ui.categoryChoices[CSPM.db.preset[uiPresetId].slot[uiSlotId].type], 	-- If choicesValue is defined, choices table is only used for UI display!
+		choicesValues = ui.categoryChoicesValues[CSPM.db.preset[uiPresetId].slot[uiSlotId].type], 
+--		choicesTooltips = ui.categoryChoicesTooltips[CSPM.db.preset[uiPresetId].slot[uiSlotId].type], 
+		getFunc = function() return CSPM.db.preset[uiPresetId].slot[uiSlotId].category end, 
+		setFunc = OnCategorySelectionChanged, 
+--		sort = "name-up", --or "name-down", "numeric-up", "numeric-down", "value-up", "value-down", "numericvalue-up", "numericvalue-down" 
+--		width = "half", 
+--		scrollable = true, 
+		default = CSPM_CATEGORY_NOTHING, 
+		reference = "CSPM_UI_CategoryMenu", 
+	}
+	optionsData[#optionsData + 1] = {
+		type = "dropdown", 
+		name = L(SI_CSPM_UI_ACTION_VALUE_MENU_NAME), 
+--		tooltip = L(SI_CSPM_UI_ACTION_VALUE_MENU_TIPS), 
+		choices = ui.actionValueChoices[CSPM.db.preset[uiPresetId].slot[uiSlotId].category], 	-- If choicesValue is defined, choices table is only used for UI display!
+		choicesValues = ui.actionValueChoicesValues[CSPM.db.preset[uiPresetId].slot[uiSlotId].category], 
+		choicesTooltips = ui.actionValueChoicesTooltips[CSPM.db.preset[uiPresetId].slot[uiSlotId].category], 
+		getFunc = function() return CSPM.db.preset[uiPresetId].slot[uiSlotId].value end, 
+		setFunc = OnActionValueSelectionChanged, 
+--		sort = "name-up", --or "name-down", "numeric-up", "numeric-down", "value-up", "value-down", "numericvalue-up", "numericvalue-down" 
+		sort = "name-up", 
+--		width = "half", 
+		scrollable = 15, 
+		default = 0, 
+		reference = "CSPM_UI_ActionValueMenu", 
 	}
 	optionsData[#optionsData + 1] = {
 		type = "editbox", 
@@ -620,31 +740,10 @@ function CSPM:CreateSettingsWindow()
 		name = "Default Name", 
 --		tooltip = nil, 
 		func = function()
-			local newSlotName = ""
-			local uiActionTypeId = CSPM.db.preset[uiPresetId].slot[uiSlotId].type
-			local uiActionValue = CSPM.db.preset[uiPresetId].slot[uiSlotId].value
-			if uiActionTypeId == CSPM_ACTION_TYPE_COLLECTIBLE then
-				newSlotName = ZO_CachedStrFormat("<<1>>", GetCollectibleName(CSPM.db.preset[uiPresetId].slot[uiSlotId].value or ""))
-			elseif uiActionTypeId == CSPM_ACTION_TYPE_EMOTE then
-				local emoteItemInfo = PLAYER_EMOTE_MANAGER:GetEmoteItemInfo(CSPM.db.preset[uiPresetId].slot[uiSlotId].value)
-				newSlotName = ZO_CachedStrFormat("<<1>>", emoteItemInfo and emoteItemInfo.displayName or "")
-			elseif uiActionTypeId == CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE then
-				local houseName
-				if uiActionValue == CSPM_ACTION_VALUE_PRIMARY_HOUSE_ID then
-					houseName = L(SI_HOUSING_FURNITURE_SETTINGS_GENERAL_PRIMARY_RESIDENCE_TEXT)		-- "Primary Residence"
-				else
-					houseName = GetCollectibleName(GetCollectibleIdForHouse(uiActionValue))
-				end
-				if uiActionValue ~= 0 then
-					local uiCategoryId = CSPM.db.preset[uiPresetId].slot[uiSlotId].category
-					if uiCategoryId == CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE then
-						newSlotName = ZO_CachedStrFormat(L(SI_GAMEPAD_WORLD_MAP_TRAVEL_TO_HOUSE_INSIDE), houseName)		-- "<<1>> (inside)"
-					elseif uiCategoryId == CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE then
-						newSlotName = ZO_CachedStrFormat(L(SI_GAMEPAD_WORLD_MAP_TRAVEL_TO_HOUSE_OUTSIDE), houseName)		-- "<<1>> (outside)"
-					end
-				end
-			end
-			CSPM.LDL:Debug("Got SlotName : ", tostring(newSlotName))
+			local actionTypeId = CSPM.db.preset[uiPresetId].slot[uiSlotId].type
+			local categoryId = CSPM.db.preset[uiPresetId].slot[uiSlotId].category
+			local actionValue = CSPM.db.preset[uiPresetId].slot[uiSlotId].value
+			local newSlotName = GetDefaultSlotName(actionTypeId, categoryId, actionValue) 
 			CSPM_UI_SlotNameEditbox:UpdateValue(false, newSlotName)
 		end, 
 		width = "full", 
@@ -669,6 +768,6 @@ function CSPM:CreateSettingsWindow()
 --		width = "half", 
 	}
 ]]
-	LAM:RegisterOptionControls("CSPM_OptionsMenu", optionsData)
+	LAM:RegisterOptionControls("CSPM_OptionsMenuEditor", optionsData)
 	CALLBACK_MANAGER:RegisterCallback("LAM-PanelControlsCreated", OnLAMPanelControlsCreated)
 end
