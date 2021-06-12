@@ -1,3 +1,6 @@
+V0.6.0: [V600] by Calamath
+- Brushed up the Pie Menu Editor UI.
+
 V0.5.0: [V500] by Calamath
 - Implemented the official version of the UI design template for the Pie menu.
 - Changed the design policy to share the pie menu controls between both keyboard and gamepad modes in order to save control resources.
