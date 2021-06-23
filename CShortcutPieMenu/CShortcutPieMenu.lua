@@ -17,15 +17,17 @@ CShortcutPieMenu = CShortcutPieMenu or {}
 
 local CSPM = CShortcutPieMenu
 CSPM.name = "CShortcutPieMenu"
-CSPM.version = "0.6.0"
+CSPM.version = "0.7.0"
 CSPM.author = "Calamath"
-CSPM.savedVars = "CShortcutPieMenuDB"
+CSPM.savedVarsPieMenuEditor = "CShortcutPieMenuDB"
+CSPM.savedVarsPieMenuManager = "CShortcutPieMenuSV"
 CSPM.savedVarsVersion = 1
 CSPM.authority = {2973583419,210970542} 
 
 -- ---------------------------------------------------------------------------------------
 -- constants
 CSPM.const = {
+	CSPM_MAX_USER_PRESET						= 10, 
 	CSPM_MENU_ITEMS_COUNT_DEFAULT				= 2, 
 	CSPM_ACTION_TYPE_NOTHING					= 0, 
 	CSPM_ACTION_TYPE_COLLECTIBLE				= 1, 
@@ -56,6 +58,7 @@ CSPM.const = {
 }
 -- ---------------------------------------------------------------------------------------
 -- Aliases of constants
+local CSPM_MAX_USER_PRESET						= CSPM.const.CSPM_MAX_USER_PRESET
 local CSPM_MENU_ITEMS_COUNT_DEFAULT				= CSPM.const.CSPM_MENU_ITEMS_COUNT_DEFAULT
 local CSPM_ACTION_TYPE_NOTHING					= CSPM.const.CSPM_ACTION_TYPE_NOTHING
 local CSPM_ACTION_TYPE_COLLECTIBLE				= CSPM.const.CSPM_ACTION_TYPE_COLLECTIBLE
@@ -136,12 +139,15 @@ local CSPM_LUT_CATEGORY_E_CSPM_TO_ICON			= CSPM.lut.CSPM_LUT_CATEGORY_E_CSPM_TO_
 
 -- ---------------------------------------------------------------------------------------
 -- CShortcutPieMenu savedata (default)
+
+-- PieMenu Slot
 local CSPM_SLOT_DATA_DEFAULT = {
 	type = CSPM_ACTION_TYPE_NOTHING, 
 	category = CSPM_CATEGORY_NOTHING, 
 	value = 0, 
 } 
 
+-- CShortcutPieMenu PieMenuEditor Config (AccountWide User Preset)
 local CSPM_DB_DEFAULT = {
 	preset = {
 		[1] = {
@@ -179,9 +185,25 @@ local CSPM_DB_DEFAULT = {
 	}, 
 }
 
+-- CShortcutPieMenu PieMenuManager Config
+local CSPM_SV_DEFAULT = {
+	accountWide = true, 
+	keybinds = {
+		[1] = 1, 	-- Primary Action
+		[2] = 0, 	-- Secondary Action
+		[3] = 0, 	-- Tertiary Action
+		[4] = 0, 	-- Quaternary Action
+		[5] = 0, 	-- Quinary Action
+	}, 
+}
+
 -- ------------------------------------------------
 
-ZO_CreateStringId("SI_BINDING_NAME_CSPM_PIE_MENU_INTERACTION", "PieMenu Interaction") 
+ZO_CreateStringId("SI_BINDING_NAME_CSPM_PIE_MENU_INTERACTION", "|c7CFC00PieMenu Interaction|r") 
+ZO_CreateStringId("SI_BINDING_NAME_CSPM_PIE_MENU_SECONDARY", "|cC5C292PieMenu Secondary Action|r")
+ZO_CreateStringId("SI_BINDING_NAME_CSPM_PIE_MENU_TERTIARY", "|cC5C293PieMenu Tertiary Action|r")
+ZO_CreateStringId("SI_BINDING_NAME_CSPM_PIE_MENU_QUATERNARY", "|cC5C294PieMenu Quaternary Action|r")
+ZO_CreateStringId("SI_BINDING_NAME_CSPM_PIE_MENU_QUINARY", "|cC5C295PieMenu Quinary Action|r")
 
 -- Library
 local LAM = LibAddonMenu2
@@ -458,21 +480,35 @@ function CSPM:OnSelectionExecutionCallback(data)
 	end
 end
 
-function CSPM:StartInteraction()
-	CSPM.LDL:Debug("StartInteraction()")
-	local ret = self.rootMenu:StartInteraction()
-	CSPM.LDL:Debug("StartInteraction result : ", tostring(ret))
-	return ret
+function CSPM:StartInteraction(presetId)
+	CSPM.LDL:Debug("StartInteraction(%s)", tostring(presetId))
+	if presetId ~= 0 then
+		local ret = self.rootMenu:StartInteraction()
+		CSPM.LDL:Debug("StartInteraction result : ", tostring(ret))
+		if ret then
+			self.activePresetId = presetId
+		end
+		return ret
+	end
+end
+
+function CSPM:StartInteractionWithKeyBindings(keybindsId)
+	local presetId = self.svCurrent.keybinds[keybindsId]
+	if presetId then
+		self.activeKeybindsId = keybindsId
+		self:StartInteraction(presetId)
+	end
 end
 
 function CSPM:StopInteraction()
 --	CSPM.LDL:Debug("StopInteraction()")
 	local ret = self.rootMenu:StopInteraction()
 	CSPM.LDL:Debug("StopInteraction result : ", tostring(ret))
+	self.activeKeybindsId = 0
 	return ret
 end
 
-function CSPM:ValidateConfigData()
+function CSPM:ValidateConfigDataDB()
 	for k, v in pairs(self.db.preset) do
 		if v.id == nil							then v.id = k 														end
 		if v.name == nil						then v.name = ""													end
@@ -487,16 +523,61 @@ function CSPM:ValidateConfigData()
 	end
 end
 
+function CSPM:BuildPresetInfoTable()
+	local tmp = {}
+	for presetId, v in pairs(self.db.preset) do
+		tmp[presetId] = {
+			id = presetId, 
+			name = v.name or "", 
+			userDefined = type(presetId) ~= "string", 
+			tooltip = v.tooltip or "", 
+		}
+	end
+	self.presetInfo = tmp
+end
+
+function CSPM:UpdateUserPresetInfo(presetId)
+	if type(presetId) ~= "number" then return end
+	if not self.presetInfo[presetId] then 
+		self.presetInfo[presetId] = {}
+	end
+	self.presetInfo[presetId].id = presetId
+	self.presetInfo[presetId].name = self.db.preset[presetId].name or ""
+	self.presetInfo[presetId].userDefined = type(presetId) ~= "string"
+	self.presetInfo[presetId].tooltip = self.db.preset[presetId].tooltip or ""
+	CALLBACK_MANAGER:FireCallbacks("CSPM-UserPresetInfoUpdated", presetId)
+end
+
+function CSPM:GetPresetInfo(presetId)
+	return self.presetInfo[presetId]
+end
+
 function CSPM:Initialize()
 	self.lang = GetCVar("Language.2")
 	self.isGamepad = IsInGamepadPreferredMode()
 	self.activePresetId = 1
-	self.db = ZO_SavedVars:NewAccountWide(self.savedVars, 1, nil, CSPM_DB_DEFAULT)
-	self:ValidateConfigData()
+	self.activeKeybindsId = 0
 
+	-- Pie Menu Editor Config (AccountWide User Preset)
+	self.db = ZO_SavedVars:NewAccountWide(self.savedVarsPieMenuEditor, 1, nil, CSPM_DB_DEFAULT)
+	self:ValidateConfigDataDB()
+	self:BuildPresetInfoTable()
+
+	-- Pie Menu Manager Config (Preset Allocation)
+	self.svCurrent = {}
+	self.svAccount = ZO_SavedVars:NewAccountWide(self.savedVarsPieMenuManager, 1, nil, CSPM_SV_DEFAULT, GetWorldName())
+	if self.svAccount.accountWide then
+		self.svCurrent = self.svAccount
+	else
+		self.svCharacter = ZO_SavedVars:NewCharacterIdSettings(self.savedVarsPieMenuManager, 1, nil, CSPM_SV_DEFAULT, GetWorldName())
+		self.svCurrent = self.svCharacter
+	end
+
+	-- UI Section
 	self.rootMenu = CSPM_PieMenuController:New(CSPM_UI_Root_Pie, "CSPM_SelectableItemRadialMenuEntryTemplate", "DefaultRadialMenuAnimation", "SelectableItemRadialMenuEntryAnimation")
 
 	self:InitializeMenuEditorUI()
+	self:InitializeManagerUI()
 	CSPM.LDL:Debug("Initialized")
 end
 
@@ -518,6 +599,15 @@ end
 
 function CSPM:DoesMenuSlotDataExist(presetId, slotId)
 	return self:GetMenuSlotData(presetId, slotId) ~= nil
+end
+
+function CSPM:CreateMenuPresetData(presetId)
+	if self:GetMenuPresetData(presetId) then return end
+	if type(presetId) ~= "number" then return end
+
+	self.db.preset[presetId] = ZO_DeepTableCopy(CSPM_DB_DEFAULT.preset[1])
+	self.db.preset[presetId].id = presetId
+	self:UpdateUserPresetInfo(presetId)
 end
 
 function CSPM:ExtendMenuSlotDataSet(presetId, menuItemsCount)
@@ -554,6 +644,7 @@ local function OnPlayerActivated(event, initial)
 
 	-- UI setting panel initialization
 	CSPM:CreateMenuEditorPanel()
+	CSPM:CreateManagerPanel()
 end
 EVENT_MANAGER:RegisterForEvent(CSPM.name, EVENT_PLAYER_ACTIVATED, OnPlayerActivated)
 

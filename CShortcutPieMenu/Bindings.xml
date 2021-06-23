@@ -2,7 +2,23 @@
 	<Layer name="SI_KEYBINDINGS_LAYER_GENERAL">
 		<Category name="CShortcutPieMenu">
 			<Action name="CSPM_PIE_MENU_INTERACTION">
-				<Down>CShortcutPieMenu:StartInteraction()</Down>
+				<Down>CShortcutPieMenu:StartInteractionWithKeyBindings(1)</Down>
+				<Up>CShortcutPieMenu:StopInteraction()</Up>
+			</Action>
+			<Action name="CSPM_PIE_MENU_SECONDARY">
+				<Down>CShortcutPieMenu:StartInteractionWithKeyBindings(2)</Down>
+				<Up>CShortcutPieMenu:StopInteraction()</Up>
+			</Action>
+			<Action name="CSPM_PIE_MENU_TERTIARY">
+				<Down>CShortcutPieMenu:StartInteractionWithKeyBindings(3)</Down>
+				<Up>CShortcutPieMenu:StopInteraction()</Up>
+			</Action>
+			<Action name="CSPM_PIE_MENU_QUATERNARY">
+				<Down>CShortcutPieMenu:StartInteractionWithKeyBindings(4)</Down>
+				<Up>CShortcutPieMenu:StopInteraction()</Up>
+			</Action>
+			<Action name="CSPM_PIE_MENU_QUINARY">
+				<Down>CShortcutPieMenu:StartInteractionWithKeyBindings(5)</Down>
 				<Up>CShortcutPieMenu:StopInteraction()</Up>
 			</Action>
 		</Category>

@@ -16,6 +16,7 @@
 local CSPM = CShortcutPieMenu
 
 -- Aliases of constants
+local CSPM_MAX_USER_PRESET						= CSPM.const.CSPM_MAX_USER_PRESET
 local CSPM_MENU_ITEMS_COUNT_DEFAULT				= CSPM.const.CSPM_MENU_ITEMS_COUNT_DEFAULT
 local CSPM_ACTION_TYPE_NOTHING					= CSPM.const.CSPM_ACTION_TYPE_NOTHING
 local CSPM_ACTION_TYPE_COLLECTIBLE				= CSPM.const.CSPM_ACTION_TYPE_COLLECTIBLE
@@ -57,6 +58,7 @@ if not LAM then d("[CSPM] Error : 'LibAddonMenu' not found.") return end
 
 local L = GetString
 local strings = {
+	SI_CSPM_COMMON_PRESET =							"Preset", 
 	SI_CSPM_COMMON_SLOT =							"Slot", 
 	SI_CSPM_COMMON_UNSELECTED =						"<Unselected>", 
 	SI_CSPM_COMMON_UNREGISTERED =					"<Unregistered>", 
@@ -68,8 +70,9 @@ local strings = {
 	SI_CSPM_COMMON_MY_HOUSE_INSIDE =				"My House (inside)", 
 	SI_CSPM_COMMON_MY_HOUSE_OUTSIDE =				"My House (outside)", 
 	SI_CSPM_UI_PANEL_HEADER1_TEXT =					"This add-on provides a pie menu for shortcuts to various UI operations.", 
+	SI_CSPM_UI_PANEL_HEADER2_TEXT =					"In this panel, you can configure your favorite shortcuts for each slot in the pie menu and register them as presets that can be used throughout your account.\n", 
 	SI_CSPM_UI_PRESET_SELECT_MENU_NAME =			"Select preset", 
-	SI_CSPM_UI_PRESET_SELECT_MENU_TIPS =			"Please select the preset number you want to configure.", 
+	SI_CSPM_UI_PRESET_SELECT_MENU_TIPS =			"Please select the preset you want to configure.", 
 	SI_CSPM_UI_SLOT_SELECT_MENU_NAME =				"Select slot", 
 	SI_CSPM_UI_SLOT_SELECT_MENU_TIPS =				"Please select the slot number you want to configure.", 
 	SI_CSPM_UI_ACTION_TYPE_MENU_NAME =				"Action Type", 
@@ -95,6 +98,64 @@ local uiPresetId = 1
 local uiSlotId = 1
 
 local function DoSetupDefault(slotId)
+end
+
+local function GetPresetDisplayNameByPresetId(presetId)
+	local presetName = ""
+	local presetInfo = CSPM:GetPresetInfo(presetId)
+	if presetInfo then
+		if presetInfo.name ~= "" then
+			presetName = presetInfo.name
+		else
+			presetName = table.concat({ L(SI_CSPM_COMMON_PRESET), " ", presetId, })
+		end
+	else
+		presetName = table.concat({ L(SI_CSPM_COMMON_PRESET), " ", presetId, " : ", L(SI_CSPM_COMMON_UNREGISTERED), })
+	end
+	return presetName
+end
+
+local function RefreshPanelDueToPresetInfoChange(presetId)
+-- This function assumes that the presetInfo table has just changed.
+	CSPM.LDL:Debug("RefreshEditorPanelDueToPresetInfoChange : ", presetId)
+	if type(presetId) ~= "number" then return end
+
+	-- NOTE : Since the preset info table has been changed, the preset selection choices and the preset name submenu header will also be updated here.
+	local presetInfo = CSPM:GetPresetInfo(presetId)
+	if presetInfo then
+		ui.presetChoices[presetId] = GetPresetDisplayNameByPresetId(presetId)
+		ui.presetChoicesTooltips[presetId] = presetInfo.tooltip or ""
+	end
+	if ui.panelInitialized then
+		CSPM_UI_PresetSelectMenu:UpdateChoices(ui.presetChoices, ui.presetChoicesValues, ui.presetChoicesTooltips)
+		CSPM_UI_PresetSelectMenu:UpdateValue()		-- Note : When called with no arguments, getFunc will be called, and setFunc will NOT be called.
+
+		CSPM_UI_PresetSubmenu.data.name = ui.presetChoices[uiPresetId]
+		CSPM_UI_PresetSubmenu:UpdateValue()		-- Note : When called with no arguments, getFunc will be called, and setFunc will NOT be called.
+	end
+end
+
+local function RebuildPresetSelectionChoices()
+	local choices = {}
+	local choicesValues = {}
+	local choicesTooltips = {}
+	for i = 1, CSPM_MAX_USER_PRESET do
+		presetInfo = CSPM:GetPresetInfo(i)
+		if presetInfo then
+			if presetInfo.name ~= "" then
+				choices[i] = presetInfo.name
+			else
+				choices[i] = table.concat({ L(SI_CSPM_COMMON_PRESET), " ", i, })
+			end
+			choicesValues[i] = i
+			choicesTooltips[i] = presetInfo.tooltip or ""
+		else
+			choices[i] = table.concat({ L(SI_CSPM_COMMON_PRESET), " ", i, " : ", L(SI_CSPM_COMMON_UNREGISTERED), })
+			choicesValues[i] = i
+			choicesTooltips[i] = ""
+		end
+	end
+	return choices, choicesValues, choicesTooltips
 end
 
 local function GetDefaultSlotName(actionTypeId, categoryId, actionValue)
@@ -143,7 +204,7 @@ end
 
 local function RefreshPanelDueToSlotDisplayNameChange()
 -- This function assumes that the slot display name of the currently open preset and slot has just changed.
-	CSPM.LDL:Debug("RefreshPanelDueToSlotDisplayNameChange : ")
+	CSPM.LDL:Debug("RefreshEditorPanelDueToSlotDisplayNameChange : ")
 	
 	-- NOTE : Since the slot display name has been changed, the slot selection choices and the slot name tab header will also be updated here.
 	ui.slotChoices[uiSlotId] = table.concat({ L(SI_CSPM_COMMON_SLOT), " ", uiSlotId, " : ", ui.slotDisplayName[uiSlotId] or L(SI_CSPM_COMMON_UNREGISTERED), })
@@ -240,11 +301,28 @@ end
 
 local function ChangePanelPresetState(presetId)
 	CSPM.LDL:Debug("ChangePanelPresetState : %s", presetId)
-	if not CSPM:DoesMenuPresetDataExist(presetId) then
-		d("[CSPM] fatal error : preset data not found")
-		return
+	-- Here, we need to call the setFunc callback of CSPM_UI_PresetSelectMenu.
+	CSPM_UI_PresetSelectMenu:UpdateValue(false, presetId)	-- Note : When called with arguments, setFunc will be called.
+end
+
+local function OnPresetIdSelectionChanged(newPresetId)
+	CSPM.LDL:Debug("OnPresetIdSelectionChanged : %s", newPresetId)
+
+	if not CSPM:DoesMenuPresetDataExist(newPresetId) then
+--		d("[CSPM] fatal error : preset data not found, so extend !")
+		CSPM:CreateMenuPresetData(newPresetId)
 	end
-	uiPresetId = presetId
+
+	-- update preset tab
+	uiPresetId = newPresetId
+
+	if CSPM_UI_PresetSubmenu.open then
+		CSPM_UI_PresetSubmenu.open = false
+		CSPM_UI_PresetSubmenu.animation:PlayFromStart()
+	end
+	CSPM_UI_PresetSubmenu.data.name = ui.presetChoices[uiPresetId]
+	CSPM_UI_PresetSubmenu:UpdateValue()		-- Note : When called with no arguments, getFunc will be called, and setFunc will NOT be called.
+
 	ui.slotDisplayName = RebuildSlotDisplayNameTable(uiPresetId)
 	CSPM_UI_MenuItemsCountSlider:UpdateValue(false, CSPM.db.preset[uiPresetId].menuItemsCount)
 	ChangePanelSlotState(1)
@@ -352,7 +430,6 @@ local function OnSlotNameEditboxChanged(newSlotName)
 end
 
 local function DoTestButton()
-	ChangePanelPresetState(1)
 end
 
 local function OnLAMPanelControlsCreated(panel)
@@ -399,12 +476,35 @@ local function OnLAMPanelControlsCreated(panel)
 		end
 	end
 
+	-- Create a widget for the Preset Selection dropdown menu
+	local dropdownPresetSelectMenu = {
+		type = "dropdown", 
+		name = "", 
+--		name = L(SI_CSPM_UI_PRESET_SELECT_MENU_NAME), 
+		tooltip = L(SI_CSPM_UI_PRESET_SELECT_MENU_TIPS), 
+		choices = ui.presetChoices, 	-- If choicesValue is defined, choices table is only used for UI display!
+		choicesValues = ui.presetChoicesValues, 
+		choicesTooltips = ui.presetChoicesTooltips, 
+		getFunc = function() return uiPresetId end, 
+		setFunc = OnPresetIdSelectionChanged, 
+--		sort = "name-up", --or "name-down", "numeric-up", "numeric-down", "value-up", "value-down", "numericvalue-up", "numericvalue-down" 
+		width = "full", 
+		scrollable = true, 
+		default = 1, 
+	}
+	CSPM_UI_PresetSelectMenu = LAMCreateControl.dropdown(ui.panel, dropdownPresetSelectMenu)
+	CSPM_UI_PresetSelectMenu.combobox:SetWidth(300)	-- default : panelWidth(585) / 3
+	CSPM_UI_PresetSelectMenu:SetAnchor(BOTTOMRIGHT, CSPM_UI_PresetSubmenu, TOPRIGHT, -112, -4)
+
 	ChangePanelPresetState(1)
 	ui.panelInitialized = true
 end
 
 function CSPM:InitializeMenuEditorUI()
 	ui.panelInitialized = false
+	ui.presetChoices, ui.presetChoicesValues, ui.presetChoicesTooltips = RebuildPresetSelectionChoices()
+	CALLBACK_MANAGER:RegisterCallback("CSPM-UserPresetInfoUpdated", RefreshPanelDueToPresetInfoChange)
+
 	ui.slotDisplayName = {}
 	ui.slotChoices, ui.slotChoicesValues = RebuildSlotSelectionChoices(CSPM_MENU_ITEMS_COUNT_DEFAULT)
 
@@ -519,7 +619,7 @@ function CSPM:CreateMenuEditorPanel()
 	local panelData = {
 		type = "panel", 
 		name = "Shortcut PieMenu", 
-		displayName = "Calamath's Shortcut Pie Menu", 
+		displayName = "Calamath's Shortcut Pie Menu (Editor)", 
 		author = CSPM.author, 
 		version = CSPM.version, 
 		website = "https://www.esoui.com/downloads/info3088-CalamathsShortcutPieMenu.html", 
@@ -595,20 +695,28 @@ function CSPM:CreateMenuEditorPanel()
 	}
 
 	local optionsData = {}
+--[[
+	optionsData[#optionsData + 1] = {
+		type = "divider", 
+		width = "full", 
+		height = 10, 
+		alpha = 0.5, 
+	}
+]]
 	optionsData[#optionsData + 1] = {
 		type = "description", 
 		title = "", 
-		text = L(SI_CSPM_UI_PANEL_HEADER1_TEXT), 
+		text = L(SI_CSPM_UI_PANEL_HEADER2_TEXT), 
 	}
 	optionsData[#optionsData + 1] = {
 		type = "submenu",
-		name = "Preset " .. uiPresetId .. " : ", 
+		name = ui.presetChoices[uiPresetId], 
 --		icon = "path/to/my/icon.dds", -- or function returning a string (optional)
 --		iconTextureCoords = {left, right, top, bottom}, -- or function returning a table (optional)
 		tooltip = "Adjust the visual design of the pie menu. (optional)", 
 --		disabled = function() return db.someBooleanSetting end, -- or boolean (optional)
 --		disabledLabel = function() return db.someBooleanSetting end, -- or boolean (optional)
---		reference = "MyAddonSubmenu" ,
+		reference = "CSPM_UI_PresetSubmenu" ,
 		controls = submenuPieVisual, 
 	}
 	optionsData[#optionsData + 1] = {
@@ -647,7 +755,7 @@ function CSPM:CreateMenuEditorPanel()
 	}
 	optionsData[#optionsData + 1] = {
 		type = "header", 
-		name = "Slot " .. uiSlotId .. " :", 
+		name = ui.slotChoices[uiSlotId], 
 		reference = "CSPM_UI_TabHeader", 
 	}
 	optionsData[#optionsData + 1] = {
@@ -770,4 +878,10 @@ function CSPM:CreateMenuEditorPanel()
 ]]
 	LAM:RegisterOptionControls("CSPM_OptionsMenuEditor", optionsData)
 	CALLBACK_MANAGER:RegisterCallback("LAM-PanelControlsCreated", OnLAMPanelControlsCreated)
+end
+
+function CSPM:OpenMenuEditorPanel()
+	if self.panelMenuEditor then
+		LAM:OpenToPanel(self.panelMenuEditor)
+	end
 end

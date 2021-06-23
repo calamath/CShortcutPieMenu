@@ -1,3 +1,7 @@
+V0.7.0: [V700] by Calamath
+- Improved add-on framework to create, configure and manage multiple pie menu presets.
+- Implemented the Pie Menu Manager UI to configure which pie menu is invoked for UI event triggers.
+
 V0.6.0: [V600] by Calamath
 - Brushed up the Pie Menu Editor UI.
 
