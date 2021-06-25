@@ -1,3 +1,6 @@
+V0.7.1: [V701] by Calamath
+- Added a new setting option to override the preset name and its note. This will allow you to decide the acutual display name as needed.
+
 V0.7.0: [V700] by Calamath
 - Improved add-on framework to create, configure and manage multiple pie menu presets.
 - Implemented the Pie Menu Manager UI to configure which pie menu is invoked for UI event triggers.

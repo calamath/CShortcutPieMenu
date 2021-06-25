@@ -494,6 +494,7 @@ local function OnLAMPanelControlsCreated(panel)
 	}
 	CSPM_UI_PresetSelectMenu = LAMCreateControl.dropdown(ui.panel, dropdownPresetSelectMenu)
 	CSPM_UI_PresetSelectMenu.combobox:SetWidth(300)	-- default : panelWidth(585) / 3
+	CSPM_UI_PresetSelectMenu:SetAnchor(BOTTOMLEFT, CSPM_UI_PresetSubmenu, TOPLEFT)
 	CSPM_UI_PresetSelectMenu:SetAnchor(BOTTOMRIGHT, CSPM_UI_PresetSubmenu, TOPRIGHT, -112, -4)
 
 	ChangePanelPresetState(1)
@@ -632,6 +633,40 @@ function CSPM:CreateMenuEditorPanel()
 	self.panelMenuEditor = ui.panel
 
 	local submenuPieVisual = {}
+	submenuPieVisual[#submenuPieVisual + 1] = {
+		type = "editbox", 
+		name = "Preset Name Override", 
+		tooltip = "Adjust the name of this preset. (optional)", 
+		getFunc = function() return CSPM.db.preset[uiPresetId].name end, 
+		setFunc = function(newPresetName)
+			CSPM.db.preset[uiPresetId].name = newPresetName
+			CSPM:UpdateUserPresetInfo(uiPresetId)
+		end, 
+		isMultiline = false, 
+		isExtraWide = false, 
+--		maxChars = 3000, 
+--		textType = TEXT_TYPE_NUMERIC, -- number (optional) or function returning a number. Valid TextType numbers: TEXT_TYPE_ALL, TEXT_TYPE_ALPHABETIC, TEXT_TYPE_ALPHABETIC_NO_FULLWIDTH_LATIN, TEXT_TYPE_NUMERIC, TEXT_TYPE_NUMERIC_UNSIGNED_INT, TEXT_TYPE_PASSWORD
+		width = "full", 
+--		disabled = true, 
+		default = "", 
+	}
+	submenuPieVisual[#submenuPieVisual + 1] = {
+		type = "editbox", 
+		name = "Preset Note", 
+		tooltip = "Adjust the notes about this preset. (optional)", 
+		getFunc = function() return CSPM.db.preset[uiPresetId].tooltip or "" end, 
+		setFunc = function(newPresetNote)
+			CSPM.db.preset[uiPresetId].tooltip = newPresetNote
+			CSPM:UpdateUserPresetInfo(uiPresetId)
+		end, 
+		isMultiline = false, 
+		isExtraWide = false, 
+--		maxChars = 3000, 
+--		textType = TEXT_TYPE_NUMERIC, -- number (optional) or function returning a number. Valid TextType numbers: TEXT_TYPE_ALL, TEXT_TYPE_ALPHABETIC, TEXT_TYPE_ALPHABETIC_NO_FULLWIDTH_LATIN, TEXT_TYPE_NUMERIC, TEXT_TYPE_NUMERIC_UNSIGNED_INT, TEXT_TYPE_PASSWORD
+		width = "full", 
+--		disabled = true, 
+		default = "", 
+	}
 	submenuPieVisual[#submenuPieVisual + 1] = {
 		type = "header", 
 		name = "Visual Design Options", 
