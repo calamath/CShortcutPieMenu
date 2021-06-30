@@ -1,3 +1,7 @@
+V0.7.2: [V702] by Calamath
+- Added a new setting option to allow you to activate the pie menu in UI mode.
+- Addressed an issue where newly unlocked collectibles were not being properly added to the drop-down menu choices in the Pie Menu Editor until next UI reload.
+
 V0.7.1: [V701] by Calamath
 - Added a new setting option to override the preset name and its note. This will allow you to decide the acutual display name as needed.
 

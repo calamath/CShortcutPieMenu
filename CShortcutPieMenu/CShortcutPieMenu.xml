@@ -59,8 +59,8 @@
 					<Anchor point="TOPRIGHT" relativeTo="$(parent)Icon" relativePoint="TOPLEFT" offsetX="4" offsetY="-8"/>
 				</Label>
 
-				<Label name="$(parent)CountText" tier="HIGH" font="ZoFontGameShadow" inheritScale="false">
-					<Anchor point="BOTTOMRIGHT" offsetX="-4"/>
+				<Label name="$(parent)CountText" tier="HIGH" font="ZoFontGameShadow" horizontalAlignment="RIGHT" inheritScale="true">
+					<Anchor point="BOTTOMRIGHT" relativeTo="$(parent)Icon" relativePoint="BOTTOMRIGHT" offsetX="4" offsetY="6"/>
 				</Label>
 
 				<Texture name="$(parent)Glow" tier ="LOW" textureFile="EsoUI/Art/Quickslots/quickslot_highlight_blob.dds" alpha="0">
@@ -79,7 +79,7 @@
 		</Control>
 
 		<!-- CSPM Radical Menu : Root Menu -->
-		<TopLevelControl name="CSPM_UI_Root_Pie">
+		<TopLevelControl name="CSPM_UI_Root_Pie" allowBringToTop="true">
 			<AnchorFill/>
 			<Controls>
 				<Control name="$(parent)Menu" inherits="CSPM_RadialMenuTemplate" hidden="true" />

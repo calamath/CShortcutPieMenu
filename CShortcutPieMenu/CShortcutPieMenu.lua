@@ -17,7 +17,7 @@ CShortcutPieMenu = CShortcutPieMenu or {}
 
 local CSPM = CShortcutPieMenu
 CSPM.name = "CShortcutPieMenu"
-CSPM.version = "0.7.1"
+CSPM.version = "0.7.2"
 CSPM.author = "Calamath"
 CSPM.savedVarsPieMenuEditor = "CShortcutPieMenuDB"
 CSPM.savedVarsPieMenuManager = "CShortcutPieMenuSV"
@@ -188,6 +188,7 @@ local CSPM_DB_DEFAULT = {
 -- CShortcutPieMenu PieMenuManager Config
 local CSPM_SV_DEFAULT = {
 	accountWide = true, 
+	allowActivateInUIMode = false, 
 	keybinds = {
 		[1] = 1, 	-- Primary Action
 		[2] = 0, 	-- Secondary Action
@@ -280,6 +281,22 @@ function CSPM_PieMenuController:Initialize(control, entryTemplate, animationTemp
 	self.menu.presetLabel = self.menuControl:GetNamedChild("PresetName")
 	self.menu.trackQuickslot = self.menuControl:GetNamedChild("TrackQuickslot")
 	self.menu.trackGamepad = self.menuControl:GetNamedChild("TrackGamepad")
+
+	self.isTopmost = false
+	self.allowActivateInUIMode = false
+end
+
+function CSPM_PieMenuController:IsTopmost()
+	return self.isTopmost
+end
+
+function CSPM_PieMenuController:SetTopmost(isTopmost)
+	self.isTopmost = isTopmost
+	self.menuControl:GetParent():SetTopmost(isTopmost)
+end
+
+function CSPM_PieMenuController:SetAllowActivateInUIMode(allowActivateInUIMode)
+	self.allowActivateInUIMode = allowActivateInUIMode
 end
 
 function CSPM_PieMenuController:SetupPieMenuVisual(presetName, showPresetName, showQuickslotRadialTrack, showGamepadRadialTrack)
@@ -306,8 +323,14 @@ end
 -- Overridden from base class
 function CSPM_PieMenuController:PrepareForInteraction()
 	CSPM.LDL:Debug("PrepareForInteraction()")
+	local currentScene = SCENE_MANAGER:GetCurrentScene()
+    if not currentScene or currentScene:IsRemoteScene() then
+		return false
+	end
     if not SCENE_MANAGER:IsInUIMode() then
 	    return true
+	elseif self.allowActivateInUIMode then
+		return true
 	end
     return false
 end
@@ -320,12 +343,18 @@ function CSPM_PieMenuController:SetupEntryControl(entryControl, data)
 	local slotLabelText
 	local statusLabelText = data.statusLabelText or ""
 	
+	if data.itemCount then
+		itemCount = data.itemCount
+	else
+		itemCount = nil
+	end
+
 	if data.showSlotLabel then
 		slotLabelText = data.slotLabelText
 	else
 		slotLabelText = ""
 	end
-	
+
 	-- function CSPM_SetupSelectableItemRadialMenuEntryTemplate(template, selected, itemCount, showIconFrame, slotLabelText, statusLabelText)
 	CSPM_SetupSelectableItemRadialMenuEntryTemplate(entryControl, selected, itemCount, data.showIconFrame, slotLabelText, statusLabelText)
 end
@@ -483,12 +512,15 @@ end
 function CSPM:StartInteraction(presetId)
 	CSPM.LDL:Debug("StartInteraction(%s)", tostring(presetId))
 	if presetId ~= 0 then
-		local ret = self.rootMenu:StartInteraction()
-		CSPM.LDL:Debug("StartInteraction result : ", tostring(ret))
-		if ret then
+		local result
+		self.rootMenu:SetAllowActivateInUIMode(self.svCurrent.allowActivateInUIMode)
+		result = self.rootMenu:StartInteraction()
+		CSPM.LDL:Debug("StartInteraction result : ", tostring(result))
+		if result then
+			self.rootMenu:SetTopmost(true)
 			self.activePresetId = presetId
 		end
-		return ret
+		return result
 	end
 end
 
@@ -502,24 +534,34 @@ end
 
 function CSPM:StopInteraction()
 --	CSPM.LDL:Debug("StopInteraction()")
-	local ret = self.rootMenu:StopInteraction()
-	CSPM.LDL:Debug("StopInteraction result : ", tostring(ret))
+	local result
+	result = self.rootMenu:StopInteraction()
+	CSPM.LDL:Debug("StopInteraction result : ", tostring(result))
+	self.rootMenu:SetTopmost(false)
 	self.activeKeybindsId = 0
-	return ret
+	return result
 end
 
 function CSPM:ValidateConfigDataDB()
 	for k, v in pairs(self.db.preset) do
-		if v.id == nil							then v.id = k 														end
-		if v.name == nil						then v.name = ""													end
-		if v.menuItemsCount == nil				then v.menuItemsCount = CSPM_MENU_ITEMS_COUNT_DEFAULT				end
-		if v.visual == nil						then v.visual = {}													end
-		if v.visual.showIconFrame == nil		then v.visual.showIconFrame			= CSPM_DB_DEFAULT.preset[1].visual.showIconFrame		end
-		if v.visual.showSlotLabel == nil		then v.visual.showSlotLabel			= CSPM_DB_DEFAULT.preset[1].visual.showSlotLabel		end
-		if v.visual.showPresetName == nil		then v.visual.showPresetName		= CSPM_DB_DEFAULT.preset[1].visual.showPresetName		end
-		if v.visual.showTrackQuickslot == nil	then v.visual.showTrackQuickslot	= CSPM_DB_DEFAULT.preset[1].visual.showTrackQuickslot	end
-		if v.visual.showTrackGamepad == nil		then v.visual.showTrackGamepad		= CSPM_DB_DEFAULT.preset[1].visual.showTrackGamepad		end
-		if v.slot == nil						then v.slot = ZO_ShallowTableCopy(CSPM_DB_DEFAULT.prest[1].slot)	end
+		if v.id == nil								then v.id = k 														end
+		if v.name == nil							then v.name = ""													end
+		if v.menuItemsCount == nil					then v.menuItemsCount = CSPM_MENU_ITEMS_COUNT_DEFAULT				end
+		if v.visual == nil							then v.visual = {}													end
+		if v.visual.showIconFrame == nil			then v.visual.showIconFrame			= CSPM_DB_DEFAULT.preset[1].visual.showIconFrame			end
+		if v.visual.showSlotLabel == nil			then v.visual.showSlotLabel			= CSPM_DB_DEFAULT.preset[1].visual.showSlotLabel			end
+		if v.visual.showPresetName == nil			then v.visual.showPresetName		= CSPM_DB_DEFAULT.preset[1].visual.showPresetName			end
+		if v.visual.showTrackQuickslot == nil		then v.visual.showTrackQuickslot	= CSPM_DB_DEFAULT.preset[1].visual.showTrackQuickslot		end
+		if v.visual.showTrackGamepad == nil			then v.visual.showTrackGamepad		= CSPM_DB_DEFAULT.preset[1].visual.showTrackGamepad			end
+		if v.slot == nil							then v.slot = ZO_ShallowTableCopy(CSPM_DB_DEFAULT.prest[1].slot)	end
+	end
+end
+
+function CSPM:ValidateConfigDataSV(sv)
+	if sv.accountWide == nil						then sv.accountWide					= CSPM_SV_DEFAULT.accountWide 								end
+	if sv.allowActivateInUIMode == nil				then sv.allowActivateInUIMode		= CSPM_SV_DEFAULT.allowActivateInUIMode 					end
+	for i = 1, #CSPM_SV_DEFAULT.keybinds do
+		if sv.keybinds[i] == nil					then sv.keybinds[i]					= CSPM_SV_DEFAULT.keybinds[i]								end
 	end
 end
 
@@ -566,10 +608,12 @@ function CSPM:Initialize()
 	-- Pie Menu Manager Config (Preset Allocation)
 	self.svCurrent = {}
 	self.svAccount = ZO_SavedVars:NewAccountWide(self.savedVarsPieMenuManager, 1, nil, CSPM_SV_DEFAULT, GetWorldName())
+	self:ValidateConfigDataSV(self.svAccount)
 	if self.svAccount.accountWide then
 		self.svCurrent = self.svAccount
 	else
 		self.svCharacter = ZO_SavedVars:NewCharacterIdSettings(self.savedVarsPieMenuManager, 1, nil, CSPM_SV_DEFAULT, GetWorldName())
+		self:ValidateConfigDataSV(self.svCharacter)
 		self.svCurrent = self.svCharacter
 	end
 

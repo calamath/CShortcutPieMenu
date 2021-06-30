@@ -501,6 +501,37 @@ local function OnLAMPanelControlsCreated(panel)
 	ui.panelInitialized = true
 end
 
+local function CollectibleDataManager_OnCollectionUpdated(collectionUpdateType, collectiblesByNewUnlockState)
+	if collectionUpdateType ~= ZO_COLLECTION_UPDATE_TYPE.UNLOCK_STATE_CHANGES then return end
+	if collectiblesByNewUnlockState[COLLECTIBLE_UNLOCK_STATE_UNLOCKED_OWNED] then
+		CSPM.LDL:Debug("COLLECTIBLE_DATA_MANAGER-OnCollectionUpdated (UnlockStateChanges)")
+		local needToRebuild = {}
+		for index, collectibleData in pairs(collectiblesByNewUnlockState[COLLECTIBLE_UNLOCK_STATE_UNLOCKED_OWNED]) do
+--			CSPM.LDL:Debug("[%s] : id=%s", tostring(index), tostring(collectibleData:GetId()))
+			needToRebuild[collectibleData:GetCategoryType()] = true
+		end
+		-- update collectible choices if needed
+		for cspmCollectibleCategory, zosCollectibleCategory in pairs(CSPM_LUT_CATEGORY_C_CSPM_TO_ZOS) do
+			if needToRebuild[zosCollectibleCategory] then
+				ui.actionValueChoices[cspmCollectibleCategory], ui.actionValueChoicesValues[cspmCollectibleCategory], ui.actionValueChoicesTooltips[cspmCollectibleCategory] = RebuildCollectibleSelectionChoicesByCategoryType(zosCollectibleCategory, true)
+			end
+		end
+		-- update emote choices if needed
+		if needToRebuild[COLLECTIBLE_CATEGORY_TYPE_EMOTE] then
+			ui.actionValueChoices[CSPM_CATEGORY_E_COLLECTED], ui.actionValueChoicesValues[CSPM_CATEGORY_E_COLLECTED], ui.actionValueChoicesTooltips[CSPM_CATEGORY_E_COLLECTED] = RebuildEmoteSelectionChoicesByEmoteCategory(EMOTE_CATEGORY_COLLECTED) 
+		end
+		-- update player house choices if needed
+		if needToRebuild[COLLECTIBLE_CATEGORY_TYPE_HOUSE] then
+			ui.actionValueChoices[CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE], ui.actionValueChoicesValues[CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE], ui.actionValueChoicesTooltips[CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE] = RebuildHouseSelectionChoices(true)
+			ui.actionValueChoices[CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE], ui.actionValueChoicesValues[CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE], ui.actionValueChoicesTooltips[CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE] = RebuildHouseSelectionChoices(true)
+		end
+		-- update MenuEditorUI panel
+		if ui.panelInitialized then
+			ChangePanelSlotState(uiSlotId)
+		end
+	end
+end
+
 function CSPM:InitializeMenuEditorUI()
 	ui.panelInitialized = false
 	ui.presetChoices, ui.presetChoicesValues, ui.presetChoicesTooltips = RebuildPresetSelectionChoices()
@@ -614,6 +645,7 @@ function CSPM:InitializeMenuEditorUI()
 	end
 	ui.actionValueChoices[CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE], ui.actionValueChoicesValues[CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE], ui.actionValueChoicesTooltips[CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE] = RebuildHouseSelectionChoices(true)
 	ui.actionValueChoices[CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE], ui.actionValueChoicesValues[CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE], ui.actionValueChoicesTooltips[CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE] = RebuildHouseSelectionChoices(true)
+	ZO_COLLECTIBLE_DATA_MANAGER:RegisterCallback("OnCollectionUpdated", CollectibleDataManager_OnCollectionUpdated)
 end
 
 function CSPM:CreateMenuEditorPanel()

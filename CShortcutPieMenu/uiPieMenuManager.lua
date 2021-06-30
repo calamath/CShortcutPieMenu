@@ -193,7 +193,7 @@ function CSPM:CreateManagerPanel()
 	optionsData[#optionsData + 1] = {
 		type = "header", 
 		name = "Key Bindings and Presets", 
-		tooltip = "For each shortcut key, you can assign your favorite pie menu. Of course, you need to configure addon keybinds in the CONTROLS settings.", 
+		helpUrl = "For each shortcut key, you can assign your favorite pie menu. Of course, you need to configure addon keybinds in the CONTROLS settings.", 
 	}
 	optionsData[#optionsData + 1] = {
 		type = "dropdown", 
@@ -270,6 +270,21 @@ function CSPM:CreateManagerPanel()
 		default = 0, 
 		reference = "CSPM_UI_MAN_PresetSelectMenuKeybinds5", 
 	}
+	optionsData[#optionsData + 1] = {
+		type = "header", 
+		name = "Behavior Options (Advanced)", 
+		helpUrl = "These are optional settings that normally do not need to be changed, such as prototype features that are still under development. Option settings that are being tweaked will be marked as beta, and positive feedback on future tweaks will be welcomed. (For advanced users)", 
+	}
+	optionsData[#optionsData + 1] = {
+		type = "checkbox",
+		name = "Activate Pie Menu in UI mode (beta)", 
+		getFunc = function() return CSPM.svCurrent.allowActivateInUIMode end, 
+		setFunc = function(newValue) CSPM.svCurrent.allowActivateInUIMode = newValue end, 
+		tooltip = "Allow you to activate the user customizable pie menu in most UI mode (cursor mode) scenes.", 
+		width = "full", 
+		default = false, 
+	}
+
 --[[
 	optionsData[#optionsData + 1] = {
 		type = "button", 
