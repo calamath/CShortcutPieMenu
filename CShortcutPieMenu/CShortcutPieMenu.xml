@@ -1,34 +1,41 @@
 <GuiXml>
 	<Controls>
 		<!-- CSPM Radical Menu Base Template -->
+		<!-- NOTE : This template is based on ZO_RadialMenuBaseTemplate by ZOS, with its own size adjustments for the UI design of the CShortcutPieMenu add-on. -->
 		<Control name="CSPM_RadialMenuBaseTemplate" hidden="true" virtual="true">
 			<Dimensions x="350" y="350" />
 			<Anchor point="CENTER" relativeTo="GuiRoot"/>
 
 			<Controls>
-				<Texture name="$(parent)SelectedBackground" textureFile="EsoUI/Art/HUD/radialMenu_bg.dds">
+				<Texture name="$(parent)SelectedBackground" layer="DL_BACKGROUND" level="4" textureFile="EsoUI/Art/HUD/radialMenu_bg.dds">
 					<Dimensions x="575" y="575" />
 					<Anchor point="CENTER" />
 				</Texture>
 
-				<Texture name="$(parent)UnselectedBackground" textureFile="EsoUI/Art/HUD/radialMenu_bg_unselected.dds" hidden="true">
+				<Texture name="$(parent)UnselectedBackground"  layer="DL_BACKGROUND" level="3" textureFile="EsoUI/Art/HUD/radialMenu_bg_unselected.dds" hidden="true">
 					<Dimensions x="575" y="575" />
 					<Anchor point="CENTER" />
 				</Texture>
 
-				<Texture name="$(parent)TrackQuickslot" textureFile="EsoUI/Art/Quickslots/quickslot_mapping_bg.dds" alpha="0" hidden="false">
+				<Texture name="$(parent)TrackQuickslot" layer="DL_BACKGROUND" level="2" textureFile="EsoUI/Art/Quickslots/quickslot_mapping_bg.dds" alpha="0" hidden="false">
 					<Dimensions x="575" y="575" />
 					<Anchor point="CENTER" />
 				</Texture>
 
-				<Texture name="$(parent)TrackGamepad" textureFile="EsoUI/Art/HUD/Gamepad/gp_radialMenu_track.dds" alpha="0" hidden="false">
+				<Texture name="$(parent)TrackGamepad" layer="DL_BACKGROUND" level="2" textureFile="EsoUI/Art/HUD/Gamepad/gp_radialMenu_track.dds" alpha="0" hidden="false">
 					<Dimensions x="700" y="700" />
 					<Anchor point="CENTER" />
+				</Texture>
+
+				<Texture name="$(parent)Underlay" color="010101" layer="DL_BACKGROUND" level="0" alpha="0.75" excludeFromResizeToFitExtents="true" inheritScale="false" mouseEnabled="true" hidden="true">
+					<Anchor point="TOPLEFT" relativeTo="GuiRoot"/>
+					<Anchor point="BOTTOMRIGHT" relativeTo="GuiRoot"/>
 				</Texture>
 			</Controls>
 		</Control>
 
 		<!-- CSPM Radical Menu Template -->
+		<!-- NOTE : This template is based on ZO_RadialMenuTemplate by ZOS, with its own extensions and size adjustment to fit the UI design of the CShortcutPieMenu add-on. -->
 		<Control name="CSPM_RadialMenuTemplate" inherits="CSPM_RadialMenuBaseTemplate" hidden="true" virtual="true">
 			<Controls>
 				<Label name="$(parent)Action" font="ZoFontHeader3" horizontalAlignment="CENTER" verticalAlignment="CENTER" inheritScale="false">
@@ -37,13 +44,14 @@
 				</Label>
 
 				<Label name="$(parent)PresetName" font="ZoFontHeader4" horizontalAlignment="CENTER" verticalAlignment="CENTER" pixelRoundingEnabled="true" inheritScale="false">
-					<Dimensions x="500" y="50" />
+					<Dimensions x="600" y="70" />
 					<Anchor point="TOP" relativePoint="BOTTOM" offsetY="75"/>
 				</Label>
 			</Controls>
 		</Control>
 
 		<!-- CSPM Radical Menu Entry Template -->
+		<!-- NOTE : This template is based on ZO_SelectableItemRadialMenuEntryTemplate by ZOS, with its own extensions and size adjustment to fit the UI design of the CShortcutPieMenu add-on. -->
 		<Control name="CSPM_SelectableItemRadialMenuEntryTemplate" scale=".75" virtual="true">
 			<Dimensions x="64" y="64"/>
 			<OnInitialized>

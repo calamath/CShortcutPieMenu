@@ -1,3 +1,9 @@
+V0.7.3: [V703] by Calamath
+- Some adjustments to the UI design template.
+- Clarified the source of the code that can be said to be modified based on the ESOUI code.
+- Improved stability in UI mode.
+- Improved the settings menu in the UI so that you can select your favorite personality from the pie menu.
+
 V0.7.2: [V702] by Calamath
 - Added a new setting option to allow you to activate the pie menu in UI mode.
 - Addressed an issue where newly unlocked collectibles were not being properly added to the drop-down menu choices in the Pie Menu Editor until next UI reload.

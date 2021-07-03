@@ -17,7 +17,7 @@ CShortcutPieMenu = CShortcutPieMenu or {}
 
 local CSPM = CShortcutPieMenu
 CSPM.name = "CShortcutPieMenu"
-CSPM.version = "0.7.2"
+CSPM.version = "0.7.3"
 CSPM.author = "Calamath"
 CSPM.savedVarsPieMenuEditor = "CShortcutPieMenuDB"
 CSPM.savedVarsPieMenuManager = "CShortcutPieMenuSV"
@@ -41,6 +41,7 @@ CSPM.const = {
 	CSPM_CATEGORY_C_MEMENTO						= 13, 
 	CSPM_CATEGORY_C_VANITY_PET					= 14, 
 	CSPM_CATEGORY_C_MOUNT						= 15, 
+	CSPM_CATEGORY_C_PERSONALITY					= 16, 
 	CSPM_CATEGORY_E_CEREMONIAL					= 31, 
 	CSPM_CATEGORY_E_CHEERS_AND_JEERS			= 32, 
 	CSPM_CATEGORY_E_EMOTION						= 33, 
@@ -72,6 +73,7 @@ local CSPM_CATEGORY_C_COMPANION					= CSPM.const.CSPM_CATEGORY_C_COMPANION
 local CSPM_CATEGORY_C_MEMENTO					= CSPM.const.CSPM_CATEGORY_C_MEMENTO
 local CSPM_CATEGORY_C_VANITY_PET				= CSPM.const.CSPM_CATEGORY_C_VANITY_PET
 local CSPM_CATEGORY_C_MOUNT						= CSPM.const.CSPM_CATEGORY_C_MOUNT
+local CSPM_CATEGORY_C_PERSONALITY				= CSPM.const.CSPM_CATEGORY_C_PERSONALITY
 local CSPM_CATEGORY_E_CEREMONIAL				= CSPM.const.CSPM_CATEGORY_E_CEREMONIAL
 local CSPM_CATEGORY_E_CHEERS_AND_JEERS			= CSPM.const.CSPM_CATEGORY_E_CHEERS_AND_JEERS
 local CSPM_CATEGORY_E_EMOTION					= CSPM.const.CSPM_CATEGORY_E_EMOTION
@@ -101,6 +103,7 @@ CSPM.lut = {
 		[CSPM_CATEGORY_C_MEMENTO]				= COLLECTIBLE_CATEGORY_TYPE_MEMENTO, 
 		[CSPM_CATEGORY_C_VANITY_PET]			= COLLECTIBLE_CATEGORY_TYPE_VANITY_PET, 
 		[CSPM_CATEGORY_C_MOUNT]					= COLLECTIBLE_CATEGORY_TYPE_MOUNT, 
+		[CSPM_CATEGORY_C_PERSONALITY]			= COLLECTIBLE_CATEGORY_TYPE_PERSONALITY, 
 	}, 
 	CSPM_LUT_CATEGORY_E_CSPM_TO_ZOS = {
 		[CSPM_CATEGORY_E_CEREMONIAL]			= EMOTE_CATEGORY_CEREMONIAL, 
@@ -213,6 +216,7 @@ if not LAM then d("[CSPM] Error : 'LibAddonMenu-2.0' not found.") return end
 -- ------------------------------------------------
 
 -- Template
+-- NOTE : This template is based on ZO_SelectableItemRadialMenuEntryTemplate by ZOS, with its own extensions and size adjustment to fit the UI design of the CShortcutPieMenu add-on.
 function CSPM_SelectableItemRadialMenuEntryTemplate_OnInitialized(self)
 	self.glow = self:GetNamedChild("Glow")
 	self.icon = self:GetNamedChild("Icon")
@@ -221,6 +225,7 @@ function CSPM_SelectableItemRadialMenuEntryTemplate_OnInitialized(self)
 
 	self.frame = self:GetNamedChild("Frame")
 	self.label = self:GetNamedChild("Label")
+	self.label:SetDimensionConstraints(0, 0, 360, 64)
 	self.status = self:GetNamedChild("StatusText")
 end
 
@@ -270,6 +275,13 @@ end
 
 -- ------------------------------------------------
 -- Class
+
+-- NOTE : Since this add-on emphasizes interface consistency with the QuickSlot system and Fishing Manager, 
+--        the pie menu control class inherits from ZOS's ZO_InteractiveRadialMenuController class.
+--        However, there are some methods that are overridden for functional extensions and differences, 
+--        and some of them may contain some of the original code of ZO_InteractiveRadialMenuController by ZOS.
+--
+local TIME_TO_HOLD_KEY_MS = 250
 local CSPM_PieMenuController = ZO_InteractiveRadialMenuController:Subclass()
 
 function CSPM_PieMenuController:New(...)
@@ -281,6 +293,7 @@ function CSPM_PieMenuController:Initialize(control, entryTemplate, animationTemp
 	self.menu.presetLabel = self.menuControl:GetNamedChild("PresetName")
 	self.menu.trackQuickslot = self.menuControl:GetNamedChild("TrackQuickslot")
 	self.menu.trackGamepad = self.menuControl:GetNamedChild("TrackGamepad")
+	self.menu.underlay = self.menuControl:GetNamedChild("Underlay")
 
 	self.isTopmost = false
 	self.allowActivateInUIMode = false
@@ -293,6 +306,18 @@ end
 function CSPM_PieMenuController:SetTopmost(isTopmost)
 	self.isTopmost = isTopmost
 	self.menuControl:GetParent():SetTopmost(isTopmost)
+end
+
+function CSPM_PieMenuController:ShowUnderlay()
+	if self.menu.underlay then
+		self.menu.underlay:SetHidden(false)
+	end
+end
+
+function CSPM_PieMenuController:HideUnderlay()
+	if self.menu.underlay then
+		self.menu.underlay:SetHidden(true)
+	end
 end
 
 function CSPM_PieMenuController:SetAllowActivateInUIMode(allowActivateInUIMode)
@@ -321,18 +346,25 @@ function CSPM_PieMenuController:SetupPieMenuVisual(presetName, showPresetName, s
 end
 
 -- Overridden from base class
+function CSPM_PieMenuController:OnUpdate()
+    if self.beginHold and GetFrameTimeMilliseconds() >= self.beginHold + TIME_TO_HOLD_KEY_MS then
+        self.beginHold = nil
+        if not self.isInteracting then
+            self:ShowMenu()
+        end
+    end
+end
+
 function CSPM_PieMenuController:PrepareForInteraction()
 	CSPM.LDL:Debug("PrepareForInteraction()")
 	local currentScene = SCENE_MANAGER:GetCurrentScene()
     if not currentScene or currentScene:IsRemoteScene() then
 		return false
 	end
-    if not SCENE_MANAGER:IsInUIMode() then
-	    return true
-	elseif self.allowActivateInUIMode then
-		return true
+    if IsGameCameraActive() and IsGameCameraUIModeActive() and not self.allowActivateInUIMode then
+		return false
 	end
-    return false
+    return true
 end
 
 function CSPM_PieMenuController:SetupEntryControl(entryControl, data)
@@ -517,6 +549,9 @@ function CSPM:StartInteraction(presetId)
 		result = self.rootMenu:StartInteraction()
 		CSPM.LDL:Debug("StartInteraction result : ", tostring(result))
 		if result then
+			if IsGameCameraActive() and IsGameCameraUIModeActive() or IsInteracting() then
+				self.rootMenu:ShowUnderlay()
+			end
 			self.rootMenu:SetTopmost(true)
 			self.activePresetId = presetId
 		end
@@ -537,6 +572,7 @@ function CSPM:StopInteraction()
 	local result
 	result = self.rootMenu:StopInteraction()
 	CSPM.LDL:Debug("StopInteraction result : ", tostring(result))
+	self.rootMenu:HideUnderlay()
 	self.rootMenu:SetTopmost(false)
 	self.activeKeybindsId = 0
 	return result
