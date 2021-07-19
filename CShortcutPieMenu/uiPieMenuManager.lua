@@ -14,7 +14,9 @@
 
 -- CShortcutPieMenu local definitions
 local CSPM = CShortcutPieMenu
+local L = GetString
 
+-- ---------------------------------------------------------------------------------------
 -- Aliases of constants
 local CSPM_MAX_USER_PRESET						= CSPM.const.CSPM_MAX_USER_PRESET
 local CSPM_MENU_ITEMS_COUNT_DEFAULT				= CSPM.const.CSPM_MENU_ITEMS_COUNT_DEFAULT
@@ -23,6 +25,7 @@ local CSPM_ACTION_TYPE_COLLECTIBLE				= CSPM.const.CSPM_ACTION_TYPE_COLLECTIBLE
 local CSPM_ACTION_TYPE_EMOTE					= CSPM.const.CSPM_ACTION_TYPE_EMOTE
 local CSPM_ACTION_TYPE_CHAT_COMMAND				= CSPM.const.CSPM_ACTION_TYPE_CHAT_COMMAND
 local CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE			= CSPM.const.CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE
+local CSPM_ACTION_TYPE_PIE_MENU					= CSPM.const.CSPM_ACTION_TYPE_PIE_MENU
 local CSPM_CATEGORY_NOTHING						= CSPM.const.CSPM_CATEGORY_NOTHING
 local CSPM_CATEGORY_IMMEDIATE_VALUE				= CSPM.const.CSPM_CATEGORY_IMMEDIATE_VALUE
 local CSPM_CATEGORY_C_ASSISTANT					= CSPM.const.CSPM_CATEGORY_C_ASSISTANT
@@ -44,28 +47,22 @@ local CSPM_CATEGORY_E_SOCIAL					= CSPM.const.CSPM_CATEGORY_E_SOCIAL
 local CSPM_CATEGORY_E_COLLECTED					= CSPM.const.CSPM_CATEGORY_E_COLLECTED
 local CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE		= CSPM.const.CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE
 local CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE	= CSPM.const.CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE
+local CSPM_CATEGORY_P_OPEN_USER_PIE_MENU		= CSPM.const.CSPM_CATEGORY_P_OPEN_USER_PIE_MENU
 local CSPM_ACTION_VALUE_PRIMARY_HOUSE_ID		= CSPM.const.CSPM_ACTION_VALUE_PRIMARY_HOUSE_ID
 
 local CSPM_SLOT_DATA_DEFAULT 					= CSPM.const.CSPM_SLOT_DATA_DEFAULT
 
+-- ---------------------------------------------------------------------------------------
 -- Aliases of look up table
 local CSPM_LUT_CATEGORY_C_CSPM_TO_ZOS			= CSPM.lut.CSPM_LUT_CATEGORY_C_CSPM_TO_ZOS
 local CSPM_LUT_CATEGORY_E_CSPM_TO_ZOS			= CSPM.lut.CSPM_LUT_CATEGORY_E_CSPM_TO_ZOS
 local CSPM_LUT_CATEGORY_E_CSPM_TO_ICON			= CSPM.lut.CSPM_LUT_CATEGORY_E_CSPM_TO_ICON
 
+
 -- Library
 local LAM = LibAddonMenu2
 if not LAM then d("[CSPM] Error : 'LibAddonMenu' not found.") return end
 
-local L = GetString
-
-local strings = {
-	SI_CSPM_UI_PANEL_HEADER3_TEXT =					"In this panel, you can configure which pie menu will be invoked for various UI event triggers.", 
-}
-for stringId, stringToAdd in pairs(strings) do
-   ZO_CreateStringId(stringId, stringToAdd)
-   SafeAddVersion(stringId, 1)
-end
 
 -- UI section locals
 local ui = ui or {}
@@ -74,16 +71,14 @@ local function DoSetupDefault(slotId)
 end
 
 local function GetPresetDisplayNameByPresetId(presetId)
-	local presetName = ""
+	local presetName = table.concat({ L(SI_CSPM_COMMON_PRESET), " ", presetId, })
 	local presetInfo = CSPM:GetPresetInfo(presetId)
 	if presetInfo then
 		if presetInfo.name ~= "" then
-			presetName = presetInfo.name
-		else
-			presetName = table.concat({ L(SI_CSPM_COMMON_PRESET), " ", presetId, })
+			presetName = table.concat({ presetName, " : ", presetInfo.name, })
 		end
 	else
-		presetName = table.concat({ L(SI_CSPM_COMMON_PRESET), " ", presetId, " : ", L(SI_CSPM_COMMON_UNREGISTERED), })
+		presetName = table.concat({ presetName, " : ", L(SI_CSPM_COMMON_UNREGISTERED), })
 	end
 	return presetName
 end
@@ -117,18 +112,12 @@ local function RebuildPresetSelectionChoices()
 	local choicesValues = {}
 	local choicesTooltips = {}
 	for i = 1, CSPM_MAX_USER_PRESET do
+		choices[i] = GetPresetDisplayNameByPresetId(i)
+		choicesValues[i] = i
 		presetInfo = CSPM:GetPresetInfo(i)
 		if presetInfo then
-			if presetInfo.name ~= "" then
-				choices[i] = presetInfo.name
-			else
-				choices[i] = table.concat({ L(SI_CSPM_COMMON_PRESET), " ", i, })
-			end
-			choicesValues[i] = i
 			choicesTooltips[i] = presetInfo.tooltip or ""
 		else
-			choices[i] = table.concat({ L(SI_CSPM_COMMON_PRESET), " ", i, " : ", L(SI_CSPM_COMMON_UNREGISTERED), })
-			choicesValues[i] = i
 			choicesTooltips[i] = ""
 		end
 	end
@@ -277,11 +266,41 @@ function CSPM:CreateManagerPanel()
 		helpUrl = "These are optional settings that normally do not need to be changed, such as prototype features that are still under development. Option settings that are being tweaked will be marked as beta, and positive feedback on future tweaks will be welcomed. (For advanced users)", 
 	}
 	optionsData[#optionsData + 1] = {
+		type = "slider", 
+		name = "Time to hold key until activation (milliseconds)", 
+		tooltip = "You can adjust the key hold time for pie menu activation. The smaller the number, the faster it is.", 
+		min = 0,
+		max = 300,
+		step = 1, 
+		getFunc = function() return CSPM.svCurrent.timeToHoldKey end, 
+		setFunc = function(newValue) CSPM.svCurrent.timeToHoldKey = newValue end, 
+		clampInput = false, 
+		default = 250, 
+	}
+	optionsData[#optionsData + 1] = {
 		type = "checkbox",
-		name = "Activate Pie Menu in UI mode (beta)", 
+		name = "Activate Pie Menu in UI mode", 
 		getFunc = function() return CSPM.svCurrent.allowActivateInUIMode end, 
 		setFunc = function(newValue) CSPM.svCurrent.allowActivateInUIMode = newValue end, 
-		tooltip = "Allow you to activate the user customizable pie menu in most UI mode (cursor mode) scenes.", 
+		tooltip = "Allow you to activate pie menu in most UI mode (cursor mode) scenes.", 
+		width = "full", 
+		default = true, 
+	}
+	optionsData[#optionsData + 1] = {
+		type = "checkbox",
+		name = "Selecting and canceling with click", 
+		getFunc = function() return CSPM.svCurrent.allowClickable end, 
+		setFunc = function(newValue) CSPM.svCurrent.allowClickable = newValue end, 
+		tooltip = "By turning on this setting, you can use mouse buttons or gamepad buttons to quickly select or cancel pie menus.\n\nSelecting : Mouse Left Button, GamePad A Button\nCanceling : Mouse Right Button, GamePad B Button and ESC", 
+		width = "full", 
+		default = true, 
+	}
+	optionsData[#optionsData + 1] = {
+		type = "checkbox",
+		name = "Centering Pie Menu at mouse cursor in UI mode", 
+		getFunc = function() return CSPM.svCurrent.centeringAtMouseCursor end, 
+		setFunc = function(newValue) CSPM.svCurrent.centeringAtMouseCursor = newValue end, 
+		tooltip = "By turning on this setting, the pie menu will be displayed at the current mouse cursor position instead of the center of the screen in UI mode.", 
 		width = "full", 
 		default = false, 
 	}

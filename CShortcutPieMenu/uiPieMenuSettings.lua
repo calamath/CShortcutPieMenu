@@ -14,7 +14,9 @@
 
 -- CShortcutPieMenu local definitions
 local CSPM = CShortcutPieMenu
+local L = GetString
 
+-- ---------------------------------------------------------------------------------------
 -- Aliases of constants
 local CSPM_MAX_USER_PRESET						= CSPM.const.CSPM_MAX_USER_PRESET
 local CSPM_MENU_ITEMS_COUNT_DEFAULT				= CSPM.const.CSPM_MENU_ITEMS_COUNT_DEFAULT
@@ -23,6 +25,7 @@ local CSPM_ACTION_TYPE_COLLECTIBLE				= CSPM.const.CSPM_ACTION_TYPE_COLLECTIBLE
 local CSPM_ACTION_TYPE_EMOTE					= CSPM.const.CSPM_ACTION_TYPE_EMOTE
 local CSPM_ACTION_TYPE_CHAT_COMMAND				= CSPM.const.CSPM_ACTION_TYPE_CHAT_COMMAND
 local CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE			= CSPM.const.CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE
+local CSPM_ACTION_TYPE_PIE_MENU					= CSPM.const.CSPM_ACTION_TYPE_PIE_MENU
 local CSPM_CATEGORY_NOTHING						= CSPM.const.CSPM_CATEGORY_NOTHING
 local CSPM_CATEGORY_IMMEDIATE_VALUE				= CSPM.const.CSPM_CATEGORY_IMMEDIATE_VALUE
 local CSPM_CATEGORY_C_ASSISTANT					= CSPM.const.CSPM_CATEGORY_C_ASSISTANT
@@ -44,54 +47,22 @@ local CSPM_CATEGORY_E_SOCIAL					= CSPM.const.CSPM_CATEGORY_E_SOCIAL
 local CSPM_CATEGORY_E_COLLECTED					= CSPM.const.CSPM_CATEGORY_E_COLLECTED
 local CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE		= CSPM.const.CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE
 local CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE	= CSPM.const.CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE
+local CSPM_CATEGORY_P_OPEN_USER_PIE_MENU		= CSPM.const.CSPM_CATEGORY_P_OPEN_USER_PIE_MENU
 local CSPM_ACTION_VALUE_PRIMARY_HOUSE_ID		= CSPM.const.CSPM_ACTION_VALUE_PRIMARY_HOUSE_ID
 
 local CSPM_SLOT_DATA_DEFAULT 					= CSPM.const.CSPM_SLOT_DATA_DEFAULT
 
+-- ---------------------------------------------------------------------------------------
 -- Aliases of look up table
 local CSPM_LUT_CATEGORY_C_CSPM_TO_ZOS			= CSPM.lut.CSPM_LUT_CATEGORY_C_CSPM_TO_ZOS
 local CSPM_LUT_CATEGORY_E_CSPM_TO_ZOS			= CSPM.lut.CSPM_LUT_CATEGORY_E_CSPM_TO_ZOS
 local CSPM_LUT_CATEGORY_E_CSPM_TO_ICON			= CSPM.lut.CSPM_LUT_CATEGORY_E_CSPM_TO_ICON
 
+
 -- Library
 local LAM = LibAddonMenu2
 if not LAM then d("[CSPM] Error : 'LibAddonMenu' not found.") return end
 
-local L = GetString
-local strings = {
-	SI_CSPM_COMMON_PRESET =							"Preset", 
-	SI_CSPM_COMMON_SLOT =							"Slot", 
-	SI_CSPM_COMMON_UNSELECTED =						"<Unselected>", 
-	SI_CSPM_COMMON_UNREGISTERED =					"<Unregistered>", 
-	SI_CSPM_COMMON_IMMEDIATE_VALUE =				"(Immediate Value)", 
-	SI_CSPM_COMMON_COLLECTIBLE =					"Collectible", 
-	SI_CSPM_COMMON_EMOTE =							"Emote", 
-	SI_CSPM_COMMON_CHAT_COMMAND =					"Chat Command", 
-	SI_CSPM_COMMON_TRAVEL_TO_HOUSE =				"Travel to house", 
-	SI_CSPM_COMMON_MY_HOUSE_INSIDE =				"My House (inside)", 
-	SI_CSPM_COMMON_MY_HOUSE_OUTSIDE =				"My House (outside)", 
-	SI_CSPM_UI_PANEL_HEADER1_TEXT =					"This add-on provides a pie menu for shortcuts to various UI operations.", 
-	SI_CSPM_UI_PANEL_HEADER2_TEXT =					"In this panel, you can configure your favorite shortcuts for each slot in the pie menu and register them as presets that can be used throughout your account.\n", 
-	SI_CSPM_UI_PRESET_SELECT_MENU_NAME =			"Select preset", 
-	SI_CSPM_UI_PRESET_SELECT_MENU_TIPS =			"Please select the preset you want to configure.", 
-	SI_CSPM_UI_SLOT_SELECT_MENU_NAME =				"Select slot", 
-	SI_CSPM_UI_SLOT_SELECT_MENU_TIPS =				"Please select the slot number you want to configure.", 
-	SI_CSPM_UI_ACTION_TYPE_MENU_NAME =				"Action Type", 
-	SI_CSPM_UI_ACTION_TYPE_MENU_TIPS =				"Select the type of operation for this slot.", 
-	SI_CSPM_UI_ACTION_TYPE_NOTHING_TIPS =			"", 
-	SI_CSPM_UI_ACTION_TYPE_COLLECTIBLE_TIPS =		"Use unlocked collectible.", 
-	SI_CSPM_UI_ACTION_TYPE_EMOTE_TIPS =				"Play unlocked emote.", 
-	SI_CSPM_UI_ACTION_TYPE_CHAT_COMMAND_TIPS =		"Execute the chat command.", 
-	SI_CSPM_UI_ACTION_TYPE_TRAVEL_TO_HOUSE_TIPS =	"Jump to your home already unlocked", 
-	SI_CSPM_UI_CATEGORY_MENU_NAME =					"Category", 
-	SI_CSPM_UI_CATEGORY_MENU_TIPS =					"<Category menu tips>", 
-	SI_CSPM_UI_ACTION_VALUE_MENU_NAME =				"Value", 
-	SI_CSPM_UI_ACTION_VALUE_MENU_TIPS =				"<Action Value tips>", 
-}
-for stringId, stringToAdd in pairs(strings) do
-   ZO_CreateStringId(stringId, stringToAdd)
-   SafeAddVersion(stringId, 1)
-end
 
 -- UI section locals
 local ui = ui or {}
@@ -102,16 +73,14 @@ local function DoSetupDefault(slotId)
 end
 
 local function GetPresetDisplayNameByPresetId(presetId)
-	local presetName = ""
+	local presetName = table.concat({ L(SI_CSPM_COMMON_PRESET), " ", presetId, })
 	local presetInfo = CSPM:GetPresetInfo(presetId)
 	if presetInfo then
 		if presetInfo.name ~= "" then
-			presetName = presetInfo.name
-		else
-			presetName = table.concat({ L(SI_CSPM_COMMON_PRESET), " ", presetId, })
+			presetName = table.concat({ presetName, " : ", presetInfo.name, })
 		end
 	else
-		presetName = table.concat({ L(SI_CSPM_COMMON_PRESET), " ", presetId, " : ", L(SI_CSPM_COMMON_UNREGISTERED), })
+		presetName = table.concat({ presetName, " : ", L(SI_CSPM_COMMON_UNREGISTERED), })
 	end
 	return presetName
 end
@@ -126,6 +95,8 @@ local function RefreshPanelDueToPresetInfoChange(presetId)
 	if presetInfo then
 		ui.presetChoices[presetId] = GetPresetDisplayNameByPresetId(presetId)
 		ui.presetChoicesTooltips[presetId] = presetInfo.tooltip or ""
+		ui.actionValueChoices[CSPM_CATEGORY_P_OPEN_USER_PIE_MENU][presetId] = ui.presetChoices[presetId]
+		ui.actionValueChoicesTooltips[CSPM_CATEGORY_P_OPEN_USER_PIE_MENU][presetId] = ui.presetChoicesTooltips[presetId]
 	end
 	if ui.panelInitialized then
 		CSPM_UI_PresetSelectMenu:UpdateChoices(ui.presetChoices, ui.presetChoicesValues, ui.presetChoicesTooltips)
@@ -133,6 +104,14 @@ local function RefreshPanelDueToPresetInfoChange(presetId)
 
 		CSPM_UI_PresetSubmenu.data.name = ui.presetChoices[uiPresetId]
 		CSPM_UI_PresetSubmenu:UpdateValue()		-- Note : When called with no arguments, getFunc will be called, and setFunc will NOT be called.
+
+		if CSPM.db.preset[uiPresetId].slot[uiSlotId].type == CSPM_ACTION_TYPE_PIE_MENU then
+			local categoryId = CSPM.db.preset[uiPresetId].slot[uiSlotId].category
+			if categoryId == CSPM_CATEGORY_P_OPEN_USER_PIE_MENU then
+				CSPM_UI_ActionValueMenu:UpdateChoices(ui.actionValueChoices[CSPM_CATEGORY_P_OPEN_USER_PIE_MENU], ui.actionValueChoicesValues[CSPM_CATEGORY_P_OPEN_USER_PIE_MENU], ui.actionValueChoicesTooltips[CSPM_CATEGORY_P_OPEN_USER_PIE_MENU])
+				CSPM_UI_ActionValueMenu:UpdateValue()		-- Note : When called with no arguments, getFunc will be called, and setFunc will NOT be called.
+			end
+		end
 	end
 end
 
@@ -141,18 +120,12 @@ local function RebuildPresetSelectionChoices()
 	local choicesValues = {}
 	local choicesTooltips = {}
 	for i = 1, CSPM_MAX_USER_PRESET do
+		choices[i] = GetPresetDisplayNameByPresetId(i)
+		choicesValues[i] = i
 		presetInfo = CSPM:GetPresetInfo(i)
 		if presetInfo then
-			if presetInfo.name ~= "" then
-				choices[i] = presetInfo.name
-			else
-				choices[i] = table.concat({ L(SI_CSPM_COMMON_PRESET), " ", i, })
-			end
-			choicesValues[i] = i
 			choicesTooltips[i] = presetInfo.tooltip or ""
 		else
-			choices[i] = table.concat({ L(SI_CSPM_COMMON_PRESET), " ", i, " : ", L(SI_CSPM_COMMON_UNREGISTERED), })
-			choicesValues[i] = i
 			choicesTooltips[i] = ""
 		end
 	end
@@ -181,6 +154,10 @@ local function GetDefaultSlotName(actionTypeId, categoryId, actionValue)
 			elseif categoryId == CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE then
 				slotName = ZO_CachedStrFormat(L(SI_GAMEPAD_WORLD_MAP_TRAVEL_TO_HOUSE_OUTSIDE), houseName)		-- "<<1>> (outside)"
 			end
+		end
+	elseif actionTypeId == CSPM_ACTION_TYPE_PIE_MENU then
+		if actionValue ~= 0 then
+			slotName = table.concat({"Open ", L(SI_CSPM_COMMON_PRESET), " ", actionValue, })
 		end
 	end
 --	CSPM.LDL:Debug("SlotName : ", tostring(slotName))
@@ -547,6 +524,7 @@ function CSPM:InitializeMenuEditorUI()
 		L(SI_CSPM_COMMON_EMOTE), 
 		L(SI_CSPM_COMMON_CHAT_COMMAND), 
 		L(SI_CSPM_COMMON_TRAVEL_TO_HOUSE), 
+		L(SI_CSPM_COMMON_PIE_MENU), 
 	} 
 	ui.actionTypeChoicesValues = {
 		CSPM_ACTION_TYPE_NOTHING, 
@@ -554,6 +532,7 @@ function CSPM:InitializeMenuEditorUI()
 		CSPM_ACTION_TYPE_EMOTE, 
 		CSPM_ACTION_TYPE_CHAT_COMMAND, 
 		CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE, 
+		CSPM_ACTION_TYPE_PIE_MENU, 
 	}
 	ui.actionTypeChoicesTooltips = {
 		L(SI_CSPM_UI_ACTION_TYPE_NOTHING_TIPS), 
@@ -561,6 +540,7 @@ function CSPM:InitializeMenuEditorUI()
 		L(SI_CSPM_UI_ACTION_TYPE_EMOTE_TIPS), 
 		L(SI_CSPM_UI_ACTION_TYPE_CHAT_COMMAND_TIPS), 
 		L(SI_CSPM_UI_ACTION_TYPE_TRAVEL_TO_HOUSE_TIPS), 
+		L(SI_CSPM_UI_ACTION_TYPE_PIE_MENU_TIPS), 
 	}
 
 	ui.categoryChoices = {}
@@ -634,6 +614,14 @@ function CSPM:InitializeMenuEditorUI()
 		CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE, 
 		CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE, 
 	}
+	ui.categoryChoices[CSPM_ACTION_TYPE_PIE_MENU] = {
+		L(SI_CSPM_COMMON_UNSELECTED), 
+		L(SI_CSPM_COMMON_OPEN_USER_PIE_MENU_PRESET), 
+	}
+	ui.categoryChoicesValues[CSPM_ACTION_TYPE_PIE_MENU] = {
+		CSPM_CATEGORY_NOTHING, 
+		CSPM_CATEGORY_P_OPEN_USER_PIE_MENU, 
+	}
 
 	ui.actionValueChoices = {}
 	ui.actionValueChoicesValues = {}
@@ -648,6 +636,7 @@ function CSPM:InitializeMenuEditorUI()
 	end
 	ui.actionValueChoices[CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE], ui.actionValueChoicesValues[CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE], ui.actionValueChoicesTooltips[CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE] = RebuildHouseSelectionChoices(true)
 	ui.actionValueChoices[CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE], ui.actionValueChoicesValues[CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE], ui.actionValueChoicesTooltips[CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE] = RebuildHouseSelectionChoices(true)
+	ui.actionValueChoices[CSPM_CATEGORY_P_OPEN_USER_PIE_MENU], ui.actionValueChoicesValues[CSPM_CATEGORY_P_OPEN_USER_PIE_MENU], ui.actionValueChoicesTooltips[CSPM_CATEGORY_P_OPEN_USER_PIE_MENU] = RebuildPresetSelectionChoices()
 	ZO_COLLECTIBLE_DATA_MANAGER:RegisterCallback("OnCollectionUpdated", CollectibleDataManager_OnCollectionUpdated)
 end
 
@@ -679,8 +668,7 @@ function CSPM:CreateMenuEditorPanel()
 		end, 
 		isMultiline = false, 
 		isExtraWide = false, 
---		maxChars = 3000, 
---		textType = TEXT_TYPE_NUMERIC, -- number (optional) or function returning a number. Valid TextType numbers: TEXT_TYPE_ALL, TEXT_TYPE_ALPHABETIC, TEXT_TYPE_ALPHABETIC_NO_FULLWIDTH_LATIN, TEXT_TYPE_NUMERIC, TEXT_TYPE_NUMERIC_UNSIGNED_INT, TEXT_TYPE_PASSWORD
+		maxChars = 1999, 
 		width = "full", 
 --		disabled = true, 
 		default = "", 
@@ -696,8 +684,7 @@ function CSPM:CreateMenuEditorPanel()
 		end, 
 		isMultiline = false, 
 		isExtraWide = false, 
---		maxChars = 3000, 
---		textType = TEXT_TYPE_NUMERIC, -- number (optional) or function returning a number. Valid TextType numbers: TEXT_TYPE_ALL, TEXT_TYPE_ALPHABETIC, TEXT_TYPE_ALPHABETIC_NO_FULLWIDTH_LATIN, TEXT_TYPE_NUMERIC, TEXT_TYPE_NUMERIC_UNSIGNED_INT, TEXT_TYPE_PASSWORD
+		maxChars = 1999, 
 		width = "full", 
 --		disabled = true, 
 		default = "", 
@@ -752,7 +739,7 @@ function CSPM:CreateMenuEditorPanel()
 		setFunc = function(newValue) CSPM.db.preset[uiPresetId].visual.showSlotLabel = newValue end, 
 		tooltip = "Whether to show the name of each slot around the pie menu.", 
 		width = "full", 
-		default = false, 
+		default = true, 
 	}
 	submenuPieVisual[#submenuPieVisual + 1] = {
 		type = "checkbox",
@@ -882,8 +869,7 @@ function CSPM:CreateMenuEditorPanel()
 		setFunc = OnActionValueEditboxChanged, 
 		isMultiline = false, 
 		isExtraWide = false, 
---		maxChars = 3000, 
---		textType = TEXT_TYPE_NUMERIC, -- number (optional) or function returning a number. Valid TextType numbers: TEXT_TYPE_ALL, TEXT_TYPE_ALPHABETIC, TEXT_TYPE_ALPHABETIC_NO_FULLWIDTH_LATIN, TEXT_TYPE_NUMERIC, TEXT_TYPE_NUMERIC_UNSIGNED_INT, TEXT_TYPE_PASSWORD
+		maxChars = 1999, 
 --		width = "half", 
 		disabled = function()
 			local uiCategoryId = CSPM.db.preset[uiPresetId].slot[uiSlotId].category
@@ -906,7 +892,7 @@ function CSPM:CreateMenuEditorPanel()
 		setFunc = OnSlotNameEditboxChanged, 
 		isMultiline = false, 
 		isExtraWide = false, 
---		maxChars = 3000, 
+		maxChars = 1999, 
 --		textType = TEXT_TYPE_NUMERIC, -- number (optional) or function returning a number. Valid TextType numbers: TEXT_TYPE_ALL, TEXT_TYPE_ALPHABETIC, TEXT_TYPE_ALPHABETIC_NO_FULLWIDTH_LATIN, TEXT_TYPE_NUMERIC, TEXT_TYPE_NUMERIC_UNSIGNED_INT, TEXT_TYPE_PASSWORD
 		width = "full", 
 --		disabled = true, 
@@ -928,7 +914,7 @@ function CSPM:CreateMenuEditorPanel()
 --		disabled = true, 
 		disabled = function()
 			local uiActionTypeId = CSPM.db.preset[uiPresetId].slot[uiSlotId].type
-			if uiActionTypeId == CSPM_ACTION_TYPE_COLLECTIBLE or uiActionTypeId == CSPM_ACTION_TYPE_EMOTE or CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE then
+			if uiActionTypeId == CSPM_ACTION_TYPE_COLLECTIBLE or uiActionTypeId == CSPM_ACTION_TYPE_EMOTE or uiActionTypeId == CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE or uiActionTypeId == CSPM_ACTION_TYPE_PIE_MENU then
 				return false
 			else
 				return true

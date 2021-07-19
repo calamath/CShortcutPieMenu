@@ -1,3 +1,12 @@
+V0.8.0: [V800] by Calamath
+- Nested Pie Menu support in Shortcut Pie Menu. this feature is based on Aspect's idea and feedback. Special thanks to: Aspect
+- Added new slot action type 'Pie Menu' for opening another pie menu preset.
+- Added new control features for selecting and canceling pie menus by clicking mouse or gamepad buttons. This feature is currently required for opening a nested pie menu preset.
+- Implemented various PieMenu behavior option settings in the Pie Menu Manager UI.
+- Fixed an issue where the preset drop-down menu was not displayed correctly when specifying a preset name.
+- Fixed a number of minor bugs.
+- Code splitting and refactoring.
+
 V0.7.3: [V703] by Calamath
 - Some adjustments to the UI design template.
 - Clarified the source of the code that can be said to be modified based on the ESOUI code.
