@@ -1,3 +1,6 @@
+V0.8.1: [V801] by Calamath
+- Initial preparation for the upcoming translation works.
+
 V0.8.0: [V800] by Calamath
 - Nested Pie Menu support in Shortcut Pie Menu. this feature is based on Aspect's idea and feedback. Special thanks to: Aspect
 - Added new slot action type 'Pie Menu' for opening another pie menu preset.

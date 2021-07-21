@@ -18,6 +18,17 @@ local L = GetString
 
 -- ---------------------------------------------------------------------------------------
 -- Aliases of constants
+local CSPM_UI_NONE								= CSPM.const.CSPM_UI_NONE
+local CSPM_UI_OPEN								= CSPM.const.CSPM_UI_OPEN
+local CSPM_UI_CLOSE								= CSPM.const.CSPM_UI_CLOSE
+local CSPM_UI_COPY								= CSPM.const.CSPM_UI_COPY
+local CSPM_UI_PASTE								= CSPM.const.CSPM_UI_PASTE
+local CSPM_UI_CLEAR								= CSPM.const.CSPM_UI_CLEAR
+local CSPM_UI_RESET								= CSPM.const.CSPM_UI_RESET
+local CSPM_UI_PREVIEW							= CSPM.const.CSPM_UI_PREVIEW
+local CSPM_UI_SELECT							= CSPM.const.CSPM_UI_SELECT
+local CSPM_UI_CANCEL							= CSPM.const.CSPM_UI_CANCEL
+
 local CSPM_MAX_USER_PRESET						= CSPM.const.CSPM_MAX_USER_PRESET
 local CSPM_MENU_ITEMS_COUNT_DEFAULT				= CSPM.const.CSPM_MENU_ITEMS_COUNT_DEFAULT
 local CSPM_ACTION_TYPE_NOTHING					= CSPM.const.CSPM_ACTION_TYPE_NOTHING
@@ -157,7 +168,7 @@ local function GetDefaultSlotName(actionTypeId, categoryId, actionValue)
 		end
 	elseif actionTypeId == CSPM_ACTION_TYPE_PIE_MENU then
 		if actionValue ~= 0 then
-			slotName = table.concat({"Open ", L(SI_CSPM_COMMON_PRESET), " ", actionValue, })
+			slotName = ZO_CachedStrFormat(L("SI_CSPM_COMMON_UI_ACTION", CSPM_UI_OPEN), L(SI_CSPM_COMMON_PRESET), actionValue)
 		end
 	end
 --	CSPM.LDL:Debug("SlotName : ", tostring(slotName))
@@ -185,7 +196,7 @@ local function RefreshPanelDueToSlotDisplayNameChange()
 	CSPM.LDL:Debug("RefreshEditorPanelDueToSlotDisplayNameChange : ")
 	
 	-- NOTE : Since the slot display name has been changed, the slot selection choices and the slot name tab header will also be updated here.
-	ui.slotChoices[uiSlotId] = table.concat({ L(SI_CSPM_COMMON_SLOT), " ", uiSlotId, " : ", ui.slotDisplayName[uiSlotId] or L(SI_CSPM_COMMON_UNREGISTERED), })
+	ui.slotChoices[uiSlotId] = ZO_CachedStrFormat(L(SI_CSPM_COMMON_UI_FORMATTER), L(SI_CSPM_COMMON_SLOT), uiSlotId, ":", ui.slotDisplayName[uiSlotId] or L(SI_CSPM_COMMON_UNREGISTERED))
 	CSPM_UI_SlotSelectMenu:UpdateChoices(ui.slotChoices, ui.slotChoicesValues)
 	CSPM_UI_SlotSelectMenu:UpdateValue()		-- Note : When called with no arguments, getFunc will be called, and setFunc will NOT be called.
 
@@ -215,7 +226,7 @@ local function RebuildSlotSelectionChoices(menuItemsCount)
 	local choices = {}
 	local choicesValues = {}
 	for i = 1, menuItemsCount do
-		choices[i] = table.concat({ L(SI_CSPM_COMMON_SLOT), " ", i, " : ", ui.slotDisplayName[i] or L(SI_CSPM_COMMON_UNREGISTERED), })
+		choices[i] = ZO_CachedStrFormat(L(SI_CSPM_COMMON_UI_FORMATTER), L(SI_CSPM_COMMON_SLOT), i, ":", ui.slotDisplayName[i] or L(SI_CSPM_COMMON_UNREGISTERED))
 		choicesValues[i] = i
 	end
 	return choices, choicesValues
@@ -616,7 +627,7 @@ function CSPM:InitializeMenuEditorUI()
 	}
 	ui.categoryChoices[CSPM_ACTION_TYPE_PIE_MENU] = {
 		L(SI_CSPM_COMMON_UNSELECTED), 
-		L(SI_CSPM_COMMON_OPEN_USER_PIE_MENU_PRESET), 
+		ZO_CachedStrFormat(L("SI_CSPM_COMMON_UI_ACTION", CSPM_UI_OPEN), L(SI_CSPM_COMMON_PIE_MENU), L(SI_CSPM_COMMON_PRESET)), 
 	}
 	ui.categoryChoicesValues[CSPM_ACTION_TYPE_PIE_MENU] = {
 		CSPM_CATEGORY_NOTHING, 
@@ -659,8 +670,8 @@ function CSPM:CreateMenuEditorPanel()
 	local submenuPieVisual = {}
 	submenuPieVisual[#submenuPieVisual + 1] = {
 		type = "editbox", 
-		name = "Preset Name Override", 
-		tooltip = "Adjust the name of this preset. (optional)", 
+		name = L(SI_CSPM_UI_VISUAL_PRESET_NAME_OVERRIDE_NAME), 
+		tooltip = L(SI_CSPM_UI_VISUAL_PRESET_NAME_OVERRIDE_TIPS), 
 		getFunc = function() return CSPM.db.preset[uiPresetId].name end, 
 		setFunc = function(newPresetName)
 			CSPM.db.preset[uiPresetId].name = newPresetName
@@ -675,8 +686,8 @@ function CSPM:CreateMenuEditorPanel()
 	}
 	submenuPieVisual[#submenuPieVisual + 1] = {
 		type = "editbox", 
-		name = "Preset Note", 
-		tooltip = "Adjust the notes about this preset. (optional)", 
+		name = L(SI_CSPM_UI_VISUAL_PRESET_NOTE_NAME), 
+		tooltip = L(SI_CSPM_UI_VISUAL_PRESET_NOTE_TIPS), 
 		getFunc = function() return CSPM.db.preset[uiPresetId].tooltip or "" end, 
 		setFunc = function(newPresetNote)
 			CSPM.db.preset[uiPresetId].tooltip = newPresetNote
@@ -691,29 +702,29 @@ function CSPM:CreateMenuEditorPanel()
 	}
 	submenuPieVisual[#submenuPieVisual + 1] = {
 		type = "header", 
-		name = "Visual Design Options", 
+		name = L(SI_CSPM_UI_VISUAL_HEADER1_TEXT), -- "Visual Design Options"
 	}
 	submenuPieVisual[#submenuPieVisual + 1] = {
 		type = "checkbox",
-		name = "Quickslot radial menu style", 
+		name = L(SI_CSPM_UI_VISUAL_QUICKSLOT_STYLE_OP_NAME), 
 		getFunc = function() return CSPM.db.preset[uiPresetId].visual.showTrackQuickslot end, 
 		setFunc = function(newValue)
 			CSPM.db.preset[uiPresetId].visual.showTrackQuickslot = newValue
 			CSPM.db.preset[uiPresetId].visual.showTrackGamepad = not newValue
 		end, 
-		tooltip = "Apply a background design like a quick slot radial menu.", 
+		tooltip = L(SI_CSPM_UI_VISUAL_QUICKSLOT_STYLE_OP_TIPS), 
 		width = "full", 
 		default = false, 
 	}
 	submenuPieVisual[#submenuPieVisual + 1] = {
 		type = "checkbox",
-		name = "Gamepad mode radial menu style", 
+		name = L(SI_CSPM_UI_VISUAL_GAMEPAD_STYLE_OP_NAME), 
 		getFunc = function() return CSPM.db.preset[uiPresetId].visual.showTrackGamepad end, 
 		setFunc = function(newValue)
 			CSPM.db.preset[uiPresetId].visual.showTrackGamepad = newValue
 			CSPM.db.preset[uiPresetId].visual.showTrackQuickslot = not newValue
 		end, 
-		tooltip = "Apply a background design like a radial menu in gamepad mode.", 
+		tooltip = L(SI_CSPM_UI_VISUAL_GAMEPAD_STYLE_OP_TIPS), 
 		width = "full", 
 		default = true, 
 	}
@@ -725,28 +736,28 @@ function CSPM:CreateMenuEditorPanel()
 	}
 	submenuPieVisual[#submenuPieVisual + 1] = {
 		type = "checkbox",
-		name = "Show preset name", 
+		name = L(SI_CSPM_UI_VISUAL_SHOW_PRESET_NAME_OP_NAME), 
 		getFunc = function() return CSPM.db.preset[uiPresetId].visual.showPresetName end, 
 		setFunc = function(newValue) CSPM.db.preset[uiPresetId].visual.showPresetName = newValue end, 
-		tooltip = "Whether to show the preset name under the pie menu.", 
+		tooltip = L(SI_CSPM_UI_VISUAL_SHOW_PRESET_NAME_OP_TIPS), 
 		width = "full", 
 		default = false, 
 	}
 	submenuPieVisual[#submenuPieVisual + 1] = {
 		type = "checkbox",
-		name = "Show slot name", 
+		name = L(SI_CSPM_UI_VISUAL_SHOW_SLOT_NAME_OP_NAME), 
 		getFunc = function() return CSPM.db.preset[uiPresetId].visual.showSlotLabel end, 
 		setFunc = function(newValue) CSPM.db.preset[uiPresetId].visual.showSlotLabel = newValue end, 
-		tooltip = "Whether to show the name of each slot around the pie menu.", 
+		tooltip = L(SI_CSPM_UI_VISUAL_SHOW_SLOT_NAME_OP_TIPS), 
 		width = "full", 
 		default = true, 
 	}
 	submenuPieVisual[#submenuPieVisual + 1] = {
 		type = "checkbox",
-		name = "Show icon frame", 
+		name = L(SI_CSPM_UI_VISUAL_SHOW_ICON_FRAME_OP_NAME), 
 		getFunc = function() return CSPM.db.preset[uiPresetId].visual.showIconFrame end, 
 		setFunc = function(newValue) CSPM.db.preset[uiPresetId].visual.showIconFrame = newValue end, 
-		tooltip = "Whether to show the icon frame for each slot in the pie menu.", 
+		tooltip = L(SI_CSPM_UI_VISUAL_SHOW_ICON_FRAME_OP_TIPS), 
 		width = "full", 
 		default = true, 
 	}
@@ -770,7 +781,7 @@ function CSPM:CreateMenuEditorPanel()
 		name = ui.presetChoices[uiPresetId], 
 --		icon = "path/to/my/icon.dds", -- or function returning a string (optional)
 --		iconTextureCoords = {left, right, top, bottom}, -- or function returning a table (optional)
-		tooltip = "Adjust the visual design of the pie menu. (optional)", 
+		tooltip = L(SI_CSPM_UI_PRESET_VISUAL_SUBMENU_TIPS), 
 --		disabled = function() return db.someBooleanSetting end, -- or boolean (optional)
 --		disabledLabel = function() return db.someBooleanSetting end, -- or boolean (optional)
 		reference = "CSPM_UI_PresetSubmenu" ,
@@ -778,8 +789,8 @@ function CSPM:CreateMenuEditorPanel()
 	}
 	optionsData[#optionsData + 1] = {
 		type = "slider", 
-		name = "Menu items count", 
-		tooltip = "Select the number of slots to be displayed in the pie menu.", 
+		name = L(SI_CSPM_UI_MENU_ITEMS_COUNT_OP_NAME), 
+		tooltip = L(SI_CSPM_UI_MENU_ITEMS_COUNT_OP_TIPS), 
 		min = 2,
 		max = 11,
 		step = 1, 
@@ -864,7 +875,7 @@ function CSPM:CreateMenuEditorPanel()
 	optionsData[#optionsData + 1] = {
 		type = "editbox", 
 		name = "", 
---		tooltip = nil, 
+		tooltip = L(SI_CSPM_UI_ACTION_VALUE_EDITBOX_TIPS), 
 		getFunc = function() return CSPM.db.preset[uiPresetId].slot[uiSlotId].value end, 
 		setFunc = OnActionValueEditboxChanged, 
 		isMultiline = false, 
@@ -886,8 +897,8 @@ function CSPM:CreateMenuEditorPanel()
 	}
 	optionsData[#optionsData + 1] = {
 		type = "editbox", 
-		name = "Slot Name Override", 
---		tooltip = nil, 
+		name = L(SI_CSPM_UI_VISUAL_SLOT_NAME_OVERRIDE_NAME), 
+		tooltip = L(SI_CSPM_UI_VISUAL_SLOT_NAME_OVERRIDE_TIPS), 
 		getFunc = function() return CSPM.db.preset[uiPresetId].slot[uiSlotId].name end, 
 		setFunc = OnSlotNameEditboxChanged, 
 		isMultiline = false, 
@@ -901,8 +912,8 @@ function CSPM:CreateMenuEditorPanel()
 	}
 	optionsData[#optionsData + 1] = {
 		type = "button", 
-		name = "Default Name", 
---		tooltip = nil, 
+		name = L(SI_CSPM_UI_DEFAULT_SLOT_NAME_BUTTON_NAME), 
+		tooltip = L(SI_CSPM_UI_DEFAULT_SLOT_NAME_BUTTON_TIPS), 
 		func = function()
 			local actionTypeId = CSPM.db.preset[uiPresetId].slot[uiSlotId].type
 			local categoryId = CSPM.db.preset[uiPresetId].slot[uiSlotId].category

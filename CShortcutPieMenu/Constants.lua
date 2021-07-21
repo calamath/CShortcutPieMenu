@@ -17,7 +17,7 @@ CShortcutPieMenu = CShortcutPieMenu or {}
 
 local CSPM = CShortcutPieMenu
 CSPM.name = "CShortcutPieMenu"
-CSPM.version = "0.8.0"
+CSPM.version = "0.8.1"
 CSPM.author = "Calamath"
 CSPM.savedVarsPieMenuEditor = "CShortcutPieMenuDB"
 CSPM.savedVarsPieMenuManager = "CShortcutPieMenuSV"
@@ -27,6 +27,17 @@ CSPM.authority = {2973583419,210970542}
 -- ---------------------------------------------------------------------------------------
 -- constants
 CSPM.const = {
+	CSPM_UI_NONE								= 0, 
+	CSPM_UI_OPEN								= 1, 
+	CSPM_UI_CLOSE								= 2, 
+	CSPM_UI_COPY								= 3, 
+	CSPM_UI_PASTE								= 4, 
+	CSPM_UI_CLEAR								= 5, 
+	CSPM_UI_RESET								= 6, 
+	CSPM_UI_PREVIEW								= 7, 
+	CSPM_UI_SELECT								= 8, 
+	CSPM_UI_CANCEL								= 9, 
+
 	CSPM_MAX_USER_PRESET						= 10, 
 	CSPM_MENU_ITEMS_COUNT_DEFAULT				= 2, 
 	CSPM_ACTION_TYPE_NOTHING					= 0, 
@@ -62,6 +73,17 @@ CSPM.const = {
 
 -- ---------------------------------------------------------------------------------------
 -- Aliases of constants
+local CSPM_UI_NONE								= CSPM.const.CSPM_UI_NONE
+local CSPM_UI_OPEN								= CSPM.const.CSPM_UI_OPEN
+local CSPM_UI_CLOSE								= CSPM.const.CSPM_UI_CLOSE
+local CSPM_UI_COPY								= CSPM.const.CSPM_UI_COPY
+local CSPM_UI_PASTE								= CSPM.const.CSPM_UI_PASTE
+local CSPM_UI_CLEAR								= CSPM.const.CSPM_UI_CLEAR
+local CSPM_UI_RESET								= CSPM.const.CSPM_UI_RESET
+local CSPM_UI_PREVIEW							= CSPM.const.CSPM_UI_PREVIEW
+local CSPM_UI_SELECT							= CSPM.const.CSPM_UI_SELECT
+local CSPM_UI_CANCEL							= CSPM.const.CSPM_UI_CANCEL
+
 local CSPM_MAX_USER_PRESET						= CSPM.const.CSPM_MAX_USER_PRESET
 local CSPM_MENU_ITEMS_COUNT_DEFAULT				= CSPM.const.CSPM_MENU_ITEMS_COUNT_DEFAULT
 local CSPM_ACTION_TYPE_NOTHING					= CSPM.const.CSPM_ACTION_TYPE_NOTHING

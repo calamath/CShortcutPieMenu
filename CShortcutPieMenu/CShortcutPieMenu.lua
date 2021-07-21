@@ -18,6 +18,17 @@ local L = GetString
 
 -- ---------------------------------------------------------------------------------------
 -- Aliases of constants
+local CSPM_UI_NONE								= CSPM.const.CSPM_UI_NONE
+local CSPM_UI_OPEN								= CSPM.const.CSPM_UI_OPEN
+local CSPM_UI_CLOSE								= CSPM.const.CSPM_UI_CLOSE
+local CSPM_UI_COPY								= CSPM.const.CSPM_UI_COPY
+local CSPM_UI_PASTE								= CSPM.const.CSPM_UI_PASTE
+local CSPM_UI_CLEAR								= CSPM.const.CSPM_UI_CLEAR
+local CSPM_UI_RESET								= CSPM.const.CSPM_UI_RESET
+local CSPM_UI_PREVIEW							= CSPM.const.CSPM_UI_PREVIEW
+local CSPM_UI_SELECT							= CSPM.const.CSPM_UI_SELECT
+local CSPM_UI_CANCEL							= CSPM.const.CSPM_UI_CANCEL
+
 local CSPM_MAX_USER_PRESET						= CSPM.const.CSPM_MAX_USER_PRESET
 local CSPM_MENU_ITEMS_COUNT_DEFAULT				= CSPM.const.CSPM_MENU_ITEMS_COUNT_DEFAULT
 local CSPM_ACTION_TYPE_NOTHING					= CSPM.const.CSPM_ACTION_TYPE_NOTHING
@@ -188,7 +199,7 @@ function CSPM:PopulateMenuCallback(rootMenu)
 			-- actionValue : presetId
 			local presetInfo = self:GetPresetInfo(actionValue)
 			if presetInfo then
-				name = table.concat({"Open ", L(SI_CSPM_COMMON_PRESET), " ", tostring(actionValue), })
+				name = ZO_CachedStrFormat(L("SI_CSPM_COMMON_UI_ACTION", CSPM_UI_OPEN), L(SI_CSPM_COMMON_PRESET), actionValue)
 				if presetInfo.name ~= "" then
 					name = table.concat({name, " (", presetInfo.name, ")", })
 				end
@@ -412,7 +423,6 @@ function CSPM:Initialize()
 
 	-- UI Section
 	self.rootMenu = CSPM_PieMenuController:New(CSPM_UI_Root_Pie, "CSPM_SelectableItemRadialMenuEntryTemplate", "DefaultRadialMenuAnimation", "SelectableItemRadialMenuEntryAnimation")
---	self.rootMenu = CSPM_PieMenuController:New(CSPM_UI_Root_Pie, "CSPM_SelectableItemRadialMenuEntryTemplate", "CSPM_RadialMenuAnimation", "SelectableItemRadialMenuEntryAnimation")
 	self.rootMenu:SetPopulateMenuCallback(function(...) self:PopulateMenuCallback(...) end)
 
 	self:InitializeMenuEditorUI()

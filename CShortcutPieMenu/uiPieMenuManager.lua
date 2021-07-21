@@ -18,6 +18,17 @@ local L = GetString
 
 -- ---------------------------------------------------------------------------------------
 -- Aliases of constants
+local CSPM_UI_NONE								= CSPM.const.CSPM_UI_NONE
+local CSPM_UI_OPEN								= CSPM.const.CSPM_UI_OPEN
+local CSPM_UI_CLOSE								= CSPM.const.CSPM_UI_CLOSE
+local CSPM_UI_COPY								= CSPM.const.CSPM_UI_COPY
+local CSPM_UI_PASTE								= CSPM.const.CSPM_UI_PASTE
+local CSPM_UI_CLEAR								= CSPM.const.CSPM_UI_CLEAR
+local CSPM_UI_RESET								= CSPM.const.CSPM_UI_RESET
+local CSPM_UI_PREVIEW							= CSPM.const.CSPM_UI_PREVIEW
+local CSPM_UI_SELECT							= CSPM.const.CSPM_UI_SELECT
+local CSPM_UI_CANCEL							= CSPM.const.CSPM_UI_CANCEL
+
 local CSPM_MAX_USER_PRESET						= CSPM.const.CSPM_MAX_USER_PRESET
 local CSPM_MENU_ITEMS_COUNT_DEFAULT				= CSPM.const.CSPM_MENU_ITEMS_COUNT_DEFAULT
 local CSPM_ACTION_TYPE_NOTHING					= CSPM.const.CSPM_ACTION_TYPE_NOTHING
@@ -172,23 +183,23 @@ function CSPM:CreateManagerPanel()
 	}
 	optionsData[#optionsData + 1] = {
 		type = "checkbox",
-		name = "Use Account Wide Settings", 
+		name = L(SI_CSPM_UI_ACCOUNT_WIDE_OP_NAME), 
 		getFunc = function() return CSPM.svAccount.accountWide end, 
 		setFunc = function(newValue) CSPM.svAccount.accountWide = newValue end, 
-		tooltip = "When the account wide setting is OFF, then each character can have different configuration options set below.", 
+		tooltip = L(SI_CSPM_UI_ACCOUNT_WIDE_OP_TIPS), 
 		width = "full", 
 		requiresReload = true, 
 		default = true, 
 	}
 	optionsData[#optionsData + 1] = {
 		type = "header", 
-		name = "Key Bindings and Presets", 
-		helpUrl = "For each shortcut key, you can assign your favorite pie menu. Of course, you need to configure addon keybinds in the CONTROLS settings.", 
+		name = L(SI_CSPM_UI_BINDINGS_HEADER1_TEXT), 
+		helpUrl = L(SI_CSPM_UI_BINDINGS_HEADER1_TIPS), 
 	}
 	optionsData[#optionsData + 1] = {
 		type = "dropdown", 
 		name = L(SI_BINDING_NAME_CSPM_PIE_MENU_INTERACTION), 
-		tooltip = "This is the 'primary interaction' key bindings that must be assigned to this add-on. Basically, you should assign the most frequently used pie menu presets, but the add-on may occasionally switch pie menu presets automatically due to the event triggers described below.", 
+		tooltip = L(SI_CSPM_UI_BINDINGS_INTERACTION1_TIPS), 
 		choices = ui.presetChoices, 	-- If choicesValue is defined, choices table is only used for UI display!
 		choicesValues = ui.presetChoicesValues, 
 		choicesTooltips = ui.presetChoicesTooltips, 
@@ -262,13 +273,13 @@ function CSPM:CreateManagerPanel()
 	}
 	optionsData[#optionsData + 1] = {
 		type = "header", 
-		name = "Behavior Options (Advanced)", 
-		helpUrl = "These are optional settings that normally do not need to be changed, such as prototype features that are still under development. Option settings that are being tweaked will be marked as beta, and positive feedback on future tweaks will be welcomed. (For advanced users)", 
+		name = L(SI_CSPM_UI_BEHAVIOR_HEADER1_TEXT), 
+		helpUrl = L(SI_CSPM_UI_BEHAVIOR_HEADER1_TIPS), 
 	}
 	optionsData[#optionsData + 1] = {
 		type = "slider", 
-		name = "Time to hold key until activation (milliseconds)", 
-		tooltip = "You can adjust the key hold time for pie menu activation. The smaller the number, the faster it is.", 
+		name = L(SI_CSPM_UI_BEHAVIOR_TIME_TO_HOLD_KEY_OP_NAME), 
+		tooltip = L(SI_CSPM_UI_BEHAVIOR_TIME_TO_HOLD_KEY_OP_TIPS), 
 		min = 0,
 		max = 300,
 		step = 1, 
@@ -279,28 +290,28 @@ function CSPM:CreateManagerPanel()
 	}
 	optionsData[#optionsData + 1] = {
 		type = "checkbox",
-		name = "Activate Pie Menu in UI mode", 
+		name = L(SI_CSPM_UI_BEHAVIOR_ACTIVATE_IN_UI_OP_NAME), 
 		getFunc = function() return CSPM.svCurrent.allowActivateInUIMode end, 
 		setFunc = function(newValue) CSPM.svCurrent.allowActivateInUIMode = newValue end, 
-		tooltip = "Allow you to activate pie menu in most UI mode (cursor mode) scenes.", 
+		tooltip = L(SI_CSPM_UI_BEHAVIOR_ACTIVATE_IN_UI_OP_TIPS), 
 		width = "full", 
 		default = true, 
 	}
 	optionsData[#optionsData + 1] = {
 		type = "checkbox",
-		name = "Selecting and canceling with click", 
+		name = L(SI_CSPM_UI_BEHAVIOR_CLICKABLE_OP_NAME), 
 		getFunc = function() return CSPM.svCurrent.allowClickable end, 
 		setFunc = function(newValue) CSPM.svCurrent.allowClickable = newValue end, 
-		tooltip = "By turning on this setting, you can use mouse buttons or gamepad buttons to quickly select or cancel pie menus.\n\nSelecting : Mouse Left Button, GamePad A Button\nCanceling : Mouse Right Button, GamePad B Button and ESC", 
+		tooltip = L(SI_CSPM_UI_BEHAVIOR_CLICKABLE_OP_TIPS), 
 		width = "full", 
 		default = true, 
 	}
 	optionsData[#optionsData + 1] = {
 		type = "checkbox",
-		name = "Centering Pie Menu at mouse cursor in UI mode", 
+		name = L(SI_CSPM_UI_BEHAVIOR_CENTER_AT_MOUSE_OP_NAME), 
 		getFunc = function() return CSPM.svCurrent.centeringAtMouseCursor end, 
 		setFunc = function(newValue) CSPM.svCurrent.centeringAtMouseCursor = newValue end, 
-		tooltip = "By turning on this setting, the pie menu will be displayed at the current mouse cursor position instead of the center of the screen in UI mode.", 
+		tooltip = L(SI_CSPM_UI_BEHAVIOR_CENTER_AT_MOUSE_OP_TIPS), 
 		width = "full", 
 		default = false, 
 	}
