@@ -215,6 +215,12 @@ function CSPM:PopulateMenuCallback(rootMenu)
 			end
 			data.slotLabelText = name
 
+			-- override the icon, if slot icon data exists
+			if type(data.slotData.icon) == "string" and data.slotData.icon ~= "" then
+				activeIcon = data.slotData.icon
+				inactiveIcon = activeIcon
+			end
+
 			rootMenu:AddEntry(name, inactiveIcon, activeIcon, function() self:OnSelectionExecutionCallback(data) end, data)
 		else
 			name = L(SI_QUICKSLOTS_EMPTY)

@@ -357,6 +357,7 @@ local function OnSlotIdSelectionChanged(newSlotId)
 	CSPM_UI_ActionValueEditbox:UpdateValue()
 	CSPM_UI_ActionValueEditbox:UpdateDisabled()
 	CSPM_UI_SlotNameEditbox:UpdateValue()
+	CSPM_UI_SlotIconEditbox:UpdateValue()
 end
 
 local function OnActionTypeSelectionChanged(newActionTypeId)
@@ -371,6 +372,10 @@ local function OnActionTypeSelectionChanged(newActionTypeId)
 	CSPM_UI_ActionValueMenu:UpdateValue(true)
 	-- According to the design policy, the slot name override setting is also initialized.
 	CSPM_UI_SlotNameEditbox:UpdateValue(true)
+	-- According to the design policy, the slot icon override setting is only initialized when the action type is set to 'unselected'.
+	if newActionTypeId == CSPM_ACTION_TYPE_NOTHING then
+		CSPM_UI_SlotIconEditbox:UpdateValue(true)
+	end
 end
 
 local function OnCategorySelectionChanged(newCategoryId)
@@ -383,6 +388,8 @@ local function OnCategorySelectionChanged(newCategoryId)
 	CSPM_UI_ActionValueMenu:UpdateValue(true)
 	-- According to the design policy, the slot name override setting is also initialized.
 	CSPM_UI_SlotNameEditbox:UpdateValue(true)
+	-- According to the design policy, the slot icon override setting will not be initialized when the category is changed.
+	-- CSPM_UI_SlotIconEditbox:UpdateValue(true)
 end
 
 local function OnActionValueSelectionChanged(newActionValue)
@@ -390,6 +397,8 @@ local function OnActionValueSelectionChanged(newActionValue)
 	CSPM.db.preset[uiPresetId].slot[uiSlotId].value = newActionValue
 	-- According to the design policy, the slot name override setting is initialized.
 	CSPM_UI_SlotNameEditbox:UpdateValue(true)
+	-- According to the design policy, the slot icon override setting will not be initialized when the action value is changed.
+	-- CSPM_UI_SlotIconEditbox:UpdateValue(true)
 end
 
 local function OnActionValueEditboxChanged(newActionValueString)
@@ -416,6 +425,15 @@ local function OnSlotNameEditboxChanged(newSlotName)
 	end
 
 	UpdateSlotDisplayNameTableForSpecificSlot(uiSlotId)
+end
+
+local function OnSlotIconEditboxChanged(newSlotIcon)
+	CSPM.LDL:Debug("OnSlotIconEditboxChanged : %s", newSlotIcon)
+	if newSlotIcon == "" then
+		CSPM.db.preset[uiPresetId].slot[uiSlotId].icon = nil
+	else
+		CSPM.db.preset[uiPresetId].slot[uiSlotId].icon = newSlotIcon
+	end
 end
 
 local function DoTestButton()
@@ -934,6 +952,21 @@ function CSPM:CreateMenuEditorPanel()
 --		isDangerous = false, 
 --		warning = "Will need to reload the UI.", -- (optional)
 --		reference = "CSPM_UI_GetSlotNameButton", 
+	}
+	optionsData[#optionsData + 1] = {
+		type = "editbox", 
+		name = L(SI_CSPM_UI_VISUAL_SLOT_ICON_OVERRIDE_NAME), 
+		tooltip = L(SI_CSPM_UI_VISUAL_SLOT_ICON_OVERRIDE_TIPS), 
+		getFunc = function() return CSPM.db.preset[uiPresetId].slot[uiSlotId].icon end, 
+		setFunc = OnSlotIconEditboxChanged, 
+		isMultiline = false, 
+		isExtraWide = false, 
+		maxChars = 1999, 
+--		textType = TEXT_TYPE_NUMERIC, -- number (optional) or function returning a number. Valid TextType numbers: TEXT_TYPE_ALL, TEXT_TYPE_ALPHABETIC, TEXT_TYPE_ALPHABETIC_NO_FULLWIDTH_LATIN, TEXT_TYPE_NUMERIC, TEXT_TYPE_NUMERIC_UNSIGNED_INT, TEXT_TYPE_PASSWORD
+		width = "full", 
+--		disabled = true, 
+		default = "", 
+		reference = "CSPM_UI_SlotIconEditbox", 
 	}
 --[[
 	optionsData[#optionsData + 1] = {

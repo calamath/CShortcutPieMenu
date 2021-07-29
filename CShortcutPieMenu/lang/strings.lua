@@ -73,6 +73,8 @@ local strings = {
 	SI_CSPM_UI_VISUAL_SLOT_NAME_OVERRIDE_TIPS =		"Adjust the name of this slot. (optional)", 
 	SI_CSPM_UI_DEFAULT_SLOT_NAME_BUTTON_NAME =		"Default Name", 
 	SI_CSPM_UI_DEFAULT_SLOT_NAME_BUTTON_TIPS =		"Insert the default slot name corresponding to the selected action in the edit box above.", 
+	SI_CSPM_UI_VISUAL_SLOT_ICON_OVERRIDE_NAME =		"Slot Icon Override", 
+	SI_CSPM_UI_VISUAL_SLOT_ICON_OVERRIDE_TIPS =		"Adjust the icon of this slot. Enter the full pathname of an icon image file starting with Esoui to replace the icon. (optional)", 
 
 	SI_CSPM_UI_VISUAL_PRESET_NAME_OVERRIDE_NAME =	"Preset Name Override", 
 	SI_CSPM_UI_VISUAL_PRESET_NAME_OVERRIDE_TIPS =	"Adjust the name of this preset. (optional)", 

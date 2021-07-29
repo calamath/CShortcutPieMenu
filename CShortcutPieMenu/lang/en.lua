@@ -75,6 +75,8 @@ SafeAddString(SI_CSPM_UI_VISUAL_SLOT_NAME_OVERRIDE_NAME,	"Slot Name Override", 1
 SafeAddString(SI_CSPM_UI_VISUAL_SLOT_NAME_OVERRIDE_TIPS,	"Adjust the name of this slot. (optional)", 1)
 SafeAddString(SI_CSPM_UI_DEFAULT_SLOT_NAME_BUTTON_NAME,		"Default Name", 1)
 SafeAddString(SI_CSPM_UI_DEFAULT_SLOT_NAME_BUTTON_TIPS,		"Insert the default slot name corresponding to the selected action in the edit box above.", 1)
+SafeAddString(SI_CSPM_UI_VISUAL_SLOT_ICON_OVERRIDE_NAME,	"Slot Icon Override", 1)
+SafeAddString(SI_CSPM_UI_VISUAL_SLOT_ICON_OVERRIDE_TIPS,	"Adjust the icon of this slot. Enter the full pathname of an icon image file starting with Esoui to replace the icon. (optional)", 1)
 
 SafeAddString(SI_CSPM_UI_VISUAL_PRESET_NAME_OVERRIDE_NAME,	"Preset Name Override", 1)
 SafeAddString(SI_CSPM_UI_VISUAL_PRESET_NAME_OVERRIDE_TIPS,	"Adjust the name of this preset. (optional)", 1)
