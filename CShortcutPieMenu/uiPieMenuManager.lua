@@ -28,6 +28,7 @@ local CSPM_UI_RESET								= CSPM.const.CSPM_UI_RESET
 local CSPM_UI_PREVIEW							= CSPM.const.CSPM_UI_PREVIEW
 local CSPM_UI_SELECT							= CSPM.const.CSPM_UI_SELECT
 local CSPM_UI_CANCEL							= CSPM.const.CSPM_UI_CANCEL
+local CSPM_UI_EXECUTE							= CSPM.const.CSPM_UI_EXECUTE
 
 local CSPM_MAX_USER_PRESET						= CSPM.const.CSPM_MAX_USER_PRESET
 local CSPM_MENU_ITEMS_COUNT_DEFAULT				= CSPM.const.CSPM_MENU_ITEMS_COUNT_DEFAULT
@@ -37,6 +38,7 @@ local CSPM_ACTION_TYPE_EMOTE					= CSPM.const.CSPM_ACTION_TYPE_EMOTE
 local CSPM_ACTION_TYPE_CHAT_COMMAND				= CSPM.const.CSPM_ACTION_TYPE_CHAT_COMMAND
 local CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE			= CSPM.const.CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE
 local CSPM_ACTION_TYPE_PIE_MENU					= CSPM.const.CSPM_ACTION_TYPE_PIE_MENU
+local CSPM_ACTION_TYPE_SHORTCUT					= CSPM.const.CSPM_ACTION_TYPE_SHORTCUT
 local CSPM_CATEGORY_NOTHING						= CSPM.const.CSPM_CATEGORY_NOTHING
 local CSPM_CATEGORY_IMMEDIATE_VALUE				= CSPM.const.CSPM_CATEGORY_IMMEDIATE_VALUE
 local CSPM_CATEGORY_C_ASSISTANT					= CSPM.const.CSPM_CATEGORY_C_ASSISTANT
@@ -59,6 +61,11 @@ local CSPM_CATEGORY_E_COLLECTED					= CSPM.const.CSPM_CATEGORY_E_COLLECTED
 local CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE		= CSPM.const.CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE
 local CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE	= CSPM.const.CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE
 local CSPM_CATEGORY_P_OPEN_USER_PIE_MENU		= CSPM.const.CSPM_CATEGORY_P_OPEN_USER_PIE_MENU
+local CSPM_CATEGORY_P_OPEN_EXTERNAL_PIE_MENU	= CSPM.const.CSPM_CATEGORY_P_OPEN_EXTERNAL_PIE_MENU
+local CSPM_CATEGORY_S_PIE_MENU_ADDON			= CSPM.const.CSPM_CATEGORY_S_PIE_MENU_ADDON
+local CSPM_CATEGORY_S_MAIN_MENU					= CSPM.const.CSPM_CATEGORY_S_MAIN_MENU
+local CSPM_CATEGORY_S_SYSTEM_MENU				= CSPM.const.CSPM_CATEGORY_S_SYSTEM_MENU
+local CSPM_CATEGORY_S_USEFUL_SHORTCUT			= CSPM.const.CSPM_CATEGORY_S_USEFUL_SHORTCUT
 local CSPM_ACTION_VALUE_PRIMARY_HOUSE_ID		= CSPM.const.CSPM_ACTION_VALUE_PRIMARY_HOUSE_ID
 
 local CSPM_SLOT_DATA_DEFAULT 					= CSPM.const.CSPM_SLOT_DATA_DEFAULT
@@ -68,6 +75,7 @@ local CSPM_SLOT_DATA_DEFAULT 					= CSPM.const.CSPM_SLOT_DATA_DEFAULT
 local CSPM_LUT_CATEGORY_C_CSPM_TO_ZOS			= CSPM.lut.CSPM_LUT_CATEGORY_C_CSPM_TO_ZOS
 local CSPM_LUT_CATEGORY_E_CSPM_TO_ZOS			= CSPM.lut.CSPM_LUT_CATEGORY_E_CSPM_TO_ZOS
 local CSPM_LUT_CATEGORY_E_CSPM_TO_ICON			= CSPM.lut.CSPM_LUT_CATEGORY_E_CSPM_TO_ICON
+local CSPM_LUT_ACTION_TYPE_API_STRINGS			= CSPM.lut.CSPM_LUT_ACTION_TYPE_API_STRINGS
 
 
 -- Library
@@ -81,28 +89,45 @@ local ui = ui or {}
 local function DoSetupDefault(slotId)
 end
 
-local function GetPresetDisplayNameByPresetId(presetId)
-	local presetName = table.concat({ L(SI_CSPM_COMMON_PRESET), " ", presetId, })
-	local presetInfo = CSPM:GetPresetInfo(presetId)
-	if presetInfo then
-		if presetInfo.name ~= "" then
-			presetName = table.concat({ presetName, " : ", presetInfo.name, })
+local function GetTableKeyForValue(luaTable, value)
+	for k, v in pairs(luaTable) do
+		if v == value then 
+			return k
 		end
-	else
-		presetName = table.concat({ presetName, " : ", L(SI_CSPM_COMMON_UNREGISTERED), })
 	end
-	return presetName
+	return
 end
 
-local function RefreshPanelDueToPresetInfoChange(presetId)
--- This function assumes that the presetInfo table has just changed.
-	CSPM.LDL:Debug("RefreshManagerPanelDueToPresetInfoChange : ", presetId)
+local function GetPresetDisplayNameByPresetId(presetId)
+	local name
+	local pieMenuName = CSPM:GetPieMenuInfo(presetId)
+	if CSPM:IsUserPieMenu(presetId) then
+		if CSPM:DoesPieMenuDataExist(presetId) then
+			if pieMenuName ~= "" then
+				name = zo_strformat(L(SI_CSPM_PRESET_NAME_FORMATTER), presetId, pieMenuName)
+			else
+				name = ZO_CachedStrFormat(L(SI_CSPM_PRESET_NO_NAME_FORMATTER), presetId)
+			end
+		else
+			name = ZO_CachedStrFormat(L(SI_CSPM_PRESET_NAME_FORMATTER), presetId, L(SI_CSPM_COMMON_UNREGISTERED))
+		end
+	else
+		name = pieMenuName
+	end
+	return name
+end
 
-	-- NOTE : Since the preset info table has been changed, the preset selection choices will also be updated here.
-	local presetInfo = CSPM:GetPresetInfo(presetId)
-	if presetInfo then
+local function RefreshPanel_OnPieMenuInfoUpdated(presetId)
+-- This function assumes that the preset attribute information in the user pie menu has just changed.
+	CSPM.LDL:Debug("RefreshManagerPanel-OnPieMenuInfoUpdated : ", presetId)
+
+	-- NOTE : the preset selection choices will also be updated here.
+	if CSPM:IsUserPieMenu(presetId) then
 		ui.presetChoices[presetId] = GetPresetDisplayNameByPresetId(presetId)
-		ui.presetChoicesTooltips[presetId] = presetInfo.tooltip or ""
+	else
+		local key = GetTableKeyForValue(ui.presetChoicesValues, presetId)
+		if not key then return end
+		ui.presetChoices[key] = GetPresetDisplayNameByPresetId(presetId)
 	end
 	if ui.panelInitialized then
 		CSPM_UI_MAN_PresetSelectMenuKeybinds1:UpdateChoices(ui.presetChoices, ui.presetChoicesValues, ui.presetChoicesTooltips)
@@ -121,18 +146,18 @@ end
 local function RebuildPresetSelectionChoices()
 	local choices = {}
 	local choicesValues = {}
-	local choicesTooltips = {}
 	for i = 1, CSPM_MAX_USER_PRESET do
 		choices[i] = GetPresetDisplayNameByPresetId(i)
 		choicesValues[i] = i
-		presetInfo = CSPM:GetPresetInfo(i)
-		if presetInfo then
-			choicesTooltips[i] = presetInfo.tooltip or ""
-		else
-			choicesTooltips[i] = ""
-		end
 	end
-	return choices, choicesValues, choicesTooltips
+
+	local externalPieMenuList = CSPM:GetExternalPieMenuList()
+	for _, presetId in pairs(externalPieMenuList) do
+		choices[#choices + 1] = GetPresetDisplayNameByPresetId(presetId)
+		choicesValues[#choicesValues + 1] = presetId
+	end
+	-- In overridden custom tooltip functions, the ChoicesTooltips table uses the presetId value instead of a string.
+	return choices, choicesValues, choicesValues
 end
 
 local function DoTestButton()
@@ -142,13 +167,29 @@ local function OnLAMPanelControlsCreated(panel)
 	if (panel ~= ui.panel) then return end
 	CALLBACK_MANAGER:UnregisterCallback("LAM-PanelControlsCreated", OnLAMPanelControlsCreated)
 
+	-- override ScrollableDropdownHelper for CSPM_UI_MAN_PresetSelectMenuKeybindsX to customize dropdown choices tooltips
+	for i = 1, 5 do
+			_G["CSPM_UI_MAN_PresetSelectMenuKeybinds" .. i].scrollHelper.OnMouseEnter = function(self, control)
+				if control.m_data.tooltip then
+					CSPM.util.LayoutSlotActionTooltip(CSPM_ACTION_TYPE_PIE_MENU, CSPM_CATEGORY_NOTHING, control.m_data.tooltip, CSPM_UI_NONE)
+					CSPM.util.ShowSlotActionTooltip(CSPM_ACTION_TYPE_PIE_MENU, control, TOPLEFT, 0, 0, BOTTOMRIGHT)
+				end
+			end
+			_G["CSPM_UI_MAN_PresetSelectMenuKeybinds" .. i].scrollHelper.OnMouseExit = function(self, control)
+				if control.m_data.tooltip then
+					CSPM.util.HideSlotActionTooltip()
+				end
+			end
+		
+	end
+
 	ui.panelInitialized = true
 end
 
 function CSPM:InitializeManagerUI()
 	ui.panelInitialized = false
 	ui.presetChoices, ui.presetChoicesValues, ui.presetChoicesTooltips = RebuildPresetSelectionChoices()
-	CALLBACK_MANAGER:RegisterCallback("CSPM-UserPresetInfoUpdated", RefreshPanelDueToPresetInfoChange)
+	CALLBACK_MANAGER:RegisterCallback("CSPM-UserPieMenuInfoUpdated", RefreshPanel_OnPieMenuInfoUpdated)
 end
 
 function CSPM:CreateManagerPanel()
@@ -159,6 +200,8 @@ function CSPM:CreateManagerPanel()
 		author = CSPM.author, 
 		version = CSPM.version, 
 		website = "https://www.esoui.com/downloads/info3088-CalamathsShortcutPieMenu.html", 
+		feedback = "https://www.esoui.com/downloads/info3088-CalamathsShortcutPieMenu.html#comments", 
+		donation = "https://www.esoui.com/downloads/info3088-CalamathsShortcutPieMenu.html#donate", 
 		slashCommand = "/cspm", 
 		registerForRefresh = true, 
 		registerForDefaults = true, 
@@ -302,7 +345,7 @@ function CSPM:CreateManagerPanel()
 		name = L(SI_CSPM_UI_BEHAVIOR_CLICKABLE_OP_NAME), 
 		getFunc = function() return CSPM.svCurrent.allowClickable end, 
 		setFunc = function(newValue) CSPM.svCurrent.allowClickable = newValue end, 
-		tooltip = L(SI_CSPM_UI_BEHAVIOR_CLICKABLE_OP_TIPS), 
+		tooltip = ZO_CachedStrFormat(L(SI_CSPM_UI_BEHAVIOR_CLICKABLE_OP_TIPS), ZO_Keybindings_GenerateIconKeyMarkup(KEY_MOUSE_LEFT, 125), ZO_Keybindings_GenerateIconKeyMarkup(KEY_GAMEPAD_BUTTON_1, 125), "", ZO_Keybindings_GenerateIconKeyMarkup(KEY_MOUSE_RIGHT, 125), ZO_Keybindings_GenerateIconKeyMarkup(KEY_GAMEPAD_BUTTON_2, 125), ZO_Keybindings_GenerateTextKeyMarkup("ESC")), 
 		width = "full", 
 		default = true, 
 	}

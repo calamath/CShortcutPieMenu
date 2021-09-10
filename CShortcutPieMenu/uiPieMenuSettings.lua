@@ -28,6 +28,7 @@ local CSPM_UI_RESET								= CSPM.const.CSPM_UI_RESET
 local CSPM_UI_PREVIEW							= CSPM.const.CSPM_UI_PREVIEW
 local CSPM_UI_SELECT							= CSPM.const.CSPM_UI_SELECT
 local CSPM_UI_CANCEL							= CSPM.const.CSPM_UI_CANCEL
+local CSPM_UI_EXECUTE							= CSPM.const.CSPM_UI_EXECUTE
 
 local CSPM_MAX_USER_PRESET						= CSPM.const.CSPM_MAX_USER_PRESET
 local CSPM_MENU_ITEMS_COUNT_DEFAULT				= CSPM.const.CSPM_MENU_ITEMS_COUNT_DEFAULT
@@ -37,6 +38,7 @@ local CSPM_ACTION_TYPE_EMOTE					= CSPM.const.CSPM_ACTION_TYPE_EMOTE
 local CSPM_ACTION_TYPE_CHAT_COMMAND				= CSPM.const.CSPM_ACTION_TYPE_CHAT_COMMAND
 local CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE			= CSPM.const.CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE
 local CSPM_ACTION_TYPE_PIE_MENU					= CSPM.const.CSPM_ACTION_TYPE_PIE_MENU
+local CSPM_ACTION_TYPE_SHORTCUT					= CSPM.const.CSPM_ACTION_TYPE_SHORTCUT
 local CSPM_CATEGORY_NOTHING						= CSPM.const.CSPM_CATEGORY_NOTHING
 local CSPM_CATEGORY_IMMEDIATE_VALUE				= CSPM.const.CSPM_CATEGORY_IMMEDIATE_VALUE
 local CSPM_CATEGORY_C_ASSISTANT					= CSPM.const.CSPM_CATEGORY_C_ASSISTANT
@@ -59,6 +61,11 @@ local CSPM_CATEGORY_E_COLLECTED					= CSPM.const.CSPM_CATEGORY_E_COLLECTED
 local CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE		= CSPM.const.CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE
 local CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE	= CSPM.const.CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE
 local CSPM_CATEGORY_P_OPEN_USER_PIE_MENU		= CSPM.const.CSPM_CATEGORY_P_OPEN_USER_PIE_MENU
+local CSPM_CATEGORY_P_OPEN_EXTERNAL_PIE_MENU	= CSPM.const.CSPM_CATEGORY_P_OPEN_EXTERNAL_PIE_MENU
+local CSPM_CATEGORY_S_PIE_MENU_ADDON			= CSPM.const.CSPM_CATEGORY_S_PIE_MENU_ADDON
+local CSPM_CATEGORY_S_MAIN_MENU					= CSPM.const.CSPM_CATEGORY_S_MAIN_MENU
+local CSPM_CATEGORY_S_SYSTEM_MENU					= CSPM.const.CSPM_CATEGORY_S_SYSTEM_MENU
+local CSPM_CATEGORY_S_USEFUL_SHORTCUT			= CSPM.const.CSPM_CATEGORY_S_USEFUL_SHORTCUT
 local CSPM_ACTION_VALUE_PRIMARY_HOUSE_ID		= CSPM.const.CSPM_ACTION_VALUE_PRIMARY_HOUSE_ID
 
 local CSPM_SLOT_DATA_DEFAULT 					= CSPM.const.CSPM_SLOT_DATA_DEFAULT
@@ -68,6 +75,7 @@ local CSPM_SLOT_DATA_DEFAULT 					= CSPM.const.CSPM_SLOT_DATA_DEFAULT
 local CSPM_LUT_CATEGORY_C_CSPM_TO_ZOS			= CSPM.lut.CSPM_LUT_CATEGORY_C_CSPM_TO_ZOS
 local CSPM_LUT_CATEGORY_E_CSPM_TO_ZOS			= CSPM.lut.CSPM_LUT_CATEGORY_E_CSPM_TO_ZOS
 local CSPM_LUT_CATEGORY_E_CSPM_TO_ICON			= CSPM.lut.CSPM_LUT_CATEGORY_E_CSPM_TO_ICON
+local CSPM_LUT_ACTION_TYPE_API_STRINGS			= CSPM.lut.CSPM_LUT_ACTION_TYPE_API_STRINGS
 
 
 -- Library
@@ -84,31 +92,32 @@ local function DoSetupDefault(slotId)
 end
 
 local function GetPresetDisplayNameByPresetId(presetId)
-	local presetName = table.concat({ L(SI_CSPM_COMMON_PRESET), " ", presetId, })
-	local presetInfo = CSPM:GetPresetInfo(presetId)
-	if presetInfo then
-		if presetInfo.name ~= "" then
-			presetName = table.concat({ presetName, " : ", presetInfo.name, })
+	local name
+	local pieMenuName = CSPM:GetPieMenuInfo(presetId)
+	if CSPM:IsUserPieMenu(presetId) then
+		if CSPM:DoesPieMenuDataExist(presetId) then
+			if pieMenuName ~= "" then
+				name = zo_strformat(L(SI_CSPM_PRESET_NAME_FORMATTER), presetId, pieMenuName)
+			else
+				name = ZO_CachedStrFormat(L(SI_CSPM_PRESET_NO_NAME_FORMATTER), presetId)
+			end
+		else
+			name = ZO_CachedStrFormat(L(SI_CSPM_PRESET_NAME_FORMATTER), presetId, L(SI_CSPM_COMMON_UNREGISTERED))
 		end
 	else
-		presetName = table.concat({ presetName, " : ", L(SI_CSPM_COMMON_UNREGISTERED), })
+		name = pieMenuName
 	end
-	return presetName
+	return name
 end
 
-local function RefreshPanelDueToPresetInfoChange(presetId)
--- This function assumes that the presetInfo table has just changed.
-	CSPM.LDL:Debug("RefreshEditorPanelDueToPresetInfoChange : ", presetId)
-	if type(presetId) ~= "number" then return end
+local function RefreshPanel_OnUserPieMenuInfoUpdated(presetId)
+-- This function assumes that the preset attribute information in the user pie menu has just changed.
+	if not CSPM:IsUserPieMenu(presetId) then return end
+	CSPM.LDL:Debug("RefreshEditorPanel-OnUserPieMenuInfoUpdated : ", presetId)
 
-	-- NOTE : Since the preset info table has been changed, the preset selection choices and the preset name submenu header will also be updated here.
-	local presetInfo = CSPM:GetPresetInfo(presetId)
-	if presetInfo then
-		ui.presetChoices[presetId] = GetPresetDisplayNameByPresetId(presetId)
-		ui.presetChoicesTooltips[presetId] = presetInfo.tooltip or ""
-		ui.actionValueChoices[CSPM_CATEGORY_P_OPEN_USER_PIE_MENU][presetId] = ui.presetChoices[presetId]
-		ui.actionValueChoicesTooltips[CSPM_CATEGORY_P_OPEN_USER_PIE_MENU][presetId] = ui.presetChoicesTooltips[presetId]
-	end
+	-- NOTE : the user preset selection choices and the preset name submenu header for the user pie menu will also be updated here.
+	ui.presetChoices[presetId] = GetPresetDisplayNameByPresetId(presetId)
+	ui.actionValueChoices[CSPM_CATEGORY_P_OPEN_USER_PIE_MENU][presetId] = ui.presetChoices[presetId]
 	if ui.panelInitialized then
 		CSPM_UI_PresetSelectMenu:UpdateChoices(ui.presetChoices, ui.presetChoicesValues, ui.presetChoicesTooltips)
 		CSPM_UI_PresetSelectMenu:UpdateValue()		-- Note : When called with no arguments, getFunc will be called, and setFunc will NOT be called.
@@ -126,53 +135,27 @@ local function RefreshPanelDueToPresetInfoChange(presetId)
 	end
 end
 
-local function RebuildPresetSelectionChoices()
+local function RebuildUserPieMenuPresetSelectionChoices()
 	local choices = {}
 	local choicesValues = {}
-	local choicesTooltips = {}
 	for i = 1, CSPM_MAX_USER_PRESET do
 		choices[i] = GetPresetDisplayNameByPresetId(i)
 		choicesValues[i] = i
-		presetInfo = CSPM:GetPresetInfo(i)
-		if presetInfo then
-			choicesTooltips[i] = presetInfo.tooltip or ""
-		else
-			choicesTooltips[i] = ""
-		end
 	end
-	return choices, choicesValues, choicesTooltips
+	return choices, choicesValues, choicesValues
+	-- In overridden custom tooltip functions, the ChoicesTooltips table uses the presetId value instead of a string.
 end
 
-local function GetDefaultSlotName(actionTypeId, categoryId, actionValue)
-	local slotName = ""
-	if actionTypeId == CSPM_ACTION_TYPE_COLLECTIBLE then
-		slotName = ZO_CachedStrFormat("<<1>>", GetCollectibleName(actionValue or ""))
-	elseif actionTypeId == CSPM_ACTION_TYPE_EMOTE then
-		local emoteItemInfo = PLAYER_EMOTE_MANAGER:GetEmoteItemInfo(actionValue)
-		slotName = ZO_CachedStrFormat("<<1>>", emoteItemInfo and emoteItemInfo.displayName or "")
-	elseif actionTypeId == CSPM_ACTION_TYPE_CHAT_COMMAND then
-		slotName = actionValue
-	elseif actionTypeId == CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE then
-		local houseName
-		if actionValue == CSPM_ACTION_VALUE_PRIMARY_HOUSE_ID then
-			houseName = L(SI_HOUSING_FURNITURE_SETTINGS_GENERAL_PRIMARY_RESIDENCE_TEXT)		-- "Primary Residence"
-		else
-			houseName = GetCollectibleName(GetCollectibleIdForHouse(actionValue))
-		end
-		if actionValue ~= 0 then
-			if categoryId == CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE then
-				slotName = ZO_CachedStrFormat(L(SI_GAMEPAD_WORLD_MAP_TRAVEL_TO_HOUSE_INSIDE), houseName)		-- "<<1>> (inside)"
-			elseif categoryId == CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE then
-				slotName = ZO_CachedStrFormat(L(SI_GAMEPAD_WORLD_MAP_TRAVEL_TO_HOUSE_OUTSIDE), houseName)		-- "<<1>> (outside)"
-			end
-		end
-	elseif actionTypeId == CSPM_ACTION_TYPE_PIE_MENU then
-		if actionValue ~= 0 then
-			slotName = ZO_CachedStrFormat(L("SI_CSPM_COMMON_UI_ACTION", CSPM_UI_OPEN), L(SI_CSPM_COMMON_PRESET), actionValue)
-		end
+local function RebuildExternalPieMenuPresetSelectionChoices()
+	local choices = {}
+	local choicesValues = {}
+	local externalPieMenuList = CSPM:GetExternalPieMenuList()
+	for _, presetId in pairs(externalPieMenuList) do
+		choices[#choices + 1] = GetPresetDisplayNameByPresetId(presetId)
+		choicesValues[#choicesValues + 1] = presetId
 	end
---	CSPM.LDL:Debug("SlotName : ", tostring(slotName))
-	return slotName
+	return choices, choicesValues, choicesValues
+	-- In overridden custom tooltip functions, the ChoicesTooltips table uses the presetId value instead of a string.
 end
 
 local function GetSlotDisplayNameBySlotId(slotId)
@@ -182,7 +165,7 @@ local function GetSlotDisplayNameBySlotId(slotId)
 		if type(savedSlotData.name) == "string" and savedSlotData.name ~= "" then
 			slotName = savedSlotData.name
 		else
-			slotName = GetDefaultSlotName(savedSlotData.type, savedSlotData.category, savedSlotData.value)
+			slotName = CSPM.util.GetDefaultSlotName(savedSlotData.type, savedSlotData.category, savedSlotData.value)
 		end
 	end
 	if slotName == "" then
@@ -191,12 +174,12 @@ local function GetSlotDisplayNameBySlotId(slotId)
 	return slotName
 end
 
-local function RefreshPanelDueToSlotDisplayNameChange()
+local function RefreshPanel_OnSlotDisplayNameChanged()
 -- This function assumes that the slot display name of the currently open preset and slot has just changed.
-	CSPM.LDL:Debug("RefreshEditorPanelDueToSlotDisplayNameChange : ")
+	CSPM.LDL:Debug("RefreshEditorPanel-OnSlotDisplayNameChanged : ")
 	
 	-- NOTE : Since the slot display name has been changed, the slot selection choices and the slot name tab header will also be updated here.
-	ui.slotChoices[uiSlotId] = ZO_CachedStrFormat(L(SI_CSPM_COMMON_UI_FORMATTER), L(SI_CSPM_COMMON_SLOT), uiSlotId, ":", ui.slotDisplayName[uiSlotId] or L(SI_CSPM_COMMON_UNREGISTERED))
+	ui.slotChoices[uiSlotId] = zo_strformat(L(SI_CSPM_SLOT_NAME_FORMATTER), uiSlotId, ui.slotDisplayName[uiSlotId] or L(SI_CSPM_COMMON_UNREGISTERED))
 	CSPM_UI_SlotSelectMenu:UpdateChoices(ui.slotChoices, ui.slotChoicesValues)
 	CSPM_UI_SlotSelectMenu:UpdateValue()		-- Note : When called with no arguments, getFunc will be called, and setFunc will NOT be called.
 
@@ -207,16 +190,16 @@ end
 local function UpdateSlotDisplayNameTableForSpecificSlot(slotId)
 	ui.slotDisplayName[slotId] = GetSlotDisplayNameBySlotId(slotId)
 	if slotId == uiSlotId then
-		RefreshPanelDueToSlotDisplayNameChange()
+		RefreshPanel_OnSlotDisplayNameChanged()
 	end
 end
 
 local function RebuildSlotDisplayNameTable(presetId)
 	presetId = presetId or uiPresetId
 	local displayNameTable = {}
-	local savedPresetData = CSPM:GetMenuPresetData(presetId)
-	if not savedPresetData then return end
-	for i = 1, savedPresetData.menuItemsCount do
+	local presetData = CSPM:GetUserPieMenuConfigDataDB(presetId)
+	if not presetData then return end
+	for i = 1, presetData.menuItemsCount do
 		displayNameTable[i] = GetSlotDisplayNameBySlotId(i)
 	end
 	return displayNameTable
@@ -226,7 +209,7 @@ local function RebuildSlotSelectionChoices(menuItemsCount)
 	local choices = {}
 	local choicesValues = {}
 	for i = 1, menuItemsCount do
-		choices[i] = ZO_CachedStrFormat(L(SI_CSPM_COMMON_UI_FORMATTER), L(SI_CSPM_COMMON_SLOT), i, ":", ui.slotDisplayName[i] or L(SI_CSPM_COMMON_UNREGISTERED))
+		choices[i] = zo_strformat(L(SI_CSPM_SLOT_NAME_FORMATTER), i, ui.slotDisplayName[i] or L(SI_CSPM_COMMON_UNREGISTERED))
 		choicesValues[i] = i
 	end
 	return choices, choicesValues
@@ -241,7 +224,7 @@ local function RebuildCollectibleSelectionChoicesByCategoryType(categoryId, unlo
 		for index = 1, GetTotalCollectiblesByCategoryType(categoryId) do
 			local collectibleId = GetCollectibleIdFromType(categoryId, index)
 			if not unlockedOnly or IsCollectibleUnlocked(collectibleId) then
-				choices[#choices + 1] = ZO_CachedStrFormat("<<1>>", GetCollectibleName(collectibleId))
+				choices[#choices + 1] = ZO_CachedStrFormat(L(SI_CSPM_COMMON_FORMATTER), GetCollectibleName(collectibleId))
 				choicesValues[#choicesValues + 1] = collectibleId
 			end
 		end
@@ -254,26 +237,28 @@ local function RebuildEmoteSelectionChoicesByEmoteCategory(emoteCategory)
 	local choices = {}
 	local choicesValues = PLAYER_EMOTE_MANAGER:GetEmoteListForType(emoteCategory) or {}
 	for k, emoteId in pairs(choicesValues) do
-		choices[#choices + 1] = ZO_CachedStrFormat("<<1>>", PLAYER_EMOTE_MANAGER:GetEmoteItemInfo(emoteId).displayName)
+		choices[#choices + 1] = ZO_CachedStrFormat(L(SI_CSPM_COMMON_FORMATTER), PLAYER_EMOTE_MANAGER:GetEmoteItemInfo(emoteId).displayName)
 	end
 	-- In overridden custom tooltip functions, the ChoicesTooltips table uses the emoteId value instead of a string.
 	return choices, choicesValues, choicesValues
 end
 
-local function RebuildHouseSelectionChoices(unlockedOnly)
+local function RebuildHouseSelectionChoices(unlockedOnly, includePrimaryHouse)
 --	unlockedOnly : return only the unlocked ones or the whole set
+--	includePrimaryHouse : whether to include the primary house
 	local choices = {}
 	local choicesValues = {}
-	local currentPrimaryHouseId = GetHousingPrimaryHouse()
-	unlockedOnly = unlockedOnly or false
-	if currentPrimaryHouseId ~= 0 then
-		choices[#choices + 1] = 		L(SI_HOUSING_FURNITURE_SETTINGS_GENERAL_PRIMARY_RESIDENCE_TEXT) -- Primary Residence
+	unlockedOnly = unlockedOnly or false	-- nil should be false
+	includePrimaryHouse = includePrimaryHouse ~= false	-- nil should be true
+
+	if includePrimaryHouse then
+		choices[#choices + 1] = ZO_CachedStrFormat(L(SI_CSPM_PARENTHESES_FORMATTER), L(SI_HOUSING_FURNITURE_SETTINGS_GENERAL_PRIMARY_RESIDENCE_TEXT))	-- Primary Residence
 		choicesValues[#choicesValues + 1] = CSPM_ACTION_VALUE_PRIMARY_HOUSE_ID
 	end
 	for index = 1, GetTotalCollectiblesByCategoryType(COLLECTIBLE_CATEGORY_TYPE_HOUSE) do
 		local collectibleId = GetCollectibleIdFromType(COLLECTIBLE_CATEGORY_TYPE_HOUSE, index)
 		if not unlockedOnly or IsCollectibleUnlocked(collectibleId) then
-			choices[#choices + 1] = ZO_CachedStrFormat("<<1>>", GetCollectibleName(collectibleId))
+			choices[#choices + 1] = ZO_CachedStrFormat(L(SI_CSPM_COMMON_FORMATTER), GetCollectibleName(collectibleId))
 			choicesValues[#choicesValues + 1] = GetCollectibleReferenceId(collectibleId)
 		end
 	end
@@ -281,6 +266,16 @@ local function RebuildHouseSelectionChoices(unlockedOnly)
 	return choices, choicesValues, choicesValues
 end
 
+local function RebuildShortcutSelectionChoicesByCategory(categoryId)
+	local choices = {}
+	local choicesValues = CSPM:GetShortcutListByCategory(categoryId) or {}
+	for k, v in ipairs(choicesValues) do
+		local name = CSPM:GetShortcutInfo(v)
+		choices[k] = name or ""
+	end
+	-- In overridden custom tooltip functions, the ChoicesTooltips table uses the shortcutId value instead of a string.
+	return choices, choicesValues, choicesValues
+end
 
 local function ChangePanelSlotState(slotId)
 	CSPM.LDL:Debug("ChangePanelSlotState : %s", slotId)
@@ -297,9 +292,9 @@ end
 local function OnPresetIdSelectionChanged(newPresetId)
 	CSPM.LDL:Debug("OnPresetIdSelectionChanged : %s", newPresetId)
 
-	if not CSPM:DoesMenuPresetDataExist(newPresetId) then
+	if not CSPM:DoesUserPieMenuConfigDataExist(newPresetId) then
 --		d("[CSPM] fatal error : preset data not found, so extend !")
-		CSPM:CreateMenuPresetData(newPresetId)
+		CSPM:CreateUserPieMenuConfigDataDB(newPresetId)
 	end
 
 	-- update preset tab
@@ -334,7 +329,7 @@ local function OnSlotIdSelectionChanged(newSlotId)
 
 	if not CSPM:DoesMenuSlotDataExist(uiPresetId, newSlotId) then
 --		d("[CSPM] fatal error : slot data not found, so extend !")
-		CSPM:ExtendMenuSlotDataSet(uiPresetId, newSlotId)
+		CSPM:ExtendMenuItemsCountForUserPieMenuConfigDataDB(uiPresetId, newSlotId)
 	end
 	local savedSlotData = CSPM:GetMenuSlotData(uiPresetId, newSlotId)
 	if not savedSlotData then d("[CSPM] fatal error : slot data not found") return end
@@ -444,42 +439,16 @@ local function OnLAMPanelControlsCreated(panel)
 	CALLBACK_MANAGER:UnregisterCallback("LAM-PanelControlsCreated", OnLAMPanelControlsCreated)
 
 	-- override ScrollableDropdownHelper for CSPM_UI_ActionValueMenu to customize dropdown choices tooltips
-	if CSPM_UI_ActionValueMenu.scrollHelper and CSPM_UI_ActionValueMenu.scrollHelper.OnMouseEnter and CSPM_UI_ActionValueMenu.scrollHelper.OnMouseExit then
-		CSPM_UI_ActionValueMenu.scrollHelper.OnMouseEnter = function(self, control)
---			CSPM.LDL:Debug("ActionValueMenu:OnMouseEnter")
-			if control.m_data.tooltip then
-				local uiActionTypeId = CSPM.db.preset[uiPresetId].slot[uiSlotId].type
-				if uiActionTypeId == CSPM_ACTION_TYPE_COLLECTIBLE then
-					InitializeTooltip(ItemTooltip, control, TOPLEFT, 0, 0, BOTTOMRIGHT)
-			        ItemTooltip:SetCollectible(control.m_data.tooltip, SHOW_NICKNAME, SHOW_PURCHASABLE_HINT, SHOW_BLOCK_REASON, GAMEPLAY_ACTOR_CATEGORY_PLAYER)
-					ItemTooltipTopLevel:BringWindowToTop()
-				elseif uiActionTypeId == CSPM_ACTION_TYPE_EMOTE then
-					
-				elseif uiActionTypeId == CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE then
-					InitializeTooltip(ItemTooltip, control, TOPLEFT, 0, 0, BOTTOMRIGHT)
-			        ItemTooltip:SetCollectible(GetCollectibleIdForHouse(control.m_data.tooltip), SHOW_NICKNAME, SHOW_PURCHASABLE_HINT, SHOW_BLOCK_REASON, GAMEPLAY_ACTOR_CATEGORY_PLAYER)
-					ItemTooltipTopLevel:BringWindowToTop()
-				else
-					InitializeTooltip(InformationTooltip, control, TOPLEFT, 0, 0, BOTTOMRIGHT)
-					SetTooltipText(InformationTooltip, LAM.util.GetStringFromValue(control.m_data.tooltip))
-					InformationTooltipTopLevel:BringWindowToTop()
-				end
-			end
+	CSPM_UI_ActionValueMenu.scrollHelper.OnMouseEnter = function(self, control)
+		if control.m_data.tooltip then
+			local uiActionTypeId = CSPM.db.preset[uiPresetId].slot[uiSlotId].type or CSPM_ACTION_TYPE_NOTHING
+			CSPM.util.LayoutSlotActionTooltip(uiActionTypeId, CSPM.db.preset[uiPresetId].slot[uiSlotId].category or CSPM_CATEGORY_NOTHING, control.m_data.tooltip)
+			CSPM.util.ShowSlotActionTooltip(uiActionTypeId, control, TOPLEFT, 0, 0, BOTTOMRIGHT)
 		end
-		CSPM_UI_ActionValueMenu.scrollHelper.OnMouseExit = function(self, control)
---			CSPM.LDL:Debug("ActionValueMenu:OnMouseExit")
-			if control.m_data.tooltip then
-				local uiActionTypeId = CSPM.db.preset[uiPresetId].slot[uiSlotId].type
-				if uiActionTypeId == CSPM_ACTION_TYPE_COLLECTIBLE then
-					ClearTooltip(ItemTooltip)
-				elseif uiActionTypeId == CSPM_ACTION_TYPE_EMOTE then
-					
-				elseif uiActionTypeId == CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE then
-					ClearTooltip(ItemTooltip)
-				else
-					ClearTooltip(InformationTooltip)
-				end
-			end
+	end
+	CSPM_UI_ActionValueMenu.scrollHelper.OnMouseExit = function(self, control)
+		if control.m_data.tooltip then
+			CSPM.util.HideSlotActionTooltip()
 		end
 	end
 
@@ -503,10 +472,33 @@ local function OnLAMPanelControlsCreated(panel)
 	CSPM_UI_PresetSelectMenu.combobox:SetWidth(300)	-- default : panelWidth(585) / 3
 	CSPM_UI_PresetSelectMenu:SetAnchor(BOTTOMLEFT, CSPM_UI_PresetSubmenu, TOPLEFT)
 	CSPM_UI_PresetSelectMenu:SetAnchor(BOTTOMRIGHT, CSPM_UI_PresetSubmenu, TOPRIGHT, -112, -4)
+	-- override ScrollableDropdownHelper for CSPM_UI_PresetSelectMenu to customize dropdown choices tooltips
+	CSPM_UI_PresetSelectMenu.scrollHelper.OnMouseEnter = function(self, control)
+		if control.m_data.tooltip then
+			CSPM.util.LayoutSlotActionTooltip(CSPM_ACTION_TYPE_PIE_MENU, CSPM_CATEGORY_NOTHING, control.m_data.tooltip, CSPM_UI_NONE)
+			CSPM.util.ShowSlotActionTooltip(CSPM_ACTION_TYPE_PIE_MENU, control, TOPLEFT, 0, 0, BOTTOMRIGHT)
+		end
+	end
+	CSPM_UI_PresetSelectMenu.scrollHelper.OnMouseExit = function(self, control)
+		if control.m_data.tooltip then
+			CSPM.util.HideSlotActionTooltip()
+		end
+	end
 
 	ChangePanelPresetState(1)
 	ui.panelInitialized = true
 end
+
+local function OnLAMPanelOpened(panel)
+	if (panel ~= ui.panel) then return end
+	CSPM.LDL:Debug("OnLAMPanelOpened:")
+end
+
+local function OnLAMPanelClosed(panel)
+	if (panel ~= ui.panel) then return end
+	CSPM.LDL:Debug("OnLAMPanelClosed:")
+end
+
 
 local function CollectibleDataManager_OnCollectionUpdated(collectionUpdateType, collectiblesByNewUnlockState)
 	if collectionUpdateType ~= ZO_COLLECTION_UPDATE_TYPE.UNLOCK_STATE_CHANGES then return end
@@ -541,8 +533,7 @@ end
 
 function CSPM:InitializeMenuEditorUI()
 	ui.panelInitialized = false
-	ui.presetChoices, ui.presetChoicesValues, ui.presetChoicesTooltips = RebuildPresetSelectionChoices()
-	CALLBACK_MANAGER:RegisterCallback("CSPM-UserPresetInfoUpdated", RefreshPanelDueToPresetInfoChange)
+	ui.presetChoices, ui.presetChoicesValues, ui.presetChoicesTooltips = RebuildUserPieMenuPresetSelectionChoices()
 
 	ui.slotDisplayName = {}
 	ui.slotChoices, ui.slotChoicesValues = RebuildSlotSelectionChoices(CSPM_MENU_ITEMS_COUNT_DEFAULT)
@@ -554,6 +545,7 @@ function CSPM:InitializeMenuEditorUI()
 		L(SI_CSPM_COMMON_CHAT_COMMAND), 
 		L(SI_CSPM_COMMON_TRAVEL_TO_HOUSE), 
 		L(SI_CSPM_COMMON_PIE_MENU), 
+		L(SI_CSPM_COMMON_SHORTCUT), 
 	} 
 	ui.actionTypeChoicesValues = {
 		CSPM_ACTION_TYPE_NOTHING, 
@@ -562,6 +554,7 @@ function CSPM:InitializeMenuEditorUI()
 		CSPM_ACTION_TYPE_CHAT_COMMAND, 
 		CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE, 
 		CSPM_ACTION_TYPE_PIE_MENU, 
+		CSPM_ACTION_TYPE_SHORTCUT, 
 	}
 	ui.actionTypeChoicesTooltips = {
 		L(SI_CSPM_UI_ACTION_TYPE_NOTHING_TIPS), 
@@ -570,6 +563,7 @@ function CSPM:InitializeMenuEditorUI()
 		L(SI_CSPM_UI_ACTION_TYPE_CHAT_COMMAND_TIPS), 
 		L(SI_CSPM_UI_ACTION_TYPE_TRAVEL_TO_HOUSE_TIPS), 
 		L(SI_CSPM_UI_ACTION_TYPE_PIE_MENU_TIPS), 
+		L(SI_CSPM_UI_ACTION_TYPE_SHORTCUT_TIPS), 
 	}
 
 	ui.categoryChoices = {}
@@ -645,11 +639,27 @@ function CSPM:InitializeMenuEditorUI()
 	}
 	ui.categoryChoices[CSPM_ACTION_TYPE_PIE_MENU] = {
 		L(SI_CSPM_COMMON_UNSELECTED), 
-		ZO_CachedStrFormat(L("SI_CSPM_COMMON_UI_ACTION", CSPM_UI_OPEN), L(SI_CSPM_COMMON_PIE_MENU), L(SI_CSPM_COMMON_PRESET)), 
+		ZO_CachedStrFormat(L("SI_CSPM_COMMON_UI_ACTION", CSPM_UI_OPEN), L(SI_CSPM_COMMON_USER_PIE_MENU)), 
+		ZO_CachedStrFormat(L("SI_CSPM_COMMON_UI_ACTION", CSPM_UI_OPEN), L(SI_CSPM_COMMON_EXTERNAL_PIE_MENU)), 
 	}
 	ui.categoryChoicesValues[CSPM_ACTION_TYPE_PIE_MENU] = {
 		CSPM_CATEGORY_NOTHING, 
 		CSPM_CATEGORY_P_OPEN_USER_PIE_MENU, 
+		CSPM_CATEGORY_P_OPEN_EXTERNAL_PIE_MENU, 
+	}
+	ui.categoryChoices[CSPM_ACTION_TYPE_SHORTCUT] = {
+		L(SI_CSPM_COMMON_UNSELECTED), 
+		CSPM.name, 
+		L(SI_CSPM_COMMON_MAIN_MENU), 
+		L(SI_CSPM_COMMON_SYSTEM_MENU), 
+		L(SI_CSPM_UI_CATEGORY_S_USEFUL_SHORTCUT_NAME), 
+	}
+	ui.categoryChoicesValues[CSPM_ACTION_TYPE_SHORTCUT] = {
+		CSPM_CATEGORY_NOTHING, 
+		CSPM_CATEGORY_S_PIE_MENU_ADDON, 
+		CSPM_CATEGORY_S_MAIN_MENU, 
+		CSPM_CATEGORY_S_SYSTEM_MENU, 
+		CSPM_CATEGORY_S_USEFUL_SHORTCUT, 
 	}
 
 	ui.actionValueChoices = {}
@@ -665,7 +675,14 @@ function CSPM:InitializeMenuEditorUI()
 	end
 	ui.actionValueChoices[CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE], ui.actionValueChoicesValues[CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE], ui.actionValueChoicesTooltips[CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE] = RebuildHouseSelectionChoices(true)
 	ui.actionValueChoices[CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE], ui.actionValueChoicesValues[CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE], ui.actionValueChoicesTooltips[CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE] = RebuildHouseSelectionChoices(true)
-	ui.actionValueChoices[CSPM_CATEGORY_P_OPEN_USER_PIE_MENU], ui.actionValueChoicesValues[CSPM_CATEGORY_P_OPEN_USER_PIE_MENU], ui.actionValueChoicesTooltips[CSPM_CATEGORY_P_OPEN_USER_PIE_MENU] = RebuildPresetSelectionChoices()
+	ui.actionValueChoices[CSPM_CATEGORY_P_OPEN_USER_PIE_MENU], ui.actionValueChoicesValues[CSPM_CATEGORY_P_OPEN_USER_PIE_MENU], ui.actionValueChoicesTooltips[CSPM_CATEGORY_P_OPEN_USER_PIE_MENU] = RebuildUserPieMenuPresetSelectionChoices()
+	ui.actionValueChoices[CSPM_CATEGORY_P_OPEN_EXTERNAL_PIE_MENU], ui.actionValueChoicesValues[CSPM_CATEGORY_P_OPEN_EXTERNAL_PIE_MENU], ui.actionValueChoicesTooltips[CSPM_CATEGORY_P_OPEN_EXTERNAL_PIE_MENU] = RebuildExternalPieMenuPresetSelectionChoices()
+	ui.actionValueChoices[CSPM_CATEGORY_S_PIE_MENU_ADDON], ui.actionValueChoicesValues[CSPM_CATEGORY_S_PIE_MENU_ADDON], ui.actionValueChoicesTooltips[CSPM_CATEGORY_S_PIE_MENU_ADDON] = RebuildShortcutSelectionChoicesByCategory(CSPM_CATEGORY_S_PIE_MENU_ADDON)
+	ui.actionValueChoices[CSPM_CATEGORY_S_MAIN_MENU], ui.actionValueChoicesValues[CSPM_CATEGORY_S_MAIN_MENU], ui.actionValueChoicesTooltips[CSPM_CATEGORY_S_MAIN_MENU] = RebuildShortcutSelectionChoicesByCategory(CSPM_CATEGORY_S_MAIN_MENU)
+	ui.actionValueChoices[CSPM_CATEGORY_S_SYSTEM_MENU], ui.actionValueChoicesValues[CSPM_CATEGORY_S_SYSTEM_MENU], ui.actionValueChoicesTooltips[CSPM_CATEGORY_S_SYSTEM_MENU] = RebuildShortcutSelectionChoicesByCategory(CSPM_CATEGORY_S_SYSTEM_MENU)
+	ui.actionValueChoices[CSPM_CATEGORY_S_USEFUL_SHORTCUT], ui.actionValueChoicesValues[CSPM_CATEGORY_S_USEFUL_SHORTCUT], ui.actionValueChoicesTooltips[CSPM_CATEGORY_S_USEFUL_SHORTCUT] = RebuildShortcutSelectionChoicesByCategory(CSPM_CATEGORY_S_USEFUL_SHORTCUT)
+
+	CALLBACK_MANAGER:RegisterCallback("CSPM-UserPieMenuInfoUpdated", RefreshPanel_OnUserPieMenuInfoUpdated)
 	ZO_COLLECTIBLE_DATA_MANAGER:RegisterCallback("OnCollectionUpdated", CollectibleDataManager_OnCollectionUpdated)
 end
 
@@ -677,6 +694,8 @@ function CSPM:CreateMenuEditorPanel()
 		author = CSPM.author, 
 		version = CSPM.version, 
 		website = "https://www.esoui.com/downloads/info3088-CalamathsShortcutPieMenu.html", 
+		feedback = "https://www.esoui.com/downloads/info3088-CalamathsShortcutPieMenu.html#comments", 
+		donation = "https://www.esoui.com/downloads/info3088-CalamathsShortcutPieMenu.html#donate", 
 		slashCommand = "/cspm.settings", 
 		registerForRefresh = true, 
 --		registerForDefaults = true, 
@@ -693,7 +712,7 @@ function CSPM:CreateMenuEditorPanel()
 		getFunc = function() return CSPM.db.preset[uiPresetId].name end, 
 		setFunc = function(newPresetName)
 			CSPM.db.preset[uiPresetId].name = newPresetName
-			CSPM:UpdateUserPresetInfo(uiPresetId)
+			CSPM:UpdateUserPieMenuInfo(uiPresetId, CSPM.db.preset[uiPresetId])
 		end, 
 		isMultiline = false, 
 		isExtraWide = false, 
@@ -709,7 +728,7 @@ function CSPM:CreateMenuEditorPanel()
 		getFunc = function() return CSPM.db.preset[uiPresetId].tooltip or "" end, 
 		setFunc = function(newPresetNote)
 			CSPM.db.preset[uiPresetId].tooltip = newPresetNote
-			CSPM:UpdateUserPresetInfo(uiPresetId)
+			CSPM:UpdateUserPieMenuInfo(uiPresetId, CSPM.db.preset[uiPresetId])
 		end, 
 		isMultiline = false, 
 		isExtraWide = false, 
@@ -936,7 +955,7 @@ function CSPM:CreateMenuEditorPanel()
 			local actionTypeId = CSPM.db.preset[uiPresetId].slot[uiSlotId].type
 			local categoryId = CSPM.db.preset[uiPresetId].slot[uiSlotId].category
 			local actionValue = CSPM.db.preset[uiPresetId].slot[uiSlotId].value
-			local newSlotName = GetDefaultSlotName(actionTypeId, categoryId, actionValue) 
+			local newSlotName = CSPM.util.GetDefaultSlotName(actionTypeId, categoryId, actionValue) 
 			CSPM_UI_SlotNameEditbox:UpdateValue(false, newSlotName)
 		end, 
 		width = "full", 
@@ -978,6 +997,8 @@ function CSPM:CreateMenuEditorPanel()
 ]]
 	LAM:RegisterOptionControls("CSPM_OptionsMenuEditor", optionsData)
 	CALLBACK_MANAGER:RegisterCallback("LAM-PanelControlsCreated", OnLAMPanelControlsCreated)
+	CALLBACK_MANAGER:RegisterCallback("LAM-PanelOpened", OnLAMPanelOpened)
+	CALLBACK_MANAGER:RegisterCallback("LAM-PanelClosed", OnLAMPanelClosed)
 end
 
 function CSPM:OpenMenuEditorPanel()

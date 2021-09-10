@@ -27,6 +27,7 @@ local strings = {
 	SI_CSPM_COMMON_UNSELECTED =						"<Unselected>", 
 	SI_CSPM_COMMON_UNREGISTERED =					"<Unregistered>", 
 	SI_CSPM_COMMON_IMMEDIATE_VALUE =				"(Immediate Value)", 
+	SI_CSPM_COMMON_SLASH_COMMAND =					"(Slash Command)", 
 	SI_CSPM_COMMON_COLLECTIBLE =					"Collectible", 
 	SI_CSPM_COMMON_EMOTE =							"Emote", 
 	SI_CSPM_COMMON_CHAT_COMMAND =					"Chat Command", 
@@ -34,17 +35,47 @@ local strings = {
 	SI_CSPM_COMMON_MY_HOUSE_INSIDE =				"My House (inside)", 
 	SI_CSPM_COMMON_MY_HOUSE_OUTSIDE =				"My House (outside)", 
 	SI_CSPM_COMMON_PIE_MENU =						"Pie Menu", 
-	SI_CSPM_COMMON_UI_FORMATTER =					"<<1>> <<2>> <<3>> <<4>> <<5>> <<6>>", 
-	SI_CSPM_COMMON_UI_ACTION0 =						"<<1>> <<2>>", 
-	SI_CSPM_COMMON_UI_ACTION1 =						"Open <<1>> <<2>>", 
-	SI_CSPM_COMMON_UI_ACTION2 =						"Close <<1>> <<2>>", 
-	SI_CSPM_COMMON_UI_ACTION3 =						"Copy <<1>> <<2>>", 
-	SI_CSPM_COMMON_UI_ACTION4 =						"Paste <<1>> <<2>>", 
-	SI_CSPM_COMMON_UI_ACTION5 =						"Clear <<1>> <<2>>", 
-	SI_CSPM_COMMON_UI_ACTION6 =						"Reset <<1>> <<2>>", 
-	SI_CSPM_COMMON_UI_ACTION7 =						"Preview <<1>> <<2>>", 
-	SI_CSPM_COMMON_UI_ACTION8 =						"Select <<1>> <<2>>", 
-	SI_CSPM_COMMON_UI_ACTION9 =						"Cancel <<1>> <<2>>", 
+	SI_CSPM_COMMON_USER_PIE_MENU =					"User Pie Menu", 
+	SI_CSPM_COMMON_EXTERNAL_PIE_MENU =				"External Pie Menu", 
+	SI_CSPM_COMMON_SHORTCUT =						"Shortcut", 
+	SI_CSPM_COMMON_MAIN_MENU =						"Player Menu", 
+	SI_CSPM_COMMON_SYSTEM_MENU =					"System Menu", 
+	SI_CSPM_COMMON_UI_ACTION0 =						"<<1>>", 
+	SI_CSPM_COMMON_UI_ACTION1 =						"Open <<1>>", 
+	SI_CSPM_COMMON_UI_ACTION2 =						"Close <<1>>", 
+	SI_CSPM_COMMON_UI_ACTION3 =						"Copy <<1>>", 
+	SI_CSPM_COMMON_UI_ACTION4 =						"Paste <<1>>", 
+	SI_CSPM_COMMON_UI_ACTION5 =						"Clear <<1>>", 
+	SI_CSPM_COMMON_UI_ACTION6 =						"Reset <<1>>", 
+	SI_CSPM_COMMON_UI_ACTION7 =						"Preview <<1>>", 
+	SI_CSPM_COMMON_UI_ACTION8 =						"Select <<1>>", 
+	SI_CSPM_COMMON_UI_ACTION9 =						"Cancel <<1>>", 
+	SI_CSPM_COMMON_UI_ACTION10 =					"Execute <<1>>", 
+
+	-- Formatter
+	SI_CSPM_COMMON_FORMATTER =						"<<1>>", 
+	SI_CSPM_PARENTHESES_FORMATTER =					"(<<1>>)", 
+	SI_CSPM_SLOT_NAME_FORMATTER =					"Slot <<1>>: <<2>>", 
+	SI_CSPM_PRESET_NO_NAME_FORMATTER =				"Preset <<1>>", 
+	SI_CSPM_PRESET_NAME_FORMATTER =					"Preset <<1>>: <<2>>", 
+
+	-- Slot action tooltip
+	SI_CSPM_SLOT_ACTION_TOOLTIP1 =					"Use collectible: <<1>>", 
+	SI_CSPM_SLOT_ACTION_TOOLTIP2 =					"Play emote: <<1>>", 
+	SI_CSPM_SLOT_ACTION_TOOLTIP3 =					"Execute chat command: <<1>>", 
+	SI_CSPM_SLOT_ACTION_TOOLTIP4 =					"Travel to: <<1>>", 
+	SI_CSPM_SLOT_ACTION_TOOLTIP5 =					"Open pie menu: <<1>>", 
+	SI_CSPM_SLOT_ACTION_TOOLTIP6 =					"Execute shortcut: <<1>>", 
+
+	-- Built-in Pie Menu
+	SI_CSPM_PIE_MAIN_MENU_TIPS1 =					"The Player Menu, also called the Main Menu, is located above the Character Window. Most of the complex operations related to game system mechanics are performed here.", 
+	SI_CSPM_PIE_MAIN_MENU_TIPS2 =					"This pie menu is a collection of shortcuts to quickly launch submenu items in the Player Menu. It can be used as an alternative to the Player Menu. It will be especially useful when you are in gamepad mode.", 
+	SI_CSPM_PIE_SYSTEM_MENU_TIPS1 =					"The System Menu, also called the Game Menu, is used for various game settings, key bindings, and to quit the game.", 
+
+	-- Built-in Shortcut
+	SI_CSPM_SHORTCUT_RELOADUI_TIPS =				"A shortcut for reloading the game's user interface system. It can be used to take effect some kind of game system or add-on setting changes, or if the game becomes unstable.", 
+	SI_CSPM_SHORTCUT_LOGOUT_TIPS =					"After waiting for a while, log out of your character and go to the character selection screen.", 
+	SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS =			"A shortcut for opening '<<C:1>>' submenu in the Player Menu.", 
 
 	-- CShortcut PieMenu Editor UI --
 	SI_CSPM_UI_PANEL_HEADER1_TEXT =					"This add-on provides a pie menu for shortcuts to various UI operations.", 
@@ -61,11 +92,13 @@ local strings = {
 	SI_CSPM_UI_ACTION_TYPE_NOTHING_TIPS =			"", 
 	SI_CSPM_UI_ACTION_TYPE_COLLECTIBLE_TIPS =		"Use unlocked collectible.", 
 	SI_CSPM_UI_ACTION_TYPE_EMOTE_TIPS =				"Play unlocked emote.", 
-	SI_CSPM_UI_ACTION_TYPE_CHAT_COMMAND_TIPS =		"Execute the chat command.", 
-	SI_CSPM_UI_ACTION_TYPE_TRAVEL_TO_HOUSE_TIPS =	"Jump to your home already unlocked", 
-	SI_CSPM_UI_ACTION_TYPE_PIE_MENU_TIPS =			"Open pie menu preset.", 
+	SI_CSPM_UI_ACTION_TYPE_CHAT_COMMAND_TIPS =		"Execute chat command.", 
+	SI_CSPM_UI_ACTION_TYPE_TRAVEL_TO_HOUSE_TIPS =	"Fast travel to player's house.", 
+	SI_CSPM_UI_ACTION_TYPE_PIE_MENU_TIPS =			"Open another pie menu preset.", 
+	SI_CSPM_UI_ACTION_TYPE_SHORTCUT_TIPS =			"Shortcuts for menu and UI operations.", 
 	SI_CSPM_UI_CATEGORY_MENU_NAME =					"Category", 
 	SI_CSPM_UI_CATEGORY_MENU_TIPS =					"<Category menu tips>", 
+	SI_CSPM_UI_CATEGORY_S_USEFUL_SHORTCUT_NAME =	"Useful Shortcut", 
 	SI_CSPM_UI_ACTION_VALUE_MENU_NAME =				"Value", 
 	SI_CSPM_UI_ACTION_VALUE_MENU_TIPS =				"<Action Value tips>", 
 	SI_CSPM_UI_ACTION_VALUE_EDITBOX_TIPS =			"If you want to enter the action value directly, enter it here (for advanced users)", 
@@ -106,11 +139,10 @@ local strings = {
 	SI_CSPM_UI_BEHAVIOR_ACTIVATE_IN_UI_OP_NAME =	"Activate Pie Menu in UI mode", 
 	SI_CSPM_UI_BEHAVIOR_ACTIVATE_IN_UI_OP_TIPS =	"Allow you to activate pie menu in most UI mode (cursor mode) scenes.", 
 	SI_CSPM_UI_BEHAVIOR_CLICKABLE_OP_NAME =			"Selecting and canceling with click", 
-	SI_CSPM_UI_BEHAVIOR_CLICKABLE_OP_TIPS =			"By turning on this setting, you can use mouse buttons or gamepad buttons to quickly select or cancel pie menus.\n\nSelecting : Mouse Left Button, GamePad A Button\nCanceling : Mouse Right Button, GamePad B Button and ESC", 
+	SI_CSPM_UI_BEHAVIOR_CLICKABLE_OP_TIPS =			"By turning on this setting, you can use mouse buttons or gamepad buttons to quickly select or cancel pie menus.\n\nSelecting : <<1>>, <<2>>, <<3>>\nCanceling : <<4>>, <<5>>, <<6>>", 
 	SI_CSPM_UI_BEHAVIOR_CENTER_AT_MOUSE_OP_NAME =	"Centering Pie Menu at mouse cursor in UI mode", 
 	SI_CSPM_UI_BEHAVIOR_CENTER_AT_MOUSE_OP_TIPS =	"By turning on this setting, the pie menu will be displayed at the current mouse cursor position instead of the center of the screen in UI mode.", 
 }
-
 for stringId, stringToAdd in pairs(strings) do
    ZO_CreateStringId(stringId, stringToAdd)
    SafeAddVersion(stringId, 1)

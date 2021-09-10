@@ -1,3 +1,18 @@
+V0.9.0: [V900] by Calamath
+New Feature: Comprehensive hardcoded UI shortcut support.
+- Added new slot action type 'Shortcut'. This allows you to place your favorite shortcuts in user-customizable pie menu slots.
+- This version provides built-in shortcuts for ESO's Player Menu scene transitions, reload UI, logout, and transitions to the Pie Menu configuration screen.
+New Feature: Comprehensive external pie menu support.
+- In the Pie Menu Manager UI, you can assign registered external pie menus to binding keys as well as customizable user pie menus.
+- Improved the slot action type 'Pie Menu'. This allows you to open your favorite external pie menu as a nested menu.
+- This version provides a built-in pie menu for ESO's Player Menu alternative as an example.
+Miscellaneous:
+- Extensive code refactoring, including file consolidation , modularization and rewriting.
+- Improved tooltips for slot actions assigned to user pie menu.
+- Updated API version to 101031 (ESO 7.1.x : Waking Flame)
+
+-- -------------------------------------------------------------------------------------------------
+
 V0.8.2: [V802] by Calamath
 - Japanese language support in celebration of the Olympic season.
 - Initial implementation of slot icon override．

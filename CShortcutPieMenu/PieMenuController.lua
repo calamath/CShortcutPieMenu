@@ -11,6 +11,14 @@
 -- You will need to obtain the above libraries separately.
 --
 
+local LDL
+--local debugMode = true
+if debugMode and LibDebugLogger then
+	LDL = LibDebugLogger("CSPM-class")
+else
+	LDL = { Verbose = function() end, Debug = function() end, Info = function() end, Warn = function() end, Error = function() end, }
+end
+
 -- Template
 -- NOTE : This template is based on ZO_SelectableItemRadialMenuEntryTemplate by ZOS, with its own extensions and size adjustment to fit the UI design of the CShortcutPieMenu add-on.
 function CSPM_SelectableItemRadialMenuEntryTemplate_OnInitialized(self)
@@ -78,7 +86,8 @@ end
 --        and some of them may contain some of the original code of ZO_RadialMenu and ZO_InteractiveRadialMenuController by ZOS.
 --
 local TIME_TO_HOLD_KEY_MS = 250
-local CSPM_INTERCEPTER = {
+local ROTATION_OFFSET = 3 * math.pi / 2
+local CSPM_INTERCEPTOR = {
 	["CSPM_KEY_MOUSE_LEFT"] = { KEY_MOUSE_LEFT, }, 
 	["CSPM_KEY_MOUSE_LEFTRIGHT"] = { KEY_MOUSE_LEFTRIGHT, }, 
 	["CSPM_KEY_MOUSE_MIDDLE"] = { KEY_MOUSE_MIDDLE, }, 
@@ -128,7 +137,7 @@ function CSPM_PieMenuController:Initialize(control, entryTemplate, animationTemp
 	self.centeringAtMouseCursor = false
 	self.timeToHoldKey = TIME_TO_HOLD_KEY_MS
 	self.bindings = {}
-	for k, v in pairs(CSPM_INTERCEPTER) do
+	for k, v in pairs(CSPM_INTERCEPTOR) do
 		local layer, category, action = GetActionIndicesFromName(k)
 		if layer and category and action then
 			if IsProtectedFunction("UnbindAllKeysFromAction") then
@@ -143,12 +152,24 @@ function CSPM_PieMenuController:Initialize(control, entryTemplate, animationTemp
 			end
 		end
 	end
+	if self.menu.SetOnUpdateRotationFunction then
+		self.rotationRaw = ROTATION_OFFSET
+		self.menu:SetOnUpdateRotationFunction(function(...) self:OnUpdateRotationCallback(...) end)
+	end
 	-- Overridden some methods of the original ZO_RadialMenu class by ZOS.
-	self.menu.OnUpdate = function()
-		if self.menu:UpdateVirtualMousePosition() then
-			self.menu:UpdateSelectedEntryFromVirtualMousePosition()
+	self.menu.OnUpdate = function(self)
+		if self:UpdateVirtualMousePosition() then
+			self:UpdateSelectedEntryFromVirtualMousePosition()
 		end
 	end
+end
+
+function CSPM_PieMenuController:SetOnSelectionChangedCallback(callback)
+    self.onSelectionChangedCallback = callback
+end
+
+function CSPM_PieMenuController:SetOnUpdateRotationFunction(callback)
+    self.onUpdateRotationFunc = callback
 end
 
 function CSPM_PieMenuController:SetPopulateMenuCallback(callback)
@@ -243,6 +264,10 @@ function CSPM_PieMenuController:UnregisterBindings(key)
 	self.bindings[key] = nil
 end
 
+function CSPM_PieMenuController:GetCurrentRotation()
+	return self.rotationRaw and (self.rotationRaw - ROTATION_OFFSET) or 0.0
+end
+
 function CSPM_PieMenuController:SetupPieMenuVisual(presetName, showPresetName, showQuickslotRadialTrack, showGamepadRadialTrack)
 	presetName = presetName or ""
 	self.menu.presetLabel:SetText(presetName)
@@ -268,8 +293,12 @@ function CSPM_PieMenuController:ClearSelection(...)
 	self.menu:ClearSelection(...)
 end
 
-function CSPM_PieMenuController:AddEntry(...)
-	self.menu:AddEntry(...)
+function CSPM_PieMenuController:GetNumMenuEntries()
+	return #self.menu.entries
+end
+
+function CSPM_PieMenuController:AddMenuEntry(name, inactiveIcon, activeIcon, callback, data)
+	self.menu:AddEntry(name, inactiveIcon, activeIcon, callback, data)
 end
 
 function CSPM_PieMenuController:CancelInteraction()
@@ -297,7 +326,7 @@ function CSPM_PieMenuController:OnUpdate()
 end
 
 function CSPM_PieMenuController:PrepareForInteraction()
---	CSPM.LDL:Debug("PrepareForInteraction()")
+	LDL:Debug("PrepareForInteraction()")
 	local currentScene = SCENE_MANAGER:GetCurrentScene()
     if not currentScene or currentScene:IsRemoteScene() then
 		return false
@@ -310,7 +339,7 @@ end
 
 function CSPM_PieMenuController:SetupEntryControl(entryControl, data)
 	if not data then return end
---	CSPM.LDL:Debug("SetupEntryControl(_, %s)", tostring(data.name))
+	LDL:Debug("SetupEntryControl(_, %s)", tostring(data.name))
 	local selected = false
 	local itemCount
 	local slotLabelText
@@ -323,7 +352,7 @@ function CSPM_PieMenuController:SetupEntryControl(entryControl, data)
 	end
 
 	if data.showSlotLabel then
-		slotLabelText = data.slotLabelText
+		slotLabelText = data.name
 	else
 		slotLabelText = ""
 	end
@@ -332,12 +361,23 @@ function CSPM_PieMenuController:SetupEntryControl(entryControl, data)
 end
 
 function CSPM_PieMenuController:OnSelectionChangedCallback(selectedEntry)
+	LDL:Debug("OnSelectionChangedCallback() : %s", selectedEntry and selectedEntry.data.index or "nil")
 	if not selectedEntry then return end
---	CSPM.LDL:Debug("OnSelectionChangedCallback : %s", selectedEntry.name)
+	if self.onSelectionChangedCallback then
+		self.onSelectionChangedCallback(self, selectedEntry.data.index, selectedEntry.data)
+	end
+end
+
+function CSPM_PieMenuController:OnUpdateRotationCallback(rotationRaw)
+--	LDL:Debug("OnUpdateRotationCallback() : rotationRaw = %s", tostring(rotationRaw))
+	self.rotationRaw = rotationRaw
+	if self.onUpdateRotationFunc then
+		self.onUpdateRotationFunc(self, rotationRaw)
+	end
 end
 
 function CSPM_PieMenuController:PopulateMenu()
---	CSPM.LDL:Debug("PopulateMenu()")
+	LDL:Debug("PopulateMenu()")
 	self.selectedSlotNum = 0
 	if IsGameCameraActive() and IsGameCameraUIModeActive() or IsInteracting() then
 		if self.allowClickable then
