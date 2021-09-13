@@ -25,7 +25,7 @@ CShortcutPieMenu = CShortcutPieMenu or {}
 
 local CSPM = CShortcutPieMenu
 CSPM.name = "CShortcutPieMenu"
-CSPM.version = "0.9.0"
+CSPM.version = "0.9.1"
 CSPM.author = "Calamath"
 CSPM.savedVarsPieMenuEditor = "CShortcutPieMenuDB"
 CSPM.savedVarsPieMenuManager = "CShortcutPieMenuSV"
@@ -417,7 +417,7 @@ do
 		[CSPM_ACTION_TYPE_COLLECTIBLE] = function(actionType, _, actionValue)
 			local name, description, icon, _, _, _, isActive, collectibleCategoryType = GetCollectibleInfo(actionValue)
 			if name ~= "" then
-				local name = ZO_CachedStrFormat(L(SI_CSPM_COMMON_FORMATTER), name)
+				name = ZO_CachedStrFormat(L(SI_CSPM_COMMON_FORMATTER), name)
 				LayoutBasicSlotActionTooltip(ItemTooltip, name, description, icon, L("SI_COLLECTIBLECATEGORYTYPE", collectibleCategoryType), isActive and "Active" or "Inactive")
 				ItemTooltip:AddLine(zo_strformat(L("SI_CSPM_SLOT_ACTION_TOOLTIP", actionType), name), "ZoFontWinH4", ZO_SELECTED_TEXT:UnpackRGB())
 				if collectibleCategoryType == COLLECTIBLE_CATEGORY_TYPE_PERSONALITY then
@@ -506,14 +506,13 @@ do
 		return LayoutSlotActionTooltip[actionType](actionType, categoryId, actionValue, uiActionId)
 	end
 
-	function CSPM.util.ShowSlotActionTooltip(actionType, owner, point, offsetX, offsetY, relativePoint)
-		local actionType = GetActionType(actionType)
-		CSPM.util.GetSlotActionTooltip(actionType):SetOwner(owner, point, offsetX, offsetY, relativePoint)
-		CSPM.util.GetSlotActionTooltip(actionType):GetOwningWindow():BringWindowToTop()
+	function CSPM.util.ShowSlotActionTooltip(owner, point, offsetX, offsetY, relativePoint)
+		CSPM.util.GetSlotActionTooltip():SetOwner(owner, point, offsetX, offsetY, relativePoint)
+		CSPM.util.GetSlotActionTooltip():GetOwningWindow():BringWindowToTop()
 	end
 
 	function CSPM.util.HideSlotActionTooltip()
-	    ClearTooltip(ItemTooltip)
+	    ClearTooltip(CSPM.util.GetSlotActionTooltip())
 	end
 end
 
@@ -524,6 +523,19 @@ local shortcutList = {
 		name = L(SI_QUICKSLOTS_EMPTY), 
 		icon = "EsoUI/Art/Quickslots/quickslot_emptySlot.dds", 
 		callback = function() return end, 
+		category = CSPM_CATEGORY_NOTHING, 
+		showSlotLabel = false, 
+	}, 
+	["!CSPM_invalid_slot_thus_open_piemenu_editor"] = {
+		name = L(SI_QUICKSLOTS_EMPTY), 
+		icon = "EsoUI/Art/Quickslots/quickslot_emptySlot.dds", 
+		callback = function(data)
+			local activePresetId = CShortcutPieMenu:GetActivePresetId()
+			if CShortcutPieMenu:IsUserPieMenu(activePresetId) then
+				CShortcutPieMenu:OpenMenuEditorPanel(activePresetId, data.index)
+			end
+			return
+		end, 
 		category = CSPM_CATEGORY_NOTHING, 
 		showSlotLabel = false, 
 	}, 
@@ -552,14 +564,26 @@ local shortcutList = {
 		name = L(SI_ADDON_MANAGER_RELOAD), 
 		tooltip = L(SI_CSPM_SHORTCUT_RELOADUI_TIPS), 
 		icon = "Esoui/Art/Tutorial/contact-radialicon_trade_up.dds", 
-		callback = function() ReloadUI("ingame") end, 
+		callback = function()
+			local messageParams = CENTER_SCREEN_ANNOUNCE:CreateMessageParams(CSA_CATEGORY_MAJOR_TEXT, SOUNDS.NONE)
+			messageParams:SetCSAType(CENTER_SCREEN_ANNOUNCE_TYPE_DISPLAY_ANNOUNCEMENT)
+			messageParams:SetText(zo_strformat(L("SI_CSPM_SLOT_ACTION_TOOLTIP", CSPM_ACTION_TYPE_SHORTCUT), L(SI_ADDON_MANAGER_RELOAD)))
+			CENTER_SCREEN_ANNOUNCE:DisplayMessage(messageParams)
+			zo_callLater(function() ReloadUI("ingame") end, 1)
+		end, 
 		category = CSPM_CATEGORY_S_SYSTEM_MENU, 
 	}, 
 	["!CSPM_logout"] = {
 		name = L(SI_DIALOG_TITLE_LOGOUT), 
 		tooltip = L(SI_CSPM_SHORTCUT_LOGOUT_TIPS), 
 		icon = "Esoui/Art/Menubar/Gamepad/gp_playermenu_icon_logout.dds", 
-		callback = function() Logout() end, 
+		callback = function()
+			local messageParams = CENTER_SCREEN_ANNOUNCE:CreateMessageParams(CSA_CATEGORY_MAJOR_TEXT, SOUNDS.NONE)
+			messageParams:SetCSAType(CENTER_SCREEN_ANNOUNCE_TYPE_DISPLAY_ANNOUNCEMENT)
+			messageParams:SetText(zo_strformat(L("SI_CSPM_SLOT_ACTION_TOOLTIP", CSPM_ACTION_TYPE_SHORTCUT), L(SI_DIALOG_TITLE_LOGOUT)))
+			CENTER_SCREEN_ANNOUNCE:DisplayMessage(messageParams)
+			Logout()
+		end, 
 		category = CSPM_CATEGORY_S_SYSTEM_MENU, 
 	}, 
 	["!CSPM_mainmenu_inventory"] = {
@@ -844,6 +868,9 @@ end
 
 -- ---------------------------------------------------------------------------------------
 -- ---------------------------------------------------------------------------------------
+function CSPM:GetActivePresetId()
+	return self.activePresetId
+end
 
 function CSPM:OnSelectionChangedCallback(rootMenu, slotIndex, data)
 --	CSPM.LDL:Debug("OnSelectionChangedCallback() : %s", slotIndex)
@@ -894,7 +921,7 @@ end
 
 function CSPM:PopulateMenuCallback(rootMenu)
 	CSPM.LDL:Debug("PopulateMenuCallback()")
-	local presetData = self:GetPieMenuData(self.activePresetId)
+	local presetData = self:GetPieMenuData(self:GetActivePresetId())
 	local visualData = presetData.visual or {}
 	rootMenu:SetupPieMenuVisual(presetData.name, visualData.showPresetName, visualData.showTrackQuickslot, visualData.showTrackGamepad)
 
@@ -953,7 +980,8 @@ function CSPM:PopulateMenuCallback(rootMenu)
 			end
 			rootMenu:AddMenuEntry(data.name, data.inactiveIcon, data.icon, function() self:OnSelectionExecutionCallback(data) end, data)
 		else
-			self:AddMenuEntryWithShortcut(rootMenu, "!CSPM_invalid_slot", visualData)
+--			self:AddMenuEntryWithShortcut(rootMenu, "!CSPM_invalid_slot", visualData)
+			self:AddMenuEntryWithShortcut(rootMenu, "!CSPM_invalid_slot_thus_open_piemenu_editor", visualData)
 		end
 	end
 

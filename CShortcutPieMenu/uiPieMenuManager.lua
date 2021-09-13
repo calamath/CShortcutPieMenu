@@ -172,7 +172,7 @@ local function OnLAMPanelControlsCreated(panel)
 			_G["CSPM_UI_MAN_PresetSelectMenuKeybinds" .. i].scrollHelper.OnMouseEnter = function(self, control)
 				if control.m_data.tooltip then
 					CSPM.util.LayoutSlotActionTooltip(CSPM_ACTION_TYPE_PIE_MENU, CSPM_CATEGORY_NOTHING, control.m_data.tooltip, CSPM_UI_NONE)
-					CSPM.util.ShowSlotActionTooltip(CSPM_ACTION_TYPE_PIE_MENU, control, TOPLEFT, 0, 0, BOTTOMRIGHT)
+					CSPM.util.ShowSlotActionTooltip(control, TOPLEFT, 0, 0, BOTTOMRIGHT)
 				end
 			end
 			_G["CSPM_UI_MAN_PresetSelectMenuKeybinds" .. i].scrollHelper.OnMouseExit = function(self, control)

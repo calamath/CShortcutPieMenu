@@ -85,6 +85,8 @@ end
 --        However, there are some methods that are overridden for functional extensions and differences, 
 --        and some of them may contain some of the original code of ZO_RadialMenu and ZO_InteractiveRadialMenuController by ZOS.
 --
+if CSPM_PieMenuController then return end
+
 local TIME_TO_HOLD_KEY_MS = 250
 local ROTATION_OFFSET = 3 * math.pi / 2
 local CSPM_INTERCEPTOR = {
@@ -113,6 +115,7 @@ local CSPM_INTERCEPTOR = {
 	["CSPM_HUD_KEY_GAMEPAD_BUTTON_3"] = { KEY_GAMEPAD_BUTTON_3, }, 
 	["CSPM_HUD_KEY_GAMEPAD_BUTTON_4"] = { KEY_GAMEPAD_BUTTON_4, }, 
 }
+local pieMenuCount = pieMenuCount or 0
 
 CSPM_PieMenuController = ZO_InteractiveRadialMenuController:Subclass()
 
@@ -122,6 +125,7 @@ end
 
 function CSPM_PieMenuController:Initialize(control, entryTemplate, animationTemplate, entryAnimationTemplate)
 	ZO_InteractiveRadialMenuController.Initialize(self, control, entryTemplate, animationTemplate, entryAnimationTemplate)
+	pieMenuCount = pieMenuCount + 1
 	self.menu.presetLabel = self.menuControl:GetNamedChild("PresetName")
 	self.menu.trackQuickslot = self.menuControl:GetNamedChild("TrackQuickslot")
 	self.menu.trackGamepad = self.menuControl:GetNamedChild("TrackGamepad")
@@ -156,6 +160,11 @@ function CSPM_PieMenuController:Initialize(control, entryTemplate, animationTemp
 		self.rotationRaw = ROTATION_OFFSET
 		self.menu:SetOnUpdateRotationFunction(function(...) self:OnUpdateRotationCallback(...) end)
 	end
+	EVENT_MANAGER:RegisterForEvent("CSPM-class_PieMenu" .. pieMenuCount, EVENT_LUA_ERROR, function()
+		if self.menu:IsShown() then
+			self.menu.ForceActiveMenuClosed()
+		end
+	end)
 	-- Overridden some methods of the original ZO_RadialMenu class by ZOS.
 	self.menu.OnUpdate = function(self)
 		if self:UpdateVirtualMousePosition() then

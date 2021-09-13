@@ -443,7 +443,7 @@ local function OnLAMPanelControlsCreated(panel)
 		if control.m_data.tooltip then
 			local uiActionTypeId = CSPM.db.preset[uiPresetId].slot[uiSlotId].type or CSPM_ACTION_TYPE_NOTHING
 			CSPM.util.LayoutSlotActionTooltip(uiActionTypeId, CSPM.db.preset[uiPresetId].slot[uiSlotId].category or CSPM_CATEGORY_NOTHING, control.m_data.tooltip)
-			CSPM.util.ShowSlotActionTooltip(uiActionTypeId, control, TOPLEFT, 0, 0, BOTTOMRIGHT)
+			CSPM.util.ShowSlotActionTooltip(control, TOPLEFT, 0, 0, BOTTOMRIGHT)
 		end
 	end
 	CSPM_UI_ActionValueMenu.scrollHelper.OnMouseExit = function(self, control)
@@ -476,7 +476,7 @@ local function OnLAMPanelControlsCreated(panel)
 	CSPM_UI_PresetSelectMenu.scrollHelper.OnMouseEnter = function(self, control)
 		if control.m_data.tooltip then
 			CSPM.util.LayoutSlotActionTooltip(CSPM_ACTION_TYPE_PIE_MENU, CSPM_CATEGORY_NOTHING, control.m_data.tooltip, CSPM_UI_NONE)
-			CSPM.util.ShowSlotActionTooltip(CSPM_ACTION_TYPE_PIE_MENU, control, TOPLEFT, 0, 0, BOTTOMRIGHT)
+			CSPM.util.ShowSlotActionTooltip(control, TOPLEFT, 0, 0, BOTTOMRIGHT)
 		end
 	end
 	CSPM_UI_PresetSelectMenu.scrollHelper.OnMouseExit = function(self, control)
@@ -1001,8 +1001,23 @@ function CSPM:CreateMenuEditorPanel()
 	CALLBACK_MANAGER:RegisterCallback("LAM-PanelClosed", OnLAMPanelClosed)
 end
 
-function CSPM:OpenMenuEditorPanel()
+function CSPM:OpenMenuEditorPanel(presetId, slotId)
 	if self.panelMenuEditor then
 		LAM:OpenToPanel(self.panelMenuEditor)
+		if presetId and CSPM:IsUserPieMenu(presetId) then
+			if ui.panelInitialized then
+				ChangePanelPresetState(presetId)
+				if slotId then
+					ChangePanelSlotState(slotId)
+				end
+			else
+				zo_callLater(function()
+					ChangePanelPresetState(presetId)
+					if slotId then
+						ChangePanelSlotState(slotId)
+					end
+				end, 1000)
+			end
+		end
 	end
 end

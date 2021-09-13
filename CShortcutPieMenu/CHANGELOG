@@ -1,3 +1,9 @@
+V0.9.1: [V901] by Calamath
+QOL Update:
+- Selecting an unconfigured or invalid slot in the user pie menu will redirect you to the Pie Menu Editor screen for that slot.
+- Improved the reload UI and logout shortcut. Added center screen announcement at run-time.
+- Added fail-safe necessary to ensure stability in the event of possible error cases.
+
 V0.9.0: [V900] by Calamath
 New Feature: Comprehensive hardcoded UI shortcut support.
 - Added new slot action type 'Shortcut'. This allows you to place your favorite shortcuts in user-customizable pie menu slots.
