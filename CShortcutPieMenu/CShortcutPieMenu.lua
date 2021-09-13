@@ -25,7 +25,7 @@ CShortcutPieMenu = CShortcutPieMenu or {}
 
 local CSPM = CShortcutPieMenu
 CSPM.name = "CShortcutPieMenu"
-CSPM.version = "0.9.1"
+CSPM.version = "0.9.2"
 CSPM.author = "Calamath"
 CSPM.savedVarsPieMenuEditor = "CShortcutPieMenuDB"
 CSPM.savedVarsPieMenuManager = "CShortcutPieMenuSV"
@@ -188,6 +188,11 @@ CSPM.lut = {
 		["pie_menu"] 			= CSPM_ACTION_TYPE_PIE_MENU, 
 		["shortcut"] 			= CSPM_ACTION_TYPE_SHORTCUT, 
 	}, 
+	CSPM_LUT_UI_COLOR = {
+		["NORMAL"]				= { 1, 1, 1, }, 
+		["ACTIVE"]				= { 0.6, 1, 0, }, 
+		["BLOCKED"]				= { 1, 0.3, 0, }, 
+	}, 
 }
 -- ---------------------------------------------------------------------------------------
 -- Aliases of look up table
@@ -195,6 +200,7 @@ local CSPM_LUT_CATEGORY_C_CSPM_TO_ZOS			= CSPM.lut.CSPM_LUT_CATEGORY_C_CSPM_TO_Z
 local CSPM_LUT_CATEGORY_E_CSPM_TO_ZOS			= CSPM.lut.CSPM_LUT_CATEGORY_E_CSPM_TO_ZOS
 local CSPM_LUT_CATEGORY_E_CSPM_TO_ICON			= CSPM.lut.CSPM_LUT_CATEGORY_E_CSPM_TO_ICON
 local CSPM_LUT_ACTION_TYPE_API_STRINGS			= CSPM.lut.CSPM_LUT_ACTION_TYPE_API_STRINGS
+local CSPM_LUT_UI_COLOR							= CSPM.lut.CSPM_LUT_UI_COLOR
 
 
 -- ---------------------------------------------------------------------------------------
@@ -270,11 +276,15 @@ do
 			return ""
 		end, 
 		[CSPM_ACTION_TYPE_COLLECTIBLE] = function(_, _, actionValue)
-			return ZO_CachedStrFormat(L(SI_CSPM_COMMON_FORMATTER), GetCollectibleName(actionValue))
+			local name = ZO_CachedStrFormat(L(SI_CSPM_COMMON_FORMATTER), GetCollectibleName(actionValue))
+			local nameColor = IsCollectibleActive(actionValue, GAMEPLAY_ACTOR_CATEGORY_PLAYER) and CSPM_LUT_UI_COLOR.ACTIVE
+			return name, nameColor
 		end, 
 		[CSPM_ACTION_TYPE_EMOTE] = function(_, _, actionValue)
 			local emoteItemInfo = PLAYER_EMOTE_MANAGER:GetEmoteItemInfo(actionValue)
-			return ZO_CachedStrFormat(L(SI_CSPM_COMMON_FORMATTER), emoteItemInfo and emoteItemInfo.displayName or "")
+			local name = ZO_CachedStrFormat(L(SI_CSPM_COMMON_FORMATTER), emoteItemInfo and emoteItemInfo.displayName or "")
+			local nameColor = emoteItemInfo and emoteItemInfo.isOverriddenByPersonality and { ZO_PERSONALITY_EMOTES_COLOR:UnpackRGB() }
+			return name, nameColor
 		end, 
 		[CSPM_ACTION_TYPE_CHAT_COMMAND] = function(_, _, actionValue)
 			return tostring(actionValue)
@@ -309,8 +319,9 @@ do
 			local shortcutData = CSPM:GetShortcutData(actionValue)
 			if shortcutData then
 				name = GetValue(shortcutData.name) or ""
+				nameColor = GetValue(shortcutData.nameColor)
 			end
-			return name
+			return name, nameColor
 		end, 
 	}
 	setmetatable(GetDefaultSlotName, { __index = function(self, key) return self[CSPM_ACTION_TYPE_NOTHING] end, })
@@ -876,6 +887,12 @@ function CSPM:OnSelectionChangedCallback(rootMenu, slotIndex, data)
 --	CSPM.LDL:Debug("OnSelectionChangedCallback() : %s", slotIndex)
 end
 
+function CSPM:AddMenuEntry(pieMenu, name, inactiveIcon, activeIcon, callback, data)
+	if pieMenu and pieMenu.AddMenuEntry then
+		pieMenu:AddMenuEntry(name, inactiveIcon, activeIcon, callback, data)
+	end
+end
+
 function CSPM:AddMenuEntryWithShortcut(pieMenu, shortcutId, visualData)
 	-- pieMenu    : (required) CSPM_PieMenuController class object
 	-- shortcutId : (required) registered shortcutId for our shortcut data manager
@@ -892,6 +909,7 @@ function CSPM:AddMenuEntryWithShortcut(pieMenu, shortcutId, visualData)
 			statusLabelText = "", 
 			itemCount = shortcutData.itemCount or nil, 
 			name = shortcutData.name, 
+			nameColor = shortcutData.nameColor, 
 			icon = shortcutData.icon, 
 			inactiveIcon = shortcutData.inactiveIcon or shortcutData.icon, 
 			callback = shortcutData.callback or function() end, 
@@ -915,7 +933,9 @@ function CSPM:AddMenuEntryWithShortcut(pieMenu, shortcutId, visualData)
 		data.slotData.type = data.slotData.type or CSPM_ACTION_TYPE_SHORTCUT
 		data.slotData.category = data.slotData.category or CSPM_CATEGORY_NOTHING
 		data.slotData.value = data.slotData.value or shortcutId
-		pieMenu:AddMenuEntry(GetValue(data.name), GetValue(data.inactiveIcon), GetValue(data.icon), function() self:OnSelectionExecutionCallback(data) end, data)
+		local nameColor = GetValue(data.nameColor)
+		local entryName = (nameColor and type(nameColor) == "table") and { GetValue(data.name), { r = nameColor[1], g = nameColor[2], b = nameColor[3], }, } or GetValue(data.name)
+		pieMenu:AddMenuEntry(entryName, GetValue(data.inactiveIcon), GetValue(data.icon), function() self:OnSelectionExecutionCallback(data) end, data)
 	end
 end
 
@@ -938,7 +958,7 @@ function CSPM:PopulateMenuCallback(rootMenu)
 		local cspmCategoryId = GetValue(data.slotData.category)
 		local actionValue = GetValue(data.slotData.value) or 0
 
-		local name = self.util.GetDefaultSlotName(actionType, cspmCategoryId, actionValue)
+		local name, nameColor = self.util.GetDefaultSlotName(actionType, cspmCategoryId, actionValue)
 		local icon = self.util.GetDefaultSlotIcon(actionType, cspmCategoryId, actionValue)
 		if actionType == CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE and actionValue == CSPM_ACTION_VALUE_PRIMARY_HOUSE_ID then
 			-- override the display name and icon according to the current primary house setting.
@@ -978,9 +998,10 @@ function CSPM:PopulateMenuCallback(rootMenu)
 				data.icon = icon
 				data.inactiveIcon = icon
 			end
-			rootMenu:AddMenuEntry(data.name, data.inactiveIcon, data.icon, function() self:OnSelectionExecutionCallback(data) end, data)
+			data.nameColor = nameColor
+			local entryName = (nameColor and type(nameColor) == "table") and { data.name, { r = nameColor[1], g = nameColor[2], b = nameColor[3], }, } or data.name
+			self:AddMenuEntry(rootMenu, entryName, data.inactiveIcon, data.icon, function() self:OnSelectionExecutionCallback(data) end, data)
 		else
---			self:AddMenuEntryWithShortcut(rootMenu, "!CSPM_invalid_slot", visualData)
 			self:AddMenuEntryWithShortcut(rootMenu, "!CSPM_invalid_slot_thus_open_piemenu_editor", visualData)
 		end
 	end

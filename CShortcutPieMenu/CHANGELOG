@@ -1,3 +1,7 @@
+V0.9.2: [V902] by Calamath
+- The slot name display for using collectible is now color-coded to reflect collectibles active status.
+(e.g.: Only the summoned companion is displayed in green, and the others are in white normal color, allowing you to predict the result of each slot action - to summon or to dismiss.)
+
 V0.9.1: [V901] by Calamath
 QOL Update:
 - Selecting an unconfigured or invalid slot in the user pie menu will redirect you to the Pie Menu Editor screen for that slot.

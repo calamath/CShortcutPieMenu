@@ -38,16 +38,25 @@ function CSPM_SelectableItemRadialMenuEntryTemplate_UpdateStatus(template, statu
 	template.status:SetText(statusLabelText)
 end
 
-function CSPM_SetupSelectableItemRadialMenuEntryTemplate(template, selected, itemCount, showIconFrame, slotLabelText, statusLabelText)
+function CSPM_SelectableItemRadialMenuEntryTemplate_UpdateSlotLabel(template, slotLabel)
+	slotLabel = slotLabel or ""
+	if type(slotLabel) == "table" then
+		template.label:SetText(slotLabel[1])
+		template.label:SetColor(slotLabel[2][1] or 1, slotLabel[2][2] or 1, slotLabel[2][3] or 1, 1)
+	else
+		template.label:SetText(slotLabel)
+		template.label:SetColor(1, 1, 1, 1)
+	end
+end
+
+function CSPM_SetupSelectableItemRadialMenuEntryTemplate(template, selected, itemCount, showIconFrame, slotLabel, statusLabelText)
 	if showIconFrame then
 		template.frame:SetHidden(false)
 	else
 		template.frame:SetHidden(true)
 	end
 
-	slotLabelText = slotLabelText or ""
-	template.label:SetText(slotLabelText)
-
+	CSPM_SelectableItemRadialMenuEntryTemplate_UpdateSlotLabel(template, slotLabel)
 	CSPM_SelectableItemRadialMenuEntryTemplate_UpdateStatus(template, statusLabelText)
 
 	if itemCount then
@@ -306,8 +315,8 @@ function CSPM_PieMenuController:GetNumMenuEntries()
 	return #self.menu.entries
 end
 
-function CSPM_PieMenuController:AddMenuEntry(name, inactiveIcon, activeIcon, callback, data)
-	self.menu:AddEntry(name, inactiveIcon, activeIcon, callback, data)
+function CSPM_PieMenuController:AddMenuEntry(...)
+	self.menu:AddEntry(...)
 end
 
 function CSPM_PieMenuController:CancelInteraction()
@@ -351,7 +360,7 @@ function CSPM_PieMenuController:SetupEntryControl(entryControl, data)
 	LDL:Debug("SetupEntryControl(_, %s)", tostring(data.name))
 	local selected = false
 	local itemCount
-	local slotLabelText
+	local slotLabel
 	local statusLabelText = data.statusLabelText or ""
 	
 	if data.itemCount then
@@ -361,12 +370,16 @@ function CSPM_PieMenuController:SetupEntryControl(entryControl, data)
 	end
 
 	if data.showSlotLabel then
-		slotLabelText = data.name
+		if data.nameColor and type(data.nameColor) == "table" then
+			slotLabel = { data.name, data.nameColor, }
+		else
+			slotLabel = data.name
+		end
 	else
-		slotLabelText = ""
+		slotLabel = ""
 	end
 
-	CSPM_SetupSelectableItemRadialMenuEntryTemplate(entryControl, selected, itemCount, data.showIconFrame, slotLabelText, statusLabelText)
+	CSPM_SetupSelectableItemRadialMenuEntryTemplate(entryControl, selected, itemCount, data.showIconFrame, slotLabel, statusLabelText)
 end
 
 function CSPM_PieMenuController:OnSelectionChangedCallback(selectedEntry)
