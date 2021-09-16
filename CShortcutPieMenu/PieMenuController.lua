@@ -26,7 +26,7 @@ function CSPM_SelectableItemRadialMenuEntryTemplate_OnInitialized(self)
 	self.icon = self:GetNamedChild("Icon")
 	self.count = self:GetNamedChild("CountText")
 	self.cooldown = self:GetNamedChild("Cooldown")
-
+	self.inCooldown = false
 	self.frame = self:GetNamedChild("Frame")
 	self.label = self:GetNamedChild("Label")
 	self.label:SetDimensionConstraints(0, 0, 360, 64)
@@ -47,6 +47,20 @@ function CSPM_SelectableItemRadialMenuEntryTemplate_UpdateSlotLabel(template, sl
 		template.label:SetText(slotLabel)
 		template.label:SetColor(1, 1, 1, 1)
 	end
+end
+
+function CSPM_SelectableItemRadialMenuEntryTemplate_UpdateCooldown(template, remaining, duration, displayType, timeType, drawLeadingEdge)
+	template.inCooldown = remaining > 0 and duration > 0
+	if template.inCooldown then
+		displayType = displayType or CD_TYPE_RADIAL
+		timeType = timeType or CD_TIME_TYPE_TIME_UNTIL
+		drawLeadingEdge = drawLeadingEdge or false		-- nil should be false (no draw leading edge for radical type.)
+		template.cooldown:SetVerticalCooldownLeadingEdgeHeight(12)
+		template.cooldown:StartCooldown(remaining, duration, displayType, timeType, drawLeadingEdge)
+	else
+		template.cooldown:ResetCooldown()
+	end
+	template.cooldown:SetHidden(not template.inCooldown)
 end
 
 function CSPM_SetupSelectableItemRadialMenuEntryTemplate(template, selected, itemCount, showIconFrame, slotLabel, statusLabelText)
@@ -377,6 +391,10 @@ function CSPM_PieMenuController:SetupEntryControl(entryControl, data)
 		end
 	else
 		slotLabel = ""
+	end
+
+	if data.cooldownRemaining and data.cooldownDuration then
+		CSPM_SelectableItemRadialMenuEntryTemplate_UpdateCooldown(entryControl, data.cooldownRemaining, data.cooldownDuration)
 	end
 
 	CSPM_SetupSelectableItemRadialMenuEntryTemplate(entryControl, selected, itemCount, data.showIconFrame, slotLabel, statusLabelText)
