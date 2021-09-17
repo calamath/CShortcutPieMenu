@@ -1,5 +1,11 @@
+V0.9.4: [V904] by Calamath
+- The display position of the slot name label is now fixed regardless of the animation.
+- Fixed an issue with the Pie Menu Editor that caused a UI error when opening the pie menu immediately after increasing the menu items count.
+- Addressed an issue where the specified active icon in the shortcut data was not displayed correctly in the pie menu.
+- Addressed a rare issue where the icon specified in the shortcut data was not displayed in the pie menu in the correct size.
+
 V0.9.3: [V903] by Calamath
-- The cooldown remaining indicator of collectibles is now propely displayed in the pie menu slot for using collectibles.
+- The cooldown remaining indicator of collectibles is now properly displayed in the pie menu slot for using collectibles.
 - Fixed an issue where the specified icon of external pie menu data was not correctly populated in the pie menu.
 - Fixed tooltip typos.
 

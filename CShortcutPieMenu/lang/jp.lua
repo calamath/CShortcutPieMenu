@@ -111,7 +111,7 @@ SafeAddString(SI_CSPM_UI_VISUAL_SLOT_ICON_OVERRIDE_TIPS,	"このスロットの�
 SafeAddString(SI_CSPM_UI_VISUAL_PRESET_NAME_OVERRIDE_NAME,	"プリセット名の上書き指定", 1)
 SafeAddString(SI_CSPM_UI_VISUAL_PRESET_NAME_OVERRIDE_TIPS,	"このプリセットの名称をお好みに調整する（オプション）", 1)
 SafeAddString(SI_CSPM_UI_VISUAL_PRESET_NOTE_NAME,			"プリセットに関するメモ", 1)
-SafeAddString(SI_CSPM_UI_VISUAL_PRESET_NOTE_TIPS,			"このプリセットについてのメモを調整する（オプション）", 1)
+SafeAddString(SI_CSPM_UI_VISUAL_PRESET_NOTE_TIPS,			"このプリセットについてのメモを調整する。本文はパイメニューのツールチップで使用されます。（オプション）", 1)
 SafeAddString(SI_CSPM_UI_VISUAL_HEADER1_TEXT,				"ビジュアルデザイン設定", 1)
 SafeAddString(SI_CSPM_UI_VISUAL_QUICKSLOT_STYLE_OP_NAME,	"クイックスロットのラジアルメニュー風のスタイル", 1)
 SafeAddString(SI_CSPM_UI_VISUAL_QUICKSLOT_STYLE_OP_TIPS,	"クイックスロットのラジアルメニューのような背景デザインを適用します。", 1)

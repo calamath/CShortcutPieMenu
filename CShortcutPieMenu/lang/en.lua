@@ -113,8 +113,8 @@ SafeAddString(SI_CSPM_UI_VISUAL_SLOT_ICON_OVERRIDE_TIPS,	"Adjust the icon of thi
 
 SafeAddString(SI_CSPM_UI_VISUAL_PRESET_NAME_OVERRIDE_NAME,	"Preset Name Override", 1)
 SafeAddString(SI_CSPM_UI_VISUAL_PRESET_NAME_OVERRIDE_TIPS,	"Adjust the name of this preset. (optional)", 1)
-SafeAddString(SI_CSPM_UI_VISUAL_PRESET_NOTE_NAME,			"Preset Note", 1)
-SafeAddString(SI_CSPM_UI_VISUAL_PRESET_NOTE_TIPS,			"Adjust the notes about this preset. (optional)", 1)
+SafeAddString(SI_CSPM_UI_VISUAL_PRESET_NOTE_NAME,			"Preset Description", 1)
+SafeAddString(SI_CSPM_UI_VISUAL_PRESET_NOTE_TIPS,			"Adjust the notes for this preset. This text is used in the pie menu tooltip. (optional)", 1)
 SafeAddString(SI_CSPM_UI_VISUAL_HEADER1_TEXT,				"Visual Design Options", 1)
 SafeAddString(SI_CSPM_UI_VISUAL_QUICKSLOT_STYLE_OP_NAME,	"Quickslot radial menu style", 1)
 SafeAddString(SI_CSPM_UI_VISUAL_QUICKSLOT_STYLE_OP_TIPS,	"Apply a background design like a quick slot radial menu.", 1)

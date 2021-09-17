@@ -25,7 +25,7 @@ CShortcutPieMenu = CShortcutPieMenu or {}
 
 local CSPM = CShortcutPieMenu
 CSPM.name = "CShortcutPieMenu"
-CSPM.version = "0.9.3"
+CSPM.version = "0.9.4"
 CSPM.author = "Calamath"
 CSPM.savedVarsPieMenuEditor = "CShortcutPieMenuDB"
 CSPM.savedVarsPieMenuManager = "CShortcutPieMenuSV"
@@ -581,6 +581,7 @@ local shortcutList = {
 		name = L(SI_ADDON_MANAGER_RELOAD), 
 		tooltip = L(SI_CSPM_SHORTCUT_RELOADUI_TIPS), 
 		icon = "Esoui/Art/Loadscreen/Keyboard/load_ourosboros.dds", 
+		resizeIconToFitFile = true, 
 		callback = function()
 			local messageParams = CENTER_SCREEN_ANNOUNCE:CreateMessageParams(CSA_CATEGORY_MAJOR_TEXT, SOUNDS.NONE)
 			messageParams:SetCSAType(CENTER_SCREEN_ANNOUNCE_TYPE_DISPLAY_ANNOUNCEMENT)
@@ -607,6 +608,7 @@ local shortcutList = {
 		name = L(SI_MAIN_MENU_INVENTORY), 
 		tooltip = ZO_CachedStrFormat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_INVENTORY)), 
 		icon = "EsoUI/Art/MainMenu/menuBar_inventory_up.dds", 
+		activeIcon = "EsoUI/Art/MainMenu/menuBar_inventory_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_INVENTORY) end, 
 		category = CSPM_CATEGORY_S_MAIN_MENU, 
 	}, 
@@ -614,6 +616,7 @@ local shortcutList = {
 		name = L(SI_MAIN_MENU_CHARACTER), 
 		tooltip = ZO_CachedStrFormat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_CHARACTER)), 
 		icon = "EsoUI/Art/MainMenu/menuBar_character_up.dds", 
+		activeIcon = "EsoUI/Art/MainMenu/menuBar_character_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_CHARACTER) end, 
 		category = CSPM_CATEGORY_S_MAIN_MENU, 
 	}, 
@@ -621,6 +624,7 @@ local shortcutList = {
 		name = L(SI_MAIN_MENU_SKILLS), 
 		tooltip = ZO_CachedStrFormat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_SKILLS)), 
 		icon = "EsoUI/Art/MainMenu/menuBar_skills_up.dds", 
+		activeIcon = "EsoUI/Art/MainMenu/menuBar_skills_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_SKILLS) end, 
 		category = CSPM_CATEGORY_S_MAIN_MENU, 
 	}, 
@@ -628,6 +632,7 @@ local shortcutList = {
 		name = L(SI_MAIN_MENU_CHAMPION), 
 		tooltip = ZO_CachedStrFormat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_CHAMPION)), 
 		icon = "EsoUI/Art/MainMenu/menuBar_champion_up.dds", 
+		activeIcon = "EsoUI/Art/MainMenu/menuBar_champion_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_CHAMPION) end, 
 		category = CSPM_CATEGORY_S_MAIN_MENU, 
 	}, 
@@ -635,6 +640,7 @@ local shortcutList = {
 		name = L(SI_MAIN_MENU_JOURNAL), 
 		tooltip = ZO_CachedStrFormat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_JOURNAL)), 
 		icon = "EsoUI/Art/MainMenu/menuBar_journal_up.dds", 
+		activeIcon = "EsoUI/Art/MainMenu/menuBar_journal_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_JOURNAL) end, 
 		category = CSPM_CATEGORY_S_MAIN_MENU, 
 	}, 
@@ -642,6 +648,7 @@ local shortcutList = {
 		name = L(SI_MAIN_MENU_COLLECTIONS), 
 		tooltip = ZO_CachedStrFormat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_COLLECTIONS)), 
 		icon = "EsoUI/Art/MainMenu/menuBar_collections_up.dds", 
+		activeIcon = "EsoUI/Art/MainMenu/menuBar_collections_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_COLLECTIONS) end, 
 		category = CSPM_CATEGORY_S_MAIN_MENU, 
 	}, 
@@ -649,6 +656,7 @@ local shortcutList = {
 		name = L(SI_MAIN_MENU_MAP), 
 		tooltip = ZO_CachedStrFormat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_MAP)), 
 		icon = "EsoUI/Art/MainMenu/menuBar_map_up.dds", 
+		activeIcon = "EsoUI/Art/MainMenu/menuBar_map_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_MAP) end, 
 		category = CSPM_CATEGORY_S_MAIN_MENU, 
 	}, 
@@ -656,6 +664,7 @@ local shortcutList = {
 		name = L(SI_MAIN_MENU_GROUP), 
 		tooltip = ZO_CachedStrFormat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_GROUP)), 
 		icon = "EsoUI/Art/MainMenu/menuBar_group_up.dds", 
+		activeIcon = "EsoUI/Art/MainMenu/menuBar_group_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_GROUP) end, 
 		category = CSPM_CATEGORY_S_MAIN_MENU, 
 	}, 
@@ -663,6 +672,7 @@ local shortcutList = {
 		name = L(SI_MAIN_MENU_CONTACTS), 
 		tooltip = ZO_CachedStrFormat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_CONTACTS)), 
 		icon = "EsoUI/Art/MainMenu/menuBar_social_up.dds", 
+		activeIcon = "EsoUI/Art/MainMenu/menuBar_social_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_CONTACTS) end, 
 		category = CSPM_CATEGORY_S_MAIN_MENU, 
 	}, 
@@ -670,6 +680,7 @@ local shortcutList = {
 		name = L(SI_MAIN_MENU_GUILDS), 
 		tooltip = ZO_CachedStrFormat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_GUILDS)), 
 		icon = "EsoUI/Art/MainMenu/menuBar_guilds_up.dds", 
+		activeIcon = "EsoUI/Art/MainMenu/menuBar_guilds_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_GUILDS) end, 
 		category = CSPM_CATEGORY_S_MAIN_MENU, 
 	}, 
@@ -677,6 +688,7 @@ local shortcutList = {
 		name = L(SI_MAIN_MENU_ALLIANCE_WAR), 
 		tooltip = ZO_CachedStrFormat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_ALLIANCE_WAR)), 
 		icon = "EsoUI/Art/MainMenu/menuBar_ava_up.dds", 
+		activeIcon = "EsoUI/Art/MainMenu/menuBar_ava_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_ALLIANCE_WAR) end, 
 		category = CSPM_CATEGORY_S_MAIN_MENU, 
 	}, 
@@ -684,6 +696,7 @@ local shortcutList = {
 		name = L(SI_MAIN_MENU_MAIL), 
 		tooltip = ZO_CachedStrFormat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_MAIL)), 
 		icon = "EsoUI/Art/MainMenu/menuBar_mail_up.dds", 
+		activeIcon = "EsoUI/Art/MainMenu/menuBar_mail_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_MAIL) end, 
 		category = CSPM_CATEGORY_S_MAIN_MENU, 
 	}, 
@@ -691,6 +704,7 @@ local shortcutList = {
 		name = L(SI_MAIN_MENU_NOTIFICATIONS), 
 		tooltip = ZO_CachedStrFormat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_NOTIFICATIONS)), 
 		icon = "EsoUI/Art/MainMenu/menuBar_notifications_up.dds", 
+		activeIcon = "EsoUI/Art/MainMenu/menuBar_notifications_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_NOTIFICATIONS) end, 
 		category = CSPM_CATEGORY_S_MAIN_MENU, 
 	}, 
@@ -698,6 +712,7 @@ local shortcutList = {
 		name = L(SI_MAIN_MENU_HELP), 
 		tooltip = ZO_CachedStrFormat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_HELP)), 
 		icon = "EsoUI/Art/MenuBar/menuBar_help_up.dds", 
+		activeIcon = "EsoUI/Art/MenuBar/menuBar_help_down.dds", 
 		callback = function() HELP_MANAGER:ToggleHelp() end, 
 		category = CSPM_CATEGORY_S_MAIN_MENU, 
 	}, 
@@ -723,12 +738,13 @@ function CSPM:EncodeMenuEntry(shortcutDataOrId, index)
 		name = GetValue(shortcutData.name) or "", 
 		nameColor = GetValue(shortcutData.nameColor), 
 		icon = GetValue(shortcutData.icon) or "EsoUI/Art/Icons/crafting_dwemer_shiny_gear.dds", 
+		resizeIconToFitFile = GetValue(shortcutData.resizeIconToFitFile), 
 		callback = shortcutData.callback or function() end, 
 		cooldownRemaining = GetValue(shortcutData.cooldownRemaining), 
 		cooldownDuration = GetValue(shortcutData.cooldownDuration), 
 		slotData = {}, 
 	}
-	data.inactiveIcon = GetValue(shortcutData.inactiveIcon) or data.icon
+	data.activeIcon = GetValue(shortcutData.activeIcon) or data.icon
 	return data
 end
 
@@ -950,7 +966,7 @@ function CSPM:AddMenuEntryWithShortcut(pieMenu, shortcutId, visualData)
 		data.slotData.value = data.slotData.value or shortcutId
 
 		local entryName = (data.nameColor and type(data.nameColor) == "table") and { data.name, { r = data.nameColor[1], g = data.nameColor[2], b = data.nameColor[3], }, } or data.name
-		pieMenu:AddMenuEntry(entryName, data.inactiveIcon, data.icon, function() self:OnSelectionExecutionCallback(data) end, data)
+		pieMenu:AddMenuEntry(entryName, data.icon, data.activeIcon, function() self:OnSelectionExecutionCallback(data) end, data)
 	end
 end
 
@@ -976,7 +992,7 @@ function CSPM:PopulateMenuCallback(rootMenu)
 			}
 			data.name, data.nameColor = self.util.GetDefaultSlotName(actionType, cspmCategoryId, actionValue)
 			data.icon = self.util.GetDefaultSlotIcon(actionType, cspmCategoryId, actionValue)
-			data.inactiveIcon = data.icon
+			data.activeIcon = data.icon
 		end
 		if data.showIconFrame == nil then
 			data.showIconFrame = visualData.showIconFrame
@@ -1000,7 +1016,7 @@ function CSPM:PopulateMenuCallback(rootMenu)
 					data.name = ZO_CachedStrFormat(L(SI_GAMEPAD_WORLD_MAP_TRAVEL_TO_HOUSE_OUTSIDE), primaryHouseName)	-- "<<1>> (outside)"
 				end
 				data.icon = GetCollectibleIcon(GetCollectibleIdForHouse(primaryHouseId))
-				data.inactiveIcon = data.icon
+				data.activeIcon = data.icon
 			end
 		end
 		if actionType == CSPM_ACTION_TYPE_PIE_MENU then
@@ -1023,11 +1039,12 @@ function CSPM:PopulateMenuCallback(rootMenu)
 				local replacementIcon = GetValue(data.slotData.icon)
 				if type(replacementIcon) == "string" and replacementIcon ~= "" then
 					data.icon = replacementIcon
-					data.inactiveIcon = replacementIcon
+					data.activeIcon = replacementIcon
+					data.resizeIconToFitFile = nil
 				end
 			end
 			local entryName = (data.nameColor and type(data.nameColor) == "table") and { data.name, { r = data.nameColor[1], g = data.nameColor[2], b = data.nameColor[3], }, } or data.name
-			self:AddMenuEntry(rootMenu, entryName, data.inactiveIcon, data.icon, function() self:OnSelectionExecutionCallback(data) end, data)
+			self:AddMenuEntry(rootMenu, entryName, data.icon, data.activeIcon, function() self:OnSelectionExecutionCallback(data) end, data)
 		else
 			self:AddMenuEntryWithShortcut(rootMenu, "!CSPM_invalid_slot_thus_open_piemenu_editor", visualData)
 		end

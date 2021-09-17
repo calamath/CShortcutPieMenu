@@ -316,6 +316,11 @@ end
 local function OnMenuItemCountChanged(newMenuItemsCount)
 	CSPM.LDL:Debug("OnMenuItemCountChanged : %s", newMenuItemsCount)
 	CSPM.db.preset[uiPresetId].menuItemsCount = newMenuItemsCount
+	if not CSPM:DoesMenuSlotDataExist(uiPresetId, newMenuItemsCount) then
+--		d("[CSPM] fatal error : slot data not found, so extend !")
+		CSPM:ExtendMenuItemsCountForUserPieMenuConfigDataDB(uiPresetId, newMenuItemsCount)
+	end
+
 	ui.slotChoices, ui.slotChoicesValues = RebuildSlotSelectionChoices(newMenuItemsCount)
 	CSPM_UI_SlotSelectMenu:UpdateChoices(ui.slotChoices, ui.slotChoicesValues)
 	CSPM_UI_SlotSelectMenu:UpdateValue()		-- Note : When called with no arguments, getFunc will be called, and setFunc will NOT be called.

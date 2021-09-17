@@ -70,32 +70,33 @@
 	<Controls>
 		<!-- CSPM Radical Menu Entry Template -->
 		<!-- NOTE : This template is based on ZO_SelectableItemRadialMenuEntryTemplate by ZOS, with its own extensions and size adjustment to fit the UI design of the CShortcutPieMenu add-on. -->
-		<Control name="CSPM_SelectableItemRadialMenuEntryTemplate" scale=".75" virtual="true" mouseEnabled="true">
+		<Control name="CSPM_SelectableItemRadialMenuEntryTemplate" scale="0.75" virtual="true" mouseEnabled="true">
 			<Dimensions x="64" y="64"/>
 			<OnInitialized>
 				CSPM_SelectableItemRadialMenuEntryTemplate_OnInitialized(self)
 			</OnInitialized>
 			<Controls>
 				<Backdrop name="$(parent)Frame" inherits="ZO_GamepadAbilityIconFrame" alpha="0.7">
-					<Anchor point="TOPLEFT" relativeTo="$(parent)Icon" offsetX="-8" offsetY="-8"/>
-					<Anchor point="BOTTOMRIGHT" relativeTo="$(parent)Icon" offsetX="8" offsetY="8"/>
+					<Anchor point="TOPLEFT" offsetX="-8" offsetY="-8"/>
+					<Anchor point="BOTTOMRIGHT" offsetX="8" offsetY="8"/>
 				</Backdrop>
 
 				<Label name="$(parent)StatusText" tier="HIGH" font="ZoFontGameShadow" horizontalAlignment="RIGHT" verticalAlignment="TOP" inheritScale="false">
-					<Anchor point="TOPRIGHT" relativeTo="$(parent)Icon" relativePoint="TOPLEFT" offsetX="4" offsetY="-8"/>
+					<Anchor point="TOPRIGHT" relativePoint="TOPLEFT" offsetX="4" offsetY="-8"/>
 				</Label>
 
 				<Label name="$(parent)CountText" tier="HIGH" font="ZoFontGameShadow" horizontalAlignment="RIGHT" inheritScale="true">
-					<Anchor point="BOTTOMRIGHT" relativeTo="$(parent)Icon" relativePoint="BOTTOMRIGHT" offsetX="4" offsetY="6"/>
+					<Anchor point="BOTTOMRIGHT" relativePoint="BOTTOMRIGHT" offsetX="4" offsetY="6"/>
 				</Label>
 
-				<Texture name="$(parent)Glow" tier ="LOW" textureFile="EsoUI/Art/Quickslots/quickslot_highlight_blob.dds" alpha="0">
+				<Texture name="$(parent)Glow" tier="LOW" textureFile="EsoUI/Art/Quickslots/quickslot_highlight_blob.dds" alpha="0">
 					<Dimensions x="128" y="128"/>
 					<Anchor point="CENTER"/>
 				</Texture>
 
-				<Texture name="$(parent)Icon" tier ="MEDIUM">
-					<AnchorFill/>
+				<Texture name="$(parent)Icon" tier="MEDIUM" resizeToFitFile="false">
+					<Dimensions x="64" y="64"/>
+					<Anchor point="CENTER"/>
 				</Texture>
 
 				<Cooldown name="$(parent)Cooldown" tier="HIGH" leadingEdgeTexture="EsoUI/Art/ActionBar/Gamepad/gp_QuickslotFill.dds" fillColor="000000" alpha=".85" hidden="true">
@@ -103,8 +104,10 @@
 				</Cooldown>
 
 				<Label name="$(parent)Label" tier="HIGH" font="ZoFontChat" horizontalAlignment="CENTER" inheritScale="false">
-					<Anchor point="TOP" relativeto="$(parent)Icon" relativePoint="BOTTOM" offsetY="5" />
+					<Anchor point="TOP" relativePoint="BOTTOM" offsetY="5" />
 				</Label>
+				<Control name="$(parent)Padding" inheritScale="false" hidden="true">
+				</Control>
 			</Controls>
 		</Control>
 	</Controls>

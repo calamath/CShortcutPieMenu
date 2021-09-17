@@ -111,8 +111,8 @@ local strings = {
 
 	SI_CSPM_UI_VISUAL_PRESET_NAME_OVERRIDE_NAME =	"Preset Name Override", 
 	SI_CSPM_UI_VISUAL_PRESET_NAME_OVERRIDE_TIPS =	"Adjust the name of this preset. (optional)", 
-	SI_CSPM_UI_VISUAL_PRESET_NOTE_NAME =			"Preset Note", 
-	SI_CSPM_UI_VISUAL_PRESET_NOTE_TIPS =			"Adjust the notes about this preset. (optional)", 
+	SI_CSPM_UI_VISUAL_PRESET_NOTE_NAME =			"Preset Description", 
+	SI_CSPM_UI_VISUAL_PRESET_NOTE_TIPS =			"Adjust the notes for this preset. This text is used in the pie menu tooltip. (optional)", 
 	SI_CSPM_UI_VISUAL_HEADER1_TEXT =				"Visual Design Options", 
 	SI_CSPM_UI_VISUAL_QUICKSLOT_STYLE_OP_NAME =		"Quickslot radial menu style", 
 	SI_CSPM_UI_VISUAL_QUICKSLOT_STYLE_OP_TIPS =		"Apply a background design like a quick slot radial menu.", 
