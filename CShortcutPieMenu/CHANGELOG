@@ -1,3 +1,7 @@
+V0.9.5: [V905] by Calamath
+- The slot status icon is now correctly displayed in the upper left corner of the slot in the pie menu.
+(e.g.: The pie menu slot for using collectible will have the appropriate status icon indicating collectibles active status.)
+
 V0.9.4: [V904] by Calamath
 - The display position of the slot name label is now fixed regardless of the animation.
 - Fixed an issue with the Pie Menu Editor that caused a UI error when opening the pie menu immediately after increasing the menu items count.

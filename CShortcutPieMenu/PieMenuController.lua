@@ -36,12 +36,21 @@ function CSPM_SelectableItemRadialMenuEntryTemplate_OnInitialized(self)
 	if self.padding then
 		self.padding:SetDimensions(64 / 2 + 10, 64 / 2 + 5)		-- trueEntryTemplateWidth / 2 + offsetX , trueEntryTemplateHeight / 2 + offsetY
 	end
-	self.status = self:GetNamedChild("StatusText")
+	self.status = self:GetNamedChild("Status")
 end
 
-function CSPM_SelectableItemRadialMenuEntryTemplate_UpdateStatus(template, statusLabelText)
-	statusLabelText = statusLabelText or ""
-	template.status:SetText(statusLabelText)
+function CSPM_SelectableItemRadialMenuEntryTemplate_UpdateStatus(template, statusIcon)
+	template.status:ClearIcons()
+	if statusIcon then
+		if type(statusIcon) == "table" then
+			for k, v in ipairs(statusIcon) do
+				template.status:AddIcon(v)
+			end
+		else
+			template.status:AddIcon(statusIcon)
+		end
+		template.status:Show()
+	end
 end
 
 function CSPM_SelectableItemRadialMenuEntryTemplate_UpdateSlotLabel(template, slotLabel)
@@ -60,7 +69,7 @@ function CSPM_SelectableItemRadialMenuEntryTemplate_UpdateCooldown(template, rem
 	if template.inCooldown then
 		displayType = displayType or CD_TYPE_RADIAL
 		timeType = timeType or CD_TIME_TYPE_TIME_UNTIL
-		drawLeadingEdge = drawLeadingEdge or false		-- nil should be false (no draw leading edge for radical type.)
+		drawLeadingEdge = drawLeadingEdge or false		-- nil should be false (no draw leading edge for radial type.)
 		template.cooldown:SetVerticalCooldownLeadingEdgeHeight(12)
 		template.cooldown:StartCooldown(remaining, duration, displayType, timeType, drawLeadingEdge)
 	else
@@ -81,7 +90,7 @@ do
 		[TOPRIGHT]		= BOTTOMLEFT, 
 		[CENTER]		= CENTER, 
 	}
-	function CSPM_SetupSelectableItemRadialMenuEntryTemplate(template, selected, itemCount, showIconFrame, slotLabel, resizeIconToFitFile)
+	function CSPM_SetupSelectableItemRadialMenuEntryTemplate(template, selected, itemCount, showIconFrame, slotLabel, statusIcon, resizeIconToFitFile)
 		if template.frame then
 			if showIconFrame then
 				template.frame:SetHidden(false)
@@ -97,32 +106,39 @@ do
 		end
 
 		if template.label then
-			-- To avoid a bug where the anchor offset calculation is incorrect for the child control without scale inheritance, when animating the parent's scale.
-			local isValid, point = template.label:GetAnchor(0)
-			if isValid then
-				if template.padding then
-					template.padding:ClearAnchors()
-					template.padding:SetAnchor(point, nil, CENTER)
+			if template.padding then
+				-- To avoid a bug where the anchor offset calculation is incorrect for the child control without scale inheritance, when animating the parent's scale.
+				local isValid, point = template.label:GetAnchor(0)
+				if isValid then
+					if template.padding then
+						template.padding:ClearAnchors()
+						template.padding:SetAnchor(point, nil, CENTER)
+					end
+					template.label:ClearAnchors()
+					template.label:SetAnchor(point, template.padding, POINT_TO_RELATIVE_POINT[point])
 				end
-				template.label:ClearAnchors()
-				template.label:SetAnchor(point, template.padding, POINT_TO_RELATIVE_POINT[point])
 			end
+			CSPM_SelectableItemRadialMenuEntryTemplate_UpdateSlotLabel(template, slotLabel)
 		end
-		CSPM_SelectableItemRadialMenuEntryTemplate_UpdateSlotLabel(template, slotLabel)
 
-		CSPM_SelectableItemRadialMenuEntryTemplate_UpdateStatus(template, statusLabelText)
+		if template.status then
+			CSPM_SelectableItemRadialMenuEntryTemplate_UpdateStatus(template, statusIcon)
+		end
 
 		if itemCount then
-			template.count:SetHidden(false)
-			template.count:SetText(itemCount)
-
+			if template.count then
+				template.count:SetHidden(false)
+				template.count:SetText(itemCount)
+			end
 			if itemCount == 0 then
 				template.icon:SetDesaturation(1)
 			else
 				template.icon:SetDesaturation(0)
 			end
 		else
-			template.count:SetHidden(true)
+			if template.count then
+				template.count:SetHidden(true)
+			end
 			template.icon:SetDesaturation(0)
 		end
 
@@ -432,8 +448,8 @@ function CSPM_PieMenuController:SetupEntryControl(entryControl, data)
 		slotLabel = ""
 	end
 
-	CSPM_SetupSelectableItemRadialMenuEntryTemplate(entryControl, selected, itemCount, data.showIconFrame, slotLabel, data.resizeIconToFitFile)
-	
+	CSPM_SetupSelectableItemRadialMenuEntryTemplate(entryControl, selected, itemCount, data.showIconFrame, slotLabel, data.statusIcon, data.resizeIconToFitFile)
+
 	if data.cooldownRemaining and data.cooldownDuration then
 		CSPM_SelectableItemRadialMenuEntryTemplate_UpdateCooldown(entryControl, data.cooldownRemaining, data.cooldownDuration)
 	end

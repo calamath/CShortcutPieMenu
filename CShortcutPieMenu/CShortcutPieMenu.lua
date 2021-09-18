@@ -25,7 +25,7 @@ CShortcutPieMenu = CShortcutPieMenu or {}
 
 local CSPM = CShortcutPieMenu
 CSPM.name = "CShortcutPieMenu"
-CSPM.version = "0.9.4"
+CSPM.version = "0.9.5"
 CSPM.author = "Calamath"
 CSPM.savedVarsPieMenuEditor = "CShortcutPieMenuDB"
 CSPM.savedVarsPieMenuManager = "CShortcutPieMenuSV"
@@ -733,13 +733,13 @@ function CSPM:EncodeMenuEntry(shortcutDataOrId, index)
 		index = index or 1, 
 		showIconFrame = shortcutData.showIconFrame, 
 		showSlotLabel = shortcutData.showSlotLabel, 
-		statusLabelText = "", 
 		itemCount = GetValue(shortcutData.itemCount), 
 		name = GetValue(shortcutData.name) or "", 
 		nameColor = GetValue(shortcutData.nameColor), 
 		icon = GetValue(shortcutData.icon) or "EsoUI/Art/Icons/crafting_dwemer_shiny_gear.dds", 
 		resizeIconToFitFile = GetValue(shortcutData.resizeIconToFitFile), 
 		callback = shortcutData.callback or function() end, 
+		statusIcon = GetValue(shortcutData.statusIcon), 
 		cooldownRemaining = GetValue(shortcutData.cooldownRemaining), 
 		cooldownDuration = GetValue(shortcutData.cooldownDuration), 
 		slotData = {}, 
@@ -987,8 +987,8 @@ function CSPM:PopulateMenuCallback(rootMenu)
 		else
 			data = {
 				index = i, 
-				statusLabelText = "", 
 				itemCount = nil, 
+				statusIcon = nil, 
 			}
 			data.name, data.nameColor = self.util.GetDefaultSlotName(actionType, cspmCategoryId, actionValue)
 			data.icon = self.util.GetDefaultSlotIcon(actionType, cspmCategoryId, actionValue)
@@ -1003,6 +1003,7 @@ function CSPM:PopulateMenuCallback(rootMenu)
 		isValid = data.name ~= ""
 
 		if actionType == CSPM_ACTION_TYPE_COLLECTIBLE then
+			data.statusIcon = IsCollectibleActive(actionValue, GAMEPLAY_ACTOR_CATEGORY_PLAYER) and ZO_CHECK_ICON
 			data.cooldownRemaining, data.cooldownDuration  = GetCollectibleCooldownAndDuration(actionValue)
 		end
 		if actionType == CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE and actionValue == CSPM_ACTION_VALUE_PRIMARY_HOUSE_ID then
