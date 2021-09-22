@@ -1,3 +1,7 @@
+V0.9.6: [V906] by Calamath
+New Feature: Appearance Collectible support.
+- Added new slot action type 'Appearance'. This allows you to place your favorite appearance collectible in user-customizable pie menu slots.
+
 V0.9.5: [V905] by Calamath
 - The slot status icon is now correctly displayed in the upper left corner of the slot in the pie menu.
 (e.g.: The pie menu slot for using collectible will have the appropriate status icon indicating collectibles active status.)
