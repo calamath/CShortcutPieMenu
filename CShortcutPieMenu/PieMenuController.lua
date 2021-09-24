@@ -40,16 +40,18 @@ function CSPM_SelectableItemRadialMenuEntryTemplate_OnInitialized(self)
 end
 
 function CSPM_SelectableItemRadialMenuEntryTemplate_UpdateStatus(template, statusIcon)
-	template.status:ClearIcons()
-	if statusIcon then
-		if type(statusIcon) == "table" then
-			for k, v in ipairs(statusIcon) do
-				template.status:AddIcon(v)
+	if template.status then
+		template.status:ClearIcons()
+		if statusIcon then
+			if type(statusIcon) == "table" then
+				for k, v in ipairs(statusIcon) do
+					template.status:AddIcon(v)
+				end
+			else
+				template.status:AddIcon(statusIcon)
 			end
-		else
-			template.status:AddIcon(statusIcon)
+			template.status:Show()
 		end
-		template.status:Show()
 	end
 end
 
@@ -90,7 +92,7 @@ do
 		[TOPRIGHT]		= BOTTOMLEFT, 
 		[CENTER]		= CENTER, 
 	}
-	function CSPM_SetupSelectableItemRadialMenuEntryTemplate(template, selected, itemCount, showIconFrame, slotLabel, statusIcon, resizeIconToFitFile)
+	function CSPM_SetupSelectableItemRadialMenuEntryTemplate(template, selected, itemCount, showIconFrame, slotLabel, resizeIconToFitFile)
 		if template.frame then
 			if showIconFrame then
 				template.frame:SetHidden(false)
@@ -119,10 +121,6 @@ do
 				end
 			end
 			CSPM_SelectableItemRadialMenuEntryTemplate_UpdateSlotLabel(template, slotLabel)
-		end
-
-		if template.status then
-			CSPM_SelectableItemRadialMenuEntryTemplate_UpdateStatus(template, statusIcon)
 		end
 
 		if itemCount then
@@ -235,6 +233,8 @@ function CSPM_PieMenuController:Initialize(control, entryTemplate, animationTemp
 			end
 		end
 	end
+	self.selectedEntry = nil
+	self.previousSelectedEntry = nil
 	if self.menu.SetOnUpdateRotationFunction then
 		self.rotationRaw = ROTATION_OFFSET
 		self.menu:SetOnUpdateRotationFunction(function(...) self:OnUpdateRotationCallback(...) end)
@@ -385,6 +385,18 @@ function CSPM_PieMenuController:GetNumMenuEntries()
 	return #self.menu.entries
 end
 
+function CSPM_PieMenuController:GetSelectedEntryControl()
+	if self.selectedEntry then
+		return self.selectedEntry.control
+	end
+end
+
+function CSPM_PieMenuController:GetPreviousSelectedEntryControl()
+	if self.previousSelectedEntry then
+		return self.previousSelectedEntry.control
+	end
+end
+
 function CSPM_PieMenuController:AddMenuEntry(...)
 	self.menu:AddEntry(...)
 end
@@ -448,7 +460,8 @@ function CSPM_PieMenuController:SetupEntryControl(entryControl, data)
 		slotLabel = ""
 	end
 
-	CSPM_SetupSelectableItemRadialMenuEntryTemplate(entryControl, selected, itemCount, data.showIconFrame, slotLabel, data.statusIcon, data.resizeIconToFitFile)
+	CSPM_SetupSelectableItemRadialMenuEntryTemplate(entryControl, selected, itemCount, data.showIconFrame, slotLabel, data.resizeIconToFitFile)
+	CSPM_SelectableItemRadialMenuEntryTemplate_UpdateStatus(entryControl, data.statusIcon)
 
 	if data.cooldownRemaining and data.cooldownDuration then
 		CSPM_SelectableItemRadialMenuEntryTemplate_UpdateCooldown(entryControl, data.cooldownRemaining, data.cooldownDuration)
@@ -456,11 +469,24 @@ function CSPM_PieMenuController:SetupEntryControl(entryControl, data)
 end
 
 function CSPM_PieMenuController:OnSelectionChangedCallback(selectedEntry)
-	LDL:Debug("OnSelectionChangedCallback() : %s", selectedEntry and selectedEntry.data.index or "nil")
-	if not selectedEntry then return end
-	if self.onSelectionChangedCallback then
-		self.onSelectionChangedCallback(self, selectedEntry.data.index, selectedEntry.data)
+	LDL:Debug("OnSelectionChangedCallback() : %s -> %s", self.previousSelectedEntry and self.previousSelectedEntry.data.index or "nil", selectedEntry and selectedEntry.data.index or "nil")
+	self.selectedEntry = selectedEntry
+	if selectedEntry then
+		local previousSelectedEntryControl = self:GetPreviousSelectedEntryControl()
+		if previousSelectedEntryControl then
+			if previousSelectedEntryControl.entry.data.activeStatusIcon then
+				CSPM_SelectableItemRadialMenuEntryTemplate_UpdateStatus(previousSelectedEntryControl, previousSelectedEntryControl.entry.data.statusIcon)
+			end
+		end
+		if selectedEntry.data.activeStatusIcon then
+			CSPM_SelectableItemRadialMenuEntryTemplate_UpdateStatus(selectedEntry.control, selectedEntry.data.activeStatusIcon)
+		end
+
+		if self.onSelectionChangedCallback then
+			self.onSelectionChangedCallback(self, selectedEntry.data.index, selectedEntry.data)
+		end
 	end
+	self.previousSelectedEntry = selectedEntry
 end
 
 function CSPM_PieMenuController:OnUpdateRotationCallback(rotationRaw)
@@ -473,6 +499,8 @@ end
 
 function CSPM_PieMenuController:PopulateMenu()
 	LDL:Debug("PopulateMenu()")
+	self.selectedEntry = nil
+	self.previousSelectedEntry = nil
 	self.selectedSlotNum = 0
 	if IsGameCameraActive() and IsGameCameraUIModeActive() or IsInteracting() then
 		if self.allowClickable then

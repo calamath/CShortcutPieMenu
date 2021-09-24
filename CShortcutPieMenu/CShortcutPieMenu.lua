@@ -232,6 +232,19 @@ CSPM.lut = {
 		["ACTIVE"]				= { 0.6, 1, 0, }, 
 		["BLOCKED"]				= { 1, 0.3, 0, }, 
 	}, 
+	CSPM_LUT_UI_ICON = {
+		["CHECK"]				= "EsoUI/Art/Miscellaneous/check_icon_32.dds", 
+		["LOCKED"]				= "EsoUI/Art/Miscellaneous/status_locked.dds", 
+		["UNLOCKED"]			= "EsoUI/Art/Miscellaneous/Gamepad/gp_icon_unlocked32.dds", 
+		["BLOCKED"]				= "EsoUI/Art/Mappins/hostile_pin.dds", 
+		["HELP"]				= "EsoUI/Art/Miscellaneous/help_icon.dds", 
+		["NEW"]					= "EsoUI/Art/Miscellaneous/new_icon.dds", 
+		["WARNING"]				= "EsoUI/Art/Miscellaneous/eso_icon_warning.dds", 
+		["MOUSE_LMB"]			= GetMouseIconPathForKeyCode(KEY_MOUSE_LEFT), 
+		["MOUSE_RMB"]			= GetMouseIconPathForKeyCode(KEY_MOUSE_RIGHT), 
+		["GAMEPAD_1"]			= GetGamepadIconPathForKeyCode(KEY_GAMEPAD_BUTTON_1), 
+		["GAMEPAD_2"]			= GetGamepadIconPathForKeyCode(KEY_GAMEPAD_BUTTON_2), 
+	}, 
 }
 -- ---------------------------------------------------------------------------------------
 -- Aliases of look up table
@@ -241,6 +254,7 @@ local CSPM_LUT_CATEGORY_E_CSPM_TO_ICON			= CSPM.lut.CSPM_LUT_CATEGORY_E_CSPM_TO_
 local CSPM_LUT_ACTION_TYPE_API_STRINGS			= CSPM.lut.CSPM_LUT_ACTION_TYPE_API_STRINGS
 local CSPM_LUT_ACTION_TYPE_ALIAS				= CSPM.lut.CSPM_LUT_ACTION_TYPE_ALIAS
 local CSPM_LUT_UI_COLOR							= CSPM.lut.CSPM_LUT_UI_COLOR
+local CSPM_LUT_UI_ICON							= CSPM.lut.CSPM_LUT_UI_ICON
 
 
 -- ---------------------------------------------------------------------------------------
@@ -318,7 +332,12 @@ do
 		end, 
 		[CSPM_ACTION_TYPE_COLLECTIBLE] = function(_, _, actionValue)
 			local name = ZO_CachedStrFormat(L(SI_CSPM_COMMON_FORMATTER), GetCollectibleName(actionValue))
-			local nameColor = IsCollectibleActive(actionValue, GAMEPLAY_ACTOR_CATEGORY_PLAYER) and CSPM_LUT_UI_COLOR.ACTIVE
+			local nameColor
+			if IsCollectibleActive(actionValue, GAMEPLAY_ACTOR_CATEGORY_PLAYER) then 
+				nameColor = CSPM_LUT_UI_COLOR.ACTIVE
+			elseif GetCollectibleBlockReason(actionValue) ~= COLLECTIBLE_USAGE_BLOCK_REASON_NOT_BLOCKED then
+				nameColor = CSPM_LUT_UI_COLOR.BLOCKED
+			end
 			return name, nameColor
 		end, 
 		[CSPM_ACTION_TYPE_EMOTE] = function(_, _, actionValue)
@@ -596,6 +615,10 @@ local shortcutList = {
 		end, 
 		category = CSPM_CATEGORY_NOTHING, 
 		showSlotLabel = false, 
+		activeStatusIcon = function()
+			local selectionButton = IsInGamepadPreferredMode() and CSPM_LUT_UI_ICON.GAMEPAD_1 or CSPM_LUT_UI_ICON.MOUSE_LMB
+			return { selectionButton, selectionButton, }
+		end, 
 	}, 
 	["!CSPM_cancel_slot"] = {
 		name = L(SI_RADIAL_MENU_CANCEL_BUTTON), 
@@ -781,6 +804,7 @@ function CSPM:EncodeMenuEntry(shortcutDataOrId, index)
 		resizeIconToFitFile = GetValue(shortcutData.resizeIconToFitFile), 
 		callback = shortcutData.callback or function() end, 
 		statusIcon = GetValue(shortcutData.statusIcon), 
+		activeStatusIcon = GetValue(shortcutData.activeStatusIcon), 
 		cooldownRemaining = GetValue(shortcutData.cooldownRemaining), 
 		cooldownDuration = GetValue(shortcutData.cooldownDuration), 
 		slotData = {}, 
@@ -1030,6 +1054,7 @@ function CSPM:PopulateMenuCallback(rootMenu)
 				index = i, 
 				itemCount = nil, 
 				statusIcon = nil, 
+				activeStatusIcon = nil, 
 			}
 			data.name, data.nameColor = self.util.GetDefaultSlotName(actionType, cspmCategoryId, actionValue)
 			data.icon = self.util.GetDefaultSlotIcon(actionType, cspmCategoryId, actionValue)
@@ -1044,7 +1069,11 @@ function CSPM:PopulateMenuCallback(rootMenu)
 		isValid = data.name ~= ""
 
 		if actionType == CSPM_ACTION_TYPE_COLLECTIBLE then
-			data.statusIcon = IsCollectibleActive(actionValue, GAMEPLAY_ACTOR_CATEGORY_PLAYER) and ZO_CHECK_ICON
+			if IsCollectibleActive(actionValue, GAMEPLAY_ACTOR_CATEGORY_PLAYER) then
+				data.statusIcon = CSPM_LUT_UI_ICON.CHECK
+			elseif GetCollectibleBlockReason(actionValue) ~= COLLECTIBLE_USAGE_BLOCK_REASON_NOT_BLOCKED then
+				data.statusIcon = CSPM_LUT_UI_ICON.BLOCKED
+			end
 			data.cooldownRemaining, data.cooldownDuration  = GetCollectibleCooldownAndDuration(actionValue)
 		end
 		if actionType == CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE and actionValue == CSPM_ACTION_VALUE_PRIMARY_HOUSE_ID then
@@ -1062,6 +1091,8 @@ function CSPM:PopulateMenuCallback(rootMenu)
 			end
 		end
 		if actionType == CSPM_ACTION_TYPE_PIE_MENU then
+			local selectionButton = IsInGamepadPreferredMode() and CSPM_LUT_UI_ICON.GAMEPAD_1 or CSPM_LUT_UI_ICON.MOUSE_LMB
+			data.activeStatusIcon = { selectionButton, selectionButton, }	-- for blinking icon
 			-- override the display name of user pie menu according to its user defined preset name.
 			local pieMenuName = self:GetPieMenuInfo(actionValue)
 			if self:IsUserPieMenu(actionValue) and pieMenuName and pieMenuName ~= "" then
