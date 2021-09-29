@@ -25,7 +25,7 @@ CShortcutPieMenu = CShortcutPieMenu or {}
 
 local CSPM = CShortcutPieMenu
 CSPM.name = "CShortcutPieMenu"
-CSPM.version = "0.9.6"
+CSPM.version = "0.9.8"
 CSPM.author = "Calamath"
 CSPM.savedVarsPieMenuEditor = "CShortcutPieMenuDB"
 CSPM.savedVarsPieMenuManager = "CShortcutPieMenuSV"
@@ -58,6 +58,7 @@ CSPM.const = {
 	CSPM_ACTION_TYPE_PIE_MENU					= 5, 
 	CSPM_ACTION_TYPE_SHORTCUT					= 6, 
 	CSPM_ACTION_TYPE_COLLECTIBLE_APPEARANCE		= 11, 	-- alias of CSPM_ACTION_TYPE_COLLECTIBLE
+	CSPM_ACTION_TYPE_SHORTCUT_ADDON				= 16, 	-- alias of CSPM_ACTION_TYPE_SHORTCUT
 	CSPM_CATEGORY_NOTHING						= 0, 
 	CSPM_CATEGORY_IMMEDIATE_VALUE				= 1, 
 	CSPM_CATEGORY_C_ASSISTANT					= 11, 
@@ -123,6 +124,7 @@ local CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE			= CSPM.const.CSPM_ACTION_TYPE_TRAVEL_TO
 local CSPM_ACTION_TYPE_PIE_MENU					= CSPM.const.CSPM_ACTION_TYPE_PIE_MENU
 local CSPM_ACTION_TYPE_SHORTCUT					= CSPM.const.CSPM_ACTION_TYPE_SHORTCUT
 local CSPM_ACTION_TYPE_COLLECTIBLE_APPEARANCE	= CSPM.const.CSPM_ACTION_TYPE_COLLECTIBLE_APPEARANCE
+local CSPM_ACTION_TYPE_SHORTCUT_ADDON			= CSPM.const.CSPM_ACTION_TYPE_SHORTCUT_ADDON
 
 local CSPM_CATEGORY_NOTHING						= CSPM.const.CSPM_CATEGORY_NOTHING
 local CSPM_CATEGORY_IMMEDIATE_VALUE				= CSPM.const.CSPM_CATEGORY_IMMEDIATE_VALUE
@@ -226,6 +228,7 @@ CSPM.lut = {
 	}, 
 	CSPM_LUT_ACTION_TYPE_ALIAS = {
 		[CSPM_ACTION_TYPE_COLLECTIBLE_APPEARANCE]		= CSPM_ACTION_TYPE_COLLECTIBLE, 
+		[CSPM_ACTION_TYPE_SHORTCUT_ADDON]				= CSPM_ACTION_TYPE_SHORTCUT, 
 	}, 
 	CSPM_LUT_UI_COLOR = {
 		["NORMAL"]				= { 1, 1, 1, }, 
@@ -781,6 +784,10 @@ local shortcutList = {
 		category = CSPM_CATEGORY_S_MAIN_MENU, 
 	}, 
 }
+local externalShortcutCategory = {
+}
+local externalShortcutCategoryList = {
+}
 
 function CSPM:GetShortcutData(shortcutId)
 	return shortcutList[shortcutId]
@@ -801,16 +808,26 @@ function CSPM:EncodeMenuEntry(shortcutDataOrId, index)
 		name = GetValue(shortcutData.name) or "", 
 		nameColor = GetValue(shortcutData.nameColor), 
 		icon = GetValue(shortcutData.icon) or "EsoUI/Art/Icons/crafting_dwemer_shiny_gear.dds", 
+		iconAttributes = GetValue(shortcutData.iconAttributes), 
 		resizeIconToFitFile = GetValue(shortcutData.resizeIconToFitFile), 
 		callback = shortcutData.callback or function() end, 
 		statusIcon = GetValue(shortcutData.statusIcon), 
 		activeStatusIcon = GetValue(shortcutData.activeStatusIcon), 
 		cooldownRemaining = GetValue(shortcutData.cooldownRemaining), 
 		cooldownDuration = GetValue(shortcutData.cooldownDuration), 
+		disabled = GetValue(shortcutData.disabled), 
 		slotData = {}, 
 	}
 	data.activeIcon = GetValue(shortcutData.activeIcon) or data.icon
+	if data.disabled == true then
+		data.nameColor = CSPM_LUT_UI_COLOR.BLOCKED	-- red color-coded
+		data.activeIcon = data.icon					-- not using activeIcon
+	end
 	return data
+end
+
+function CSPM:GetShortcutCategoryList()
+	return externalShortcutCategoryList
 end
 
 function CSPM:GetShortcutListByCategory(categoryId)
@@ -826,8 +843,20 @@ end
 function CSPM:RegisterExternalShortcutData(shortcutId, shortcutData)
 	if type(shortcutId) ~= "string" or zo_strsub(shortcutId, 1, 1) == "!" or type(shortcutData) ~= "table" then return false end
 	if shortcutList[shortcutId] then return false end
+	local categoryId = GetValue(shortcutData.category)
+	if type(categoryId) == "number" then return false end
+
 	shortcutList[shortcutId] = shortcutData
-	CALLBACK_MANAGER:FireCallbacks("CSPM-ShortcutRegistered", shortcutId)
+	if categoryId then
+		if not externalShortcutCategory[categoryId] then
+			externalShortcutCategory[categoryId] = true
+			table.insert(externalShortcutCategoryList, categoryId)
+		end
+	else
+		shortcutList[shortcutId].category = CSPM_CATEGORY_NOTHING
+	end
+	CSPM.LDL:Debug("ExternalShortcutRegistered : %s (%s)", shortcutId, shortcutList[shortcutId].category)
+	CALLBACK_MANAGER:FireCallbacks("CSPM-ShortcutRegistered", shortcutId, shortcutList[shortcutId].category)
 	return true
 end
 
@@ -1071,8 +1100,9 @@ function CSPM:PopulateMenuCallback(rootMenu)
 		if actionType == CSPM_ACTION_TYPE_COLLECTIBLE then
 			if IsCollectibleActive(actionValue, GAMEPLAY_ACTOR_CATEGORY_PLAYER) then
 				data.statusIcon = CSPM_LUT_UI_ICON.CHECK
-			elseif GetCollectibleBlockReason(actionValue) ~= COLLECTIBLE_USAGE_BLOCK_REASON_NOT_BLOCKED then
+			elseif GetCollectibleUnlockStateById(actionValue) == COLLECTIBLE_UNLOCK_STATE_LOCKED or IsCollectibleBlocked(actionValue) then
 				data.statusIcon = CSPM_LUT_UI_ICON.BLOCKED
+				data.iconAttributes = { iconDesaturation = 1, }
 			end
 			data.cooldownRemaining, data.cooldownDuration  = GetCollectibleCooldownAndDuration(actionValue)
 		end

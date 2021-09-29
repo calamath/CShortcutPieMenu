@@ -40,6 +40,7 @@ local CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE			= CSPM.const.CSPM_ACTION_TYPE_TRAVEL_TO
 local CSPM_ACTION_TYPE_PIE_MENU					= CSPM.const.CSPM_ACTION_TYPE_PIE_MENU
 local CSPM_ACTION_TYPE_SHORTCUT					= CSPM.const.CSPM_ACTION_TYPE_SHORTCUT
 local CSPM_ACTION_TYPE_COLLECTIBLE_APPEARANCE	= CSPM.const.CSPM_ACTION_TYPE_COLLECTIBLE_APPEARANCE
+local CSPM_ACTION_TYPE_SHORTCUT_ADDON			= CSPM.const.CSPM_ACTION_TYPE_SHORTCUT_ADDON
 
 local CSPM_CATEGORY_NOTHING						= CSPM.const.CSPM_CATEGORY_NOTHING
 local CSPM_CATEGORY_IMMEDIATE_VALUE				= CSPM.const.CSPM_CATEGORY_IMMEDIATE_VALUE
@@ -185,27 +186,63 @@ local function OnLAMPanelControlsCreated(panel)
 
 	-- override ScrollableDropdownHelper for CSPM_UI_MAN_PresetSelectMenuKeybindsX to customize dropdown choices tooltips
 	for i = 1, 5 do
-			_G["CSPM_UI_MAN_PresetSelectMenuKeybinds" .. i].scrollHelper.OnMouseEnter = function(self, control)
-				if control.m_data.tooltip then
-					CSPM.util.LayoutSlotActionTooltip(CSPM_ACTION_TYPE_PIE_MENU, CSPM_CATEGORY_NOTHING, control.m_data.tooltip, CSPM_UI_NONE)
-					CSPM.util.ShowSlotActionTooltip(control, TOPLEFT, 0, 0, BOTTOMRIGHT)
-				end
+		_G["CSPM_UI_MAN_PresetSelectMenuKeybinds" .. i].scrollHelper.OnMouseEnter = function(self, control)
+			if control.m_data.tooltip then
+				CSPM.util.LayoutSlotActionTooltip(CSPM_ACTION_TYPE_PIE_MENU, CSPM_CATEGORY_NOTHING, control.m_data.tooltip, CSPM_UI_NONE)
+				CSPM.util.ShowSlotActionTooltip(control, TOPLEFT, 0, 0, BOTTOMRIGHT)
 			end
-			_G["CSPM_UI_MAN_PresetSelectMenuKeybinds" .. i].scrollHelper.OnMouseExit = function(self, control)
-				if control.m_data.tooltip then
-					CSPM.util.HideSlotActionTooltip()
-				end
+		end
+		_G["CSPM_UI_MAN_PresetSelectMenuKeybinds" .. i].scrollHelper.OnMouseExit = function(self, control)
+			if control.m_data.tooltip then
+				CSPM.util.HideSlotActionTooltip()
 			end
-		
+		end
 	end
 
 	ui.panelInitialized = true
 end
 
+local function OnLAMPanelOpened(panel)
+	if (panel ~= ui.panel) then return end
+	ui.panelOpened = true
+	CSPM.LDL:Debug("OnLAMPanelOpened: PieMenu Manager")
+	-- update preset selection choices if needed.
+	-- NOTE : If an external pie menu is added by an external add-on after the previous construction of the choice, the pie menu preset choice should be rebuilt.
+	if ui.requestRebuildPresetSelectionChoices then
+		CSPM.LDL:Debug("uiPieMenuManager-PresetSelectionChoices Updated:")
+		ui.presetChoices, ui.presetChoicesValues, ui.presetChoicesTooltips = RebuildPresetSelectionChoices()
+		ui.requestRebuildPresetSelectionChoices = false
+
+		CSPM_UI_MAN_PresetSelectMenuKeybinds1:UpdateChoices(ui.presetChoices, ui.presetChoicesValues, ui.presetChoicesTooltips)
+		CSPM_UI_MAN_PresetSelectMenuKeybinds1:UpdateValue()		-- Note : When called with no arguments, getFunc will be called, and setFunc will NOT be called.
+		CSPM_UI_MAN_PresetSelectMenuKeybinds2:UpdateChoices(ui.presetChoices, ui.presetChoicesValues, ui.presetChoicesTooltips)
+		CSPM_UI_MAN_PresetSelectMenuKeybinds2:UpdateValue()
+		CSPM_UI_MAN_PresetSelectMenuKeybinds3:UpdateChoices(ui.presetChoices, ui.presetChoicesValues, ui.presetChoicesTooltips)
+		CSPM_UI_MAN_PresetSelectMenuKeybinds3:UpdateValue()
+		CSPM_UI_MAN_PresetSelectMenuKeybinds4:UpdateChoices(ui.presetChoices, ui.presetChoicesValues, ui.presetChoicesTooltips)
+		CSPM_UI_MAN_PresetSelectMenuKeybinds4:UpdateValue()
+		CSPM_UI_MAN_PresetSelectMenuKeybinds5:UpdateChoices(ui.presetChoices, ui.presetChoicesValues, ui.presetChoicesTooltips)
+		CSPM_UI_MAN_PresetSelectMenuKeybinds5:UpdateValue()
+	end
+end
+
+local function OnLAMPanelClosed(panel)
+	if (panel ~= ui.panel) then return end
+	ui.panelOpened = false
+	CSPM.LDL:Debug("OnLAMPanelClosed: PieMenu Manager")
+end
+
+local function OnExternalPieMenuRegistered(presetId)
+	ui.requestRebuildPresetSelectionChoices = true
+end
+
 function CSPM:InitializeManagerUI()
 	ui.panelInitialized = false
+	ui.panelOpened = false
 	ui.presetChoices, ui.presetChoicesValues, ui.presetChoicesTooltips = RebuildPresetSelectionChoices()
+	ui.requestRebuildPresetSelectionChoices = false
 	CALLBACK_MANAGER:RegisterCallback("CSPM-UserPieMenuInfoUpdated", RefreshPanel_OnPieMenuInfoUpdated)
+	CALLBACK_MANAGER:RegisterCallback("CSPM-PieMenuRegistered", OnExternalPieMenuRegistered)
 end
 
 function CSPM:CreateManagerPanel()
@@ -385,6 +422,8 @@ function CSPM:CreateManagerPanel()
 ]]
 	LAM:RegisterOptionControls("CSPM_OptionsManager", optionsData)
 	CALLBACK_MANAGER:RegisterCallback("LAM-PanelControlsCreated", OnLAMPanelControlsCreated)
+	CALLBACK_MANAGER:RegisterCallback("LAM-PanelOpened", OnLAMPanelOpened)
+	CALLBACK_MANAGER:RegisterCallback("LAM-PanelClosed", OnLAMPanelClosed)
 end
 
 function CSPM:OpenManagerPanel()

@@ -40,6 +40,7 @@ local CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE			= CSPM.const.CSPM_ACTION_TYPE_TRAVEL_TO
 local CSPM_ACTION_TYPE_PIE_MENU					= CSPM.const.CSPM_ACTION_TYPE_PIE_MENU
 local CSPM_ACTION_TYPE_SHORTCUT					= CSPM.const.CSPM_ACTION_TYPE_SHORTCUT
 local CSPM_ACTION_TYPE_COLLECTIBLE_APPEARANCE	= CSPM.const.CSPM_ACTION_TYPE_COLLECTIBLE_APPEARANCE
+local CSPM_ACTION_TYPE_SHORTCUT_ADDON			= CSPM.const.CSPM_ACTION_TYPE_SHORTCUT_ADDON
 
 local CSPM_CATEGORY_NOTHING						= CSPM.const.CSPM_CATEGORY_NOTHING
 local CSPM_CATEGORY_IMMEDIATE_VALUE				= CSPM.const.CSPM_CATEGORY_IMMEDIATE_VALUE
@@ -231,6 +232,20 @@ local function RebuildSlotSelectionChoices(menuItemsCount)
 	return choices, choicesValues
 end
 
+local function RebuildExternalShortcutCategorySelectionChoices()
+	local choices = {
+		L(SI_CSPM_COMMON_UNSELECTED), 
+	}
+	local choicesValues = {
+		CSPM_CATEGORY_NOTHING, 
+	}
+	for _, categoryId in pairs(CSPM:GetShortcutCategoryList()) do
+		choices[#choices + 1] = categoryId
+		choicesValues[#choicesValues + 1] = categoryId
+	end
+	return choices, choicesValues
+end
+
 local function RebuildCollectibleSelectionChoicesByCategoryType(categoryId, unlockedOnly)
 --	unlockedOnly : return only the unlocked ones or the whole set
 	local choices = {}
@@ -292,6 +307,7 @@ local function RebuildShortcutSelectionChoicesByCategory(categoryId)
 	-- In overridden custom tooltip functions, the ChoicesTooltips table uses the shortcutId value instead of a string.
 	return choices, choicesValues, choicesValues
 end
+
 
 local function ChangePanelSlotState(slotId)
 	CSPM.LDL:Debug("ChangePanelSlotState : %s", slotId)
@@ -512,12 +528,51 @@ end
 
 local function OnLAMPanelOpened(panel)
 	if (panel ~= ui.panel) then return end
-	CSPM.LDL:Debug("OnLAMPanelOpened:")
+	ui.panelOpened = true
+	CSPM.LDL:Debug("OnLAMPanelOpened: PieMenu Editor")
+
+	-- update external shortcut category selection choices if needed.
+	if ui.requestRebuildExternalShortcutCategoryChoices then
+		CSPM.LDL:Debug("uiExternalShortcutCategoryChoices Updated:")
+		ui.categoryChoices[CSPM_ACTION_TYPE_SHORTCUT_ADDON], ui.categoryChoicesValues[CSPM_ACTION_TYPE_SHORTCUT_ADDON] = RebuildExternalShortcutCategorySelectionChoices()
+		ui.requestRebuildExternalShortcutCategoryChoices = false
+		if CSPM.db.preset[uiPresetId].slot[uiSlotId].type == CSPM_ACTION_TYPE_SHORTCUT_ADDON then
+			CSPM_UI_CategoryMenu:UpdateChoices(ui.categoryChoices[CSPM_ACTION_TYPE_SHORTCUT_ADDON], ui.categoryChoicesValues[CSPM_ACTION_TYPE_SHORTCUT_ADDON])
+			CSPM_UI_CategoryMenu:UpdateValue()
+		end
+	end
+	-- update external shortcut selection choices if needed.
+	-- NOTE : If an external shortcut is added by an external add-on after the previous construction of the choice, the corresponding shortcut choice should be rebuilt.
+	for categoryId, isRequested in pairs(ui.requestRebuildExternalShortcutChoices) do
+		if isRequested then
+			CSPM.LDL:Debug("uiExternalShortcutChoices Updated: ", tostring(categoryId))
+			ui.actionValueChoices[categoryId], ui.actionValueChoicesValues[categoryId], ui.actionValueChoicesTooltips[categoryId] = RebuildShortcutSelectionChoicesByCategory(categoryId)
+			ui.requestRebuildExternalShortcutChoices[categoryId] = false
+			if CSPM.db.preset[uiPresetId].slot[uiSlotId].category == categoryId then
+				CSPM_UI_ActionValueMenu:UpdateChoices(ui.actionValueChoices[categoryId], ui.actionValueChoicesValues[categoryId], ui.actionValueChoicesTooltips[categoryId])
+				CSPM_UI_ActionValueMenu:UpdateValue()		-- Note : When called with no arguments, getFunc will be called, and setFunc will NOT be called.
+			end
+		end
+	end
+	-- update external pie menu selection choices if needed.
+	-- NOTE : If an external pie menu is added by an external add-on after the previous construction of the choice, the external pie menu choice should be rebuilt.
+	if ui.requestRebuildExternalPieMenuChoices then
+		CSPM.LDL:Debug("uiExternalPieMenuChoices Updated:")
+		ui.actionValueChoices[CSPM_CATEGORY_P_OPEN_EXTERNAL_PIE_MENU], ui.actionValueChoicesValues[CSPM_CATEGORY_P_OPEN_EXTERNAL_PIE_MENU], ui.actionValueChoicesTooltips[CSPM_CATEGORY_P_OPEN_EXTERNAL_PIE_MENU] = RebuildExternalPieMenuPresetSelectionChoices()
+		ui.requestRebuildExternalPieMenuChoices = false
+		if CSPM.db.preset[uiPresetId].slot[uiSlotId].type == CSPM_ACTION_TYPE_PIE_MENU then
+			if CSPM.db.preset[uiPresetId].slot[uiSlotId].category == CSPM_CATEGORY_P_OPEN_EXTERNAL_PIE_MENU then
+				CSPM_UI_ActionValueMenu:UpdateChoices(ui.actionValueChoices[CSPM_CATEGORY_P_OPEN_EXTERNAL_PIE_MENU], ui.actionValueChoicesValues[CSPM_CATEGORY_P_OPEN_EXTERNAL_PIE_MENU], ui.actionValueChoicesTooltips[CSPM_CATEGORY_P_OPEN_EXTERNAL_PIE_MENU])
+				CSPM_UI_ActionValueMenu:UpdateValue()		-- Note : When called with no arguments, getFunc will be called, and setFunc will NOT be called.
+			end
+		end
+	end
 end
 
 local function OnLAMPanelClosed(panel)
 	if (panel ~= ui.panel) then return end
-	CSPM.LDL:Debug("OnLAMPanelClosed:")
+	ui.panelOpened = false
+	CSPM.LDL:Debug("OnLAMPanelClosed: PieMenu Editor")
 end
 
 
@@ -552,8 +607,23 @@ local function CollectibleDataManager_OnCollectionUpdated(collectionUpdateType, 
 	end
 end
 
+local function OnExternalShortcutRegistered(shortcutId, categoryId)
+	if categoryId == CSPM_CATEGORY_NOTHING then return end
+	if ui.requestRebuildExternalShortcutChoices[categoryId] == nil then
+		ui.requestRebuildExternalShortcutCategoryChoices = true
+	end
+	ui.requestRebuildExternalShortcutChoices[categoryId] = true
+end
+
+local function OnExternalPieMenuRegistered(presetId)
+	ui.requestRebuildExternalPieMenuChoices = true
+end
+
+
 function CSPM:InitializeMenuEditorUI()
 	ui.panelInitialized = false
+	ui.panelOpened = false
+
 	ui.presetChoices, ui.presetChoicesValues, ui.presetChoicesTooltips = RebuildUserPieMenuPresetSelectionChoices()
 
 	ui.slotDisplayName = {}
@@ -568,6 +638,7 @@ function CSPM:InitializeMenuEditorUI()
 		L(SI_CSPM_COMMON_TRAVEL_TO_HOUSE), 
 		L(SI_CSPM_COMMON_PIE_MENU), 
 		L(SI_CSPM_COMMON_SHORTCUT), 
+		L(SI_CSPM_COMMON_ADDON), 
 	} 
 	ui.actionTypeChoicesValues = {
 		CSPM_ACTION_TYPE_NOTHING, 
@@ -578,6 +649,7 @@ function CSPM:InitializeMenuEditorUI()
 		CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE, 
 		CSPM_ACTION_TYPE_PIE_MENU, 
 		CSPM_ACTION_TYPE_SHORTCUT, 
+		CSPM_ACTION_TYPE_SHORTCUT_ADDON, 
 	}
 	ui.actionTypeChoicesTooltips = {
 		L(SI_CSPM_UI_ACTION_TYPE_NOTHING_TIPS), 
@@ -588,6 +660,7 @@ function CSPM:InitializeMenuEditorUI()
 		L(SI_CSPM_UI_ACTION_TYPE_TRAVEL_TO_HOUSE_TIPS), 
 		L(SI_CSPM_UI_ACTION_TYPE_PIE_MENU_TIPS), 
 		L(SI_CSPM_UI_ACTION_TYPE_SHORTCUT_TIPS), 
+		L(SI_CSPM_UI_ACTION_TYPE_SHORTCUT_ADDON_TIPS), 
 	}
 
 	ui.categoryChoices = {}
@@ -715,6 +788,8 @@ function CSPM:InitializeMenuEditorUI()
 		CSPM_CATEGORY_S_SYSTEM_MENU, 
 		CSPM_CATEGORY_S_USEFUL_SHORTCUT, 
 	}
+	ui.categoryChoices[CSPM_ACTION_TYPE_SHORTCUT_ADDON], ui.categoryChoicesValues[CSPM_ACTION_TYPE_SHORTCUT_ADDON] = RebuildExternalShortcutCategorySelectionChoices()
+	ui.requestRebuildExternalShortcutCategoryChoices = false
 
 	ui.actionValueChoices = {}
 	ui.actionValueChoicesValues = {}
@@ -731,13 +806,21 @@ function CSPM:InitializeMenuEditorUI()
 	ui.actionValueChoices[CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE], ui.actionValueChoicesValues[CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE], ui.actionValueChoicesTooltips[CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE] = RebuildHouseSelectionChoices(true)
 	ui.actionValueChoices[CSPM_CATEGORY_P_OPEN_USER_PIE_MENU], ui.actionValueChoicesValues[CSPM_CATEGORY_P_OPEN_USER_PIE_MENU], ui.actionValueChoicesTooltips[CSPM_CATEGORY_P_OPEN_USER_PIE_MENU] = RebuildUserPieMenuPresetSelectionChoices()
 	ui.actionValueChoices[CSPM_CATEGORY_P_OPEN_EXTERNAL_PIE_MENU], ui.actionValueChoicesValues[CSPM_CATEGORY_P_OPEN_EXTERNAL_PIE_MENU], ui.actionValueChoicesTooltips[CSPM_CATEGORY_P_OPEN_EXTERNAL_PIE_MENU] = RebuildExternalPieMenuPresetSelectionChoices()
+	ui.requestRebuildExternalPieMenuChoices = false
 	ui.actionValueChoices[CSPM_CATEGORY_S_PIE_MENU_ADDON], ui.actionValueChoicesValues[CSPM_CATEGORY_S_PIE_MENU_ADDON], ui.actionValueChoicesTooltips[CSPM_CATEGORY_S_PIE_MENU_ADDON] = RebuildShortcutSelectionChoicesByCategory(CSPM_CATEGORY_S_PIE_MENU_ADDON)
 	ui.actionValueChoices[CSPM_CATEGORY_S_MAIN_MENU], ui.actionValueChoicesValues[CSPM_CATEGORY_S_MAIN_MENU], ui.actionValueChoicesTooltips[CSPM_CATEGORY_S_MAIN_MENU] = RebuildShortcutSelectionChoicesByCategory(CSPM_CATEGORY_S_MAIN_MENU)
 	ui.actionValueChoices[CSPM_CATEGORY_S_SYSTEM_MENU], ui.actionValueChoicesValues[CSPM_CATEGORY_S_SYSTEM_MENU], ui.actionValueChoicesTooltips[CSPM_CATEGORY_S_SYSTEM_MENU] = RebuildShortcutSelectionChoicesByCategory(CSPM_CATEGORY_S_SYSTEM_MENU)
 	ui.actionValueChoices[CSPM_CATEGORY_S_USEFUL_SHORTCUT], ui.actionValueChoicesValues[CSPM_CATEGORY_S_USEFUL_SHORTCUT], ui.actionValueChoicesTooltips[CSPM_CATEGORY_S_USEFUL_SHORTCUT] = RebuildShortcutSelectionChoicesByCategory(CSPM_CATEGORY_S_USEFUL_SHORTCUT)
+	ui.requestRebuildExternalShortcutChoices = {}
+	for _, categoryId in pairs(CSPM:GetShortcutCategoryList()) do
+		ui.actionValueChoices[categoryId], ui.actionValueChoicesValues[categoryId], ui.actionValueChoicesTooltips[categoryId] = RebuildShortcutSelectionChoicesByCategory(categoryId)
+		ui.requestRebuildExternalShortcutChoices[categoryId] = false
+	end
 
 	CALLBACK_MANAGER:RegisterCallback("CSPM-UserPieMenuInfoUpdated", RefreshPanel_OnUserPieMenuInfoUpdated)
 	ZO_COLLECTIBLE_DATA_MANAGER:RegisterCallback("OnCollectionUpdated", CollectibleDataManager_OnCollectionUpdated)
+	CALLBACK_MANAGER:RegisterCallback("CSPM-ShortcutRegistered", OnExternalShortcutRegistered)
+	CALLBACK_MANAGER:RegisterCallback("CSPM-PieMenuRegistered", OnExternalPieMenuRegistered)
 end
 
 function CSPM:CreateMenuEditorPanel()

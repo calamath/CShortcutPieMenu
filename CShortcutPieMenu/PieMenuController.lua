@@ -55,6 +55,26 @@ function CSPM_SelectableItemRadialMenuEntryTemplate_UpdateStatus(template, statu
 	end
 end
 
+function CSPM_SelectableItemRadialMenuEntryTemplate_UpdateIconAttributes(template, attributes)
+-- NOTE: The argument attributes is also compatible with the argument for ZO_SetIconAttributes().
+	if type(attributes) ~= "table" then return end
+	if attributes.iconColor then
+		if attributes.iconColor.UnpackRGBA and attributes.iconColor.Colorize then	-- checking ZO_ColorDef object
+			template.icon:SetColor(attributes.iconColor:UnpackRGBA())
+		else
+			template.icon:SetColor(attributes.iconColor[1] or 1, attributes.iconColor[2] or 1, attributes.iconColor[3] or 1, attributes.iconColor[4] or 1)
+		end
+	end
+	if attributes.iconDesaturation then
+		template.icon:SetDesaturation(attributes.iconDesaturation)
+	end
+	if attributes.iconSamplingTable then
+		for sampleProcessingType, weight in pairs(attributes.iconSamplingTable) do
+			template.icon:SetTextureSampleProcessingWeight(sampleProcessingType, weight)
+		end
+	end
+end
+
 function CSPM_SelectableItemRadialMenuEntryTemplate_UpdateSlotLabel(template, slotLabel)
 	slotLabel = slotLabel or ""
 	if type(slotLabel) == "table" then
@@ -92,7 +112,7 @@ do
 		[TOPRIGHT]		= BOTTOMLEFT, 
 		[CENTER]		= CENTER, 
 	}
-	function CSPM_SetupSelectableItemRadialMenuEntryTemplate(template, selected, itemCount, showIconFrame, slotLabel, resizeIconToFitFile)
+	function CSPM_SetupSelectableItemRadialMenuEntryTemplate(template, showGlow, itemCount, showIconFrame, slotLabel, iconDesaturation, resizeIconToFitFile)
 		if template.frame then
 			if showIconFrame then
 				template.frame:SetHidden(false)
@@ -101,10 +121,20 @@ do
 			end
 		end
 
-		if resizeIconToFitFile == true then
-			template.icon:SetResizeToFitFile(true)
-		else
-			template.icon:SetResizeToFitFile(false)
+		if template.icon then
+			template.icon:SetColor(1, 1, 1, 1)
+			if iconDesaturation == true then
+				template.icon:SetDesaturation(1)
+			else
+				template.icon:SetDesaturation(0)
+			end
+			template.icon:SetTextureSampleProcessingWeight(TEX_SAMPLE_PROCESSING_RGB, 1)
+			template.icon:SetTextureSampleProcessingWeight(TEX_SAMPLE_PROCESSING_ALPHA_AS_RGB, 0)
+			if resizeIconToFitFile == true then
+				template.icon:SetResizeToFitFile(true)
+			else
+				template.icon:SetResizeToFitFile(false)
+			end
 		end
 
 		if template.label then
@@ -112,10 +142,8 @@ do
 				-- To avoid a bug where the anchor offset calculation is incorrect for the child control without scale inheritance, when animating the parent's scale.
 				local isValid, point = template.label:GetAnchor(0)
 				if isValid then
-					if template.padding then
-						template.padding:ClearAnchors()
-						template.padding:SetAnchor(point, nil, CENTER)
-					end
+					template.padding:ClearAnchors()
+					template.padding:SetAnchor(point, nil, CENTER)
 					template.label:ClearAnchors()
 					template.label:SetAnchor(point, template.padding, POINT_TO_RELATIVE_POINT[point])
 				end
@@ -123,24 +151,17 @@ do
 			CSPM_SelectableItemRadialMenuEntryTemplate_UpdateSlotLabel(template, slotLabel)
 		end
 
-		if itemCount then
-			if template.count then
+		if template.count then
+			if itemCount then
 				template.count:SetHidden(false)
 				template.count:SetText(itemCount)
-			end
-			if itemCount == 0 then
-				template.icon:SetDesaturation(1)
 			else
-				template.icon:SetDesaturation(0)
-			end
-		else
-			if template.count then
 				template.count:SetHidden(true)
+				template.count:SetText("")
 			end
-			template.icon:SetDesaturation(0)
 		end
 
-		if selected then
+		if showGlow then
 			if template.glow then
 				template.glow:SetAlpha(1)
 			end
@@ -440,9 +461,10 @@ end
 function CSPM_PieMenuController:SetupEntryControl(entryControl, data)
 	if not data then return end
 	LDL:Debug("SetupEntryControl(_, %s)", tostring(data.name))
-	local selected = false
+	local showGlow = false
 	local itemCount
 	local slotLabel
+	local iconDesaturation = data.disabled or false
 	
 	if data.itemCount then
 		itemCount = data.itemCount
@@ -460,7 +482,8 @@ function CSPM_PieMenuController:SetupEntryControl(entryControl, data)
 		slotLabel = ""
 	end
 
-	CSPM_SetupSelectableItemRadialMenuEntryTemplate(entryControl, selected, itemCount, data.showIconFrame, slotLabel, data.resizeIconToFitFile)
+	CSPM_SetupSelectableItemRadialMenuEntryTemplate(entryControl, showGlow, itemCount, data.showIconFrame, slotLabel, iconDesaturation, data.resizeIconToFitFile)
+	CSPM_SelectableItemRadialMenuEntryTemplate_UpdateIconAttributes(entryControl, data.iconAttributes)
 	CSPM_SelectableItemRadialMenuEntryTemplate_UpdateStatus(entryControl, data.statusIcon)
 
 	if data.cooldownRemaining and data.cooldownDuration then

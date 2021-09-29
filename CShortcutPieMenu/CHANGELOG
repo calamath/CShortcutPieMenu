@@ -1,3 +1,12 @@
+V0.9.8: [V908] by Calamath
+New Feature: Support for external shortcuts provided by other add-ons.
+- Added new slot action type 'Add-on'. This allows you to place shortcuts provided by other add-ons in user-customizable pie menu slots.
+- This feature will be tested until the API is disclosed in the next major version update.
+Bug Fix:
+- Addressed an issue where external pie menus registered by other add-ons may not be added to the preset selection choices in the Pie Menu Manager UI.
+- Addressed an issue where external shortcuts registered by other add-ons may not be added to the shortcut selection choices in the Pie Menu Editor UI.
+- Fixed an issue where the blocked collectible icon was not desaturated in the pie menu slot for using collectibles.
+
 V0.9.7: [V907] by Calamath
 - The slot name display for using collectible is now red color-coded to reflect collectibles block reason.
 (e.g.: Inside the house, summoning your pet will be displayed in red, while outside the house they will be displayed in normal white color, allowing you to predict the outcome of each slot action - will be blocked or not.)
