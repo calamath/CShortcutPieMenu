@@ -25,7 +25,7 @@ CShortcutPieMenu = CShortcutPieMenu or {}
 
 local CSPM = CShortcutPieMenu
 CSPM.name = "CShortcutPieMenu"
-CSPM.version = "0.9.8"
+CSPM.version = "0.9.9"
 CSPM.author = "Calamath"
 CSPM.savedVarsPieMenuEditor = "CShortcutPieMenuDB"
 CSPM.savedVarsPieMenuManager = "CShortcutPieMenuSV"
@@ -387,7 +387,7 @@ do
 			return name, nameColor
 		end, 
 	}
-	setmetatable(GetDefaultSlotName, { __index = function(self, key) return self[CSPM_ACTION_TYPE_NOTHING] end, })
+	setmetatable(GetDefaultSlotName, { __index = function(self, key) return rawget(self, CSPM_ACTION_TYPE_NOTHING) end, })
 
 	function CSPM.util.GetDefaultSlotName(actionType, categoryId, actionValue)
 		local actionType = GetActionType(actionType)
@@ -448,7 +448,7 @@ do
 			return icon
 		end, 
 	}
-	setmetatable(GetDefaultSlotIcon, { __index = function(self, key) return self[CSPM_ACTION_TYPE_NOTHING] end, })
+	setmetatable(GetDefaultSlotIcon, { __index = function(self, key) return rawget(self, CSPM_ACTION_TYPE_NOTHING) end, })
 
 	function CSPM.util.GetDefaultSlotIcon(actionType, categoryId, actionValue)
 		local actionType = GetActionType(actionType)
@@ -577,7 +577,7 @@ do
 			return true
 		end, 
 	}
-	setmetatable(LayoutSlotActionTooltip, { __index = function(self, key) return self[CSPM_ACTION_TYPE_NOTHING] end, })
+	setmetatable(LayoutSlotActionTooltip, { __index = function(self, key) return rawget(self, CSPM_ACTION_TYPE_NOTHING) end, })
 
 	function CSPM.util.LayoutSlotActionTooltip(actionType, categoryId, actionValue, uiActionId)
 		local actionType = GetActionType(actionType)
@@ -1219,7 +1219,7 @@ do
 			end
 		end, 
 	}
-	setmetatable(ExecuteSlotAction, { __index = function(self, key) return self[CSPM_ACTION_TYPE_NOTHING] end, })
+	setmetatable(ExecuteSlotAction, { __index = function(self, key) return rawget(self, CSPM_ACTION_TYPE_NOTHING) end, })
 
 	function CSPM:OnSelectionExecutionCallback(data)
 		local slotData = data.slotData or {}

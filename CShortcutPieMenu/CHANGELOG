@@ -1,3 +1,7 @@
+V0.9.9: [V909] by Calamath
+- Fixed a number of minor bugs.
+- Updated API version to 101032 (ESO 7.2.x : Deadlands)
+
 V0.9.8: [V908] by Calamath
 New Feature: Support for external shortcuts provided by other add-ons.
 - Added new slot action type 'Add-on'. This allows you to place shortcuts provided by other add-ons in user-customizable pie menu slots.
