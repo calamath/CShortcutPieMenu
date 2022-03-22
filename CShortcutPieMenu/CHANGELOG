@@ -1,3 +1,7 @@
+V0.9.10: [V910] by Calamath
+- Fixed an issue with Emote category icons are not displayed.
+- Updated API version to 101033 (ESO 7.3.x : Ascending Tide)
+
 V0.9.9: [V909] by Calamath
 - Fixed a number of minor bugs.
 - Updated API version to 101032 (ESO 7.2.x : Deadlands)

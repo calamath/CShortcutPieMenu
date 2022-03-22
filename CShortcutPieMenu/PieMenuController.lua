@@ -423,18 +423,17 @@ function CSPM_PieMenuController:AddMenuEntry(...)
 end
 
 function CSPM_PieMenuController:CancelInteraction()
-	self:ClearSelection()
-	return(self:StopInteraction())
+	return(self:StopInteraction(true))	-- true: clearSelection
 end
 
 -- Overridden from base class
-function CSPM_PieMenuController:StopInteraction()
+function CSPM_PieMenuController:StopInteraction(clearSelection)
 	if self.isInteracting then
 		self:HideUnderlay()
 		self:ShowOverlay()
 		self:SetTopmost(false)
 	end
-	return(ZO_InteractiveRadialMenuController.StopInteraction(self))
+	return(ZO_InteractiveRadialMenuController.StopInteraction(self, clearSelection))
 end
 
 function CSPM_PieMenuController:OnUpdate()

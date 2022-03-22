@@ -1,12 +1,12 @@
 ## Title: Calamath's Shortcut Pie Menu
 ## Description: Shortcut Pie Menu
-## Version: 0.9.9
-## AddOnVersion: 909
+## Version: 0.9.10
+## AddOnVersion: 910
 ## Author: Calamath
 ## License: Artistic License 2.0
-## APIVersion: 101032
-## DependsOn: LibAddonMenu-2.0>=32
-## OptionalDependsOn: LibDebugLogger>=217
+## APIVersion: 101033
+## DependsOn: LibAddonMenu-2.0>=33
+## OptionalDependsOn: LibDebugLogger>=220
 ## SavedVariables: CShortcutPieMenuDB CShortcutPieMenuSV
 
 ; This Add-on is not created by, affiliated with or sponsored by ZeniMax 
