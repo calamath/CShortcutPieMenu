@@ -25,7 +25,7 @@ CShortcutPieMenu = CShortcutPieMenu or {}
 
 local CSPM = CShortcutPieMenu
 CSPM.name = "CShortcutPieMenu"
-CSPM.version = "0.9.10"
+CSPM.version = "0.9.11"
 CSPM.author = "Calamath"
 CSPM.savedVarsPieMenuEditor = "CShortcutPieMenuDB"
 CSPM.savedVarsPieMenuManager = "CShortcutPieMenuSV"
@@ -299,6 +299,7 @@ local CSPM_SV_DEFAULT = {
 	allowClickable = true, 
 	centeringAtMouseCursor = false, 
 	timeToHoldKey = 250, 
+	mouseDeltaScaleFactorInUIMode = 1, 
 	keybinds = {
 		[1] = 1, 	-- Primary Action
 		[2] = 0, 	-- Secondary Action
@@ -1243,6 +1244,7 @@ function CSPM:StartInteraction(presetId)
 		self.rootMenu:SetCenteringAtMouseCursor(self.svCurrent.centeringAtMouseCursor)
 		self.rootMenu:SetAllowClickable(self.svCurrent.allowClickable)
 		self.rootMenu:SetTimeToHoldKey(self.svCurrent.timeToHoldKey)
+		self.rootMenu:SetMouseDeltaScaleFactorInUIMode(self.svCurrent.mouseDeltaScaleFactorInUIMode)
 		result = self.rootMenu:StartInteraction()
 		CSPM.LDL:Debug("StartInteraction result : ", tostring(result))
 		if result then
@@ -1343,13 +1345,14 @@ function CSPM:ValidateConfigDataDB()
 end
 
 function CSPM:ValidateConfigDataSV(sv)
-	if sv.accountWide == nil						then sv.accountWide					= CSPM_SV_DEFAULT.accountWide 								end
-	if sv.allowActivateInUIMode == nil				then sv.allowActivateInUIMode		= CSPM_SV_DEFAULT.allowActivateInUIMode 					end
-	if sv.allowClickable == nil						then sv.allowClickable				= CSPM_SV_DEFAULT.allowClickable 							end
-	if sv.centeringAtMouseCursor == nil				then sv.centeringAtMouseCursor		= CSPM_SV_DEFAULT.centeringAtMouseCursor 					end
-	if sv.timeToHoldKey == nil						then sv.timeToHoldKey				= CSPM_SV_DEFAULT.timeToHoldKey 							end
+	if sv.accountWide == nil						then sv.accountWide						= CSPM_SV_DEFAULT.accountWide 								end
+	if sv.allowActivateInUIMode == nil				then sv.allowActivateInUIMode			= CSPM_SV_DEFAULT.allowActivateInUIMode 					end
+	if sv.allowClickable == nil						then sv.allowClickable					= CSPM_SV_DEFAULT.allowClickable 							end
+	if sv.centeringAtMouseCursor == nil				then sv.centeringAtMouseCursor			= CSPM_SV_DEFAULT.centeringAtMouseCursor 					end
+	if sv.timeToHoldKey == nil						then sv.timeToHoldKey					= CSPM_SV_DEFAULT.timeToHoldKey 							end
+	if sv.mouseDeltaScaleFactorInUIMode == nil		then sv.mouseDeltaScaleFactorInUIMode	= CSPM_SV_DEFAULT.mouseDeltaScaleFactorInUIMode				end
 	for i = 1, #CSPM_SV_DEFAULT.keybinds do
-		if sv.keybinds[i] == nil					then sv.keybinds[i]					= CSPM_SV_DEFAULT.keybinds[i]								end
+		if sv.keybinds[i] == nil					then sv.keybinds[i]						= CSPM_SV_DEFAULT.keybinds[i]								end
 	end
 end
 

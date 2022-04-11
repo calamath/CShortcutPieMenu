@@ -1,3 +1,7 @@
+V0.9.11: [V911] by Calamath
+- Addressed an issue experienced by some users where the pie menu was difficult to navigate with the mouse in UI mode.
+- Added a mouse sensitivity option to Pie Menu Manager UI for those who experience that the mouse operation of the pie menu is not smooth in UI mode. Please adjust this option to a higher level before use.
+
 V0.9.10: [V910] by Calamath
 - Fixed an issue with Emote category icons are not displayed.
 - Updated API version to 101033 (ESO 7.3.x : Ascending Tide)

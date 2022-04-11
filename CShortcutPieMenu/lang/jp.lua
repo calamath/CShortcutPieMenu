@@ -52,6 +52,11 @@ SafeAddString(SI_CSPM_COMMON_UI_ACTION7,					"<<1>> をプレビュー", 1)
 SafeAddString(SI_CSPM_COMMON_UI_ACTION8,					"<<1>> を選択", 1)
 SafeAddString(SI_CSPM_COMMON_UI_ACTION9,					"<<1>> をキャンセル", 1)
 SafeAddString(SI_CSPM_COMMON_UI_ACTION10,					"<<1>> を実行", 1)
+SafeAddString(SI_CSPM_COMMON_DEFAULT,						"標準", 1)
+SafeAddString(SI_CSPM_COMMON_LOW,							"低", 1)
+SafeAddString(SI_CSPM_COMMON_MEDIUM,						"中", 1)
+SafeAddString(SI_CSPM_COMMON_HIGH,							"高", 1)
+SafeAddString(SI_CSPM_COMMON_ULTRA		,					"最高", 1)
 
 -- Formatter
 SafeAddString(SI_CSPM_COMMON_FORMATTER,						"<<1>>", 1)
@@ -145,4 +150,6 @@ SafeAddString(SI_CSPM_UI_BEHAVIOR_CLICKABLE_OP_NAME,		"クリックによる選�
 SafeAddString(SI_CSPM_UI_BEHAVIOR_CLICKABLE_OP_TIPS,		"この設定をオンにすると、マウスボタンやゲームパッドのボタンでパイメニューの選択やキャンセルが素早くできるようになります。\n\nメニュー選択：<<1>>，<<2>>, <<3>>\nキャンセル：<<4>>，<<5>>，<<6>>", 1)
 SafeAddString(SI_CSPM_UI_BEHAVIOR_CENTER_AT_MOUSE_OP_NAME,	"UIモードでマウスカーソルの中心に置く", 1)
 SafeAddString(SI_CSPM_UI_BEHAVIOR_CENTER_AT_MOUSE_OP_TIPS,	"この設定をオンにすると、UIモードではパイメニューが画面の中央ではなく、現在のマウスカーソルの位置に表示されます。", 1)
+SafeAddString(SI_CSPM_UI_BEHAVIOR_MOUSE_SENSITIVITY_OP_NAME,	"UIモードでのマウス感度", 1)
+SafeAddString(SI_CSPM_UI_BEHAVIOR_MOUSE_SENSITIVITY_OP_TIPS,	"UIモードでパイメニューのマウス操作がスムーズでない場合のみ、この項目で調整してください。", 1)
 

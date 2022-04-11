@@ -411,6 +411,30 @@ function CSPM:CreateManagerPanel()
 		width = "full", 
 		default = false, 
 	}
+	optionsData[#optionsData + 1] = {
+		type = "dropdown", 
+		name = L(SI_CSPM_UI_BEHAVIOR_MOUSE_SENSITIVITY_OP_NAME), 
+		tooltip = L(SI_CSPM_UI_BEHAVIOR_MOUSE_SENSITIVITY_OP_TIPS), 
+		choices = {
+			L(SI_CSPM_COMMON_LOW), 
+			L(SI_CSPM_COMMON_DEFAULT), 
+			L(SI_CSPM_COMMON_MEDIUM), 
+			L(SI_CSPM_COMMON_HIGH), 
+			L(SI_CSPM_COMMON_ULTRA), 
+		}, 
+		choicesValues = {
+			0.5, 
+			1, 
+			5, 
+			12, 
+			20, 
+		}, 
+		getFunc = function() return CSPM.svCurrent.mouseDeltaScaleFactorInUIMode end, 
+		setFunc = function(newValue) CSPM.svCurrent.mouseDeltaScaleFactorInUIMode = newValue end, 
+		width = "full", 
+		scrollable = true, 
+		default = 1, 
+	}
 
 --[[
 	optionsData[#optionsData + 1] = {

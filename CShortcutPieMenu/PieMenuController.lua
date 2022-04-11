@@ -224,6 +224,7 @@ end
 function CSPM_PieMenuController:Initialize(control, entryTemplate, animationTemplate, entryAnimationTemplate)
 	ZO_InteractiveRadialMenuController.Initialize(self, control, entryTemplate, animationTemplate, entryAnimationTemplate)
 	pieMenuCount = pieMenuCount + 1
+	self.menu.mouseDeltaScaleFactor = 1
 	self.menu.presetLabel = self.menuControl:GetNamedChild("PresetName")
 	self.menu.trackQuickslot = self.menuControl:GetNamedChild("TrackQuickslot")
 	self.menu.trackGamepad = self.menuControl:GetNamedChild("TrackGamepad")
@@ -234,6 +235,7 @@ function CSPM_PieMenuController:Initialize(control, entryTemplate, animationTemp
 	self.menu.overlay:SetHandler("OnKeyDown", function(control, ...) self:OnGlobalKeyDown(...) end)
 	CALLBACK_MANAGER:RegisterCallback("CSPM-KeyDownHUD", function(...) self:OnGlobalKeyDown(...) end)
 	self.isTopmost = false
+	self.mouseDeltaScaleFactorInUIMode = 1
 	self.allowActivateInUIMode = true
 	self.allowClickable = true
 	self.centeringAtMouseCursor = false
@@ -266,10 +268,24 @@ function CSPM_PieMenuController:Initialize(control, entryTemplate, animationTemp
 		end
 	end)
 	-- Overridden some methods of the original ZO_RadialMenu class by ZOS.
+	self.menu.SetMouseDeltaScaleFactor = function(self, scaleFactor)
+		self.mouseDeltaScaleFactor = scaleFactor
+	end
 	self.menu.OnUpdate = function(self)
 		if self:UpdateVirtualMousePosition() then
 			self:UpdateSelectedEntryFromVirtualMousePosition()
 		end
+	end
+	self.menu.UpdateVirtualMousePosition= function(self)
+		if self.enableMouse then
+			local deltaX, deltaY = GetUIMouseDeltas()
+			if deltaX ~= 0 or deltaY ~= 0 then
+				self.virtualMouseX = self.virtualMouseX + deltaX * self.mouseDeltaScaleFactor
+				self.virtualMouseY = self.virtualMouseY + deltaY * self.mouseDeltaScaleFactor
+				return self:ShouldUpdateSelection()
+			end
+		end
+		return false
 	end
 end
 
@@ -330,6 +346,10 @@ function CSPM_PieMenuController:HideOverlay()
 	if self.menu.overlay then
 		self.menu.overlay:SetHidden(true)
 	end
+end
+
+function CSPM_PieMenuController:SetMouseDeltaScaleFactorInUIMode(scaleFactor)
+	self.mouseDeltaScaleFactorInUIMode = scaleFactor
 end
 
 function CSPM_PieMenuController:SetAllowActivateInUIMode(allowActivateInUIMode)
@@ -525,6 +545,7 @@ function CSPM_PieMenuController:PopulateMenu()
 	self.previousSelectedEntry = nil
 	self.selectedSlotNum = 0
 	if IsGameCameraActive() and IsGameCameraUIModeActive() or IsInteracting() then
+		self.menu:SetMouseDeltaScaleFactor(self.mouseDeltaScaleFactorInUIMode)
 		if self.allowClickable then
 			self:SetActionLayer("CSPM_UI_Interceptor")
 			self:ShowOverlay()
@@ -539,6 +560,7 @@ function CSPM_PieMenuController:PopulateMenu()
 		end
 		self:ShowUnderlay()
 	else
+		self.menu:SetMouseDeltaScaleFactor(1)
 		if self.allowClickable then
 			self:SetActionLayer("CSPM_HUD_Interceptor")
 			self:ShowOverlay()

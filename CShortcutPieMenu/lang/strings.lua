@@ -53,6 +53,11 @@ local strings = {
 	SI_CSPM_COMMON_UI_ACTION8 =						"Select <<1>>", 
 	SI_CSPM_COMMON_UI_ACTION9 =						"Cancel <<1>>", 
 	SI_CSPM_COMMON_UI_ACTION10 =					"Execute <<1>>", 
+	SI_CSPM_COMMON_DEFAULT =						"Default", 
+	SI_CSPM_COMMON_LOW =							"Low", 
+	SI_CSPM_COMMON_MEDIUM =							"Medium", 
+	SI_CSPM_COMMON_HIGH =							"High", 
+	SI_CSPM_COMMON_ULTRA =							"Ultra", 	-- Ultra High
 
 	-- Formatter
 	SI_CSPM_COMMON_FORMATTER =						"<<1>>", 
@@ -146,6 +151,8 @@ local strings = {
 	SI_CSPM_UI_BEHAVIOR_CLICKABLE_OP_TIPS =			"By turning on this setting, you can use mouse buttons or gamepad buttons to quickly select or cancel pie menus.\n\nSelecting : <<1>>, <<2>>, <<3>>\nCanceling : <<4>>, <<5>>, <<6>>", 
 	SI_CSPM_UI_BEHAVIOR_CENTER_AT_MOUSE_OP_NAME =	"Centering Pie Menu at mouse cursor in UI mode", 
 	SI_CSPM_UI_BEHAVIOR_CENTER_AT_MOUSE_OP_TIPS =	"By turning on this setting, the pie menu will be displayed at the current mouse cursor position instead of the center of the screen in UI mode.", 
+	SI_CSPM_UI_BEHAVIOR_MOUSE_SENSITIVITY_OP_NAME =	"Mouse sensitivity in UI mode", 
+	SI_CSPM_UI_BEHAVIOR_MOUSE_SENSITIVITY_OP_TIPS =	"If you experience the mouse operation of the pie menu is not smooth in UI mode, please adjust it in this section.", 
 }
 for stringId, stringToAdd in pairs(strings) do
    ZO_CreateStringId(stringId, stringToAdd)
