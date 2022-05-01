@@ -25,7 +25,7 @@ CShortcutPieMenu = CShortcutPieMenu or {}
 
 local CSPM = CShortcutPieMenu
 CSPM.name = "CShortcutPieMenu"
-CSPM.version = "0.9.11"
+CSPM.version = "0.9.12"
 CSPM.author = "Calamath"
 CSPM.savedVarsPieMenuEditor = "CShortcutPieMenuDB"
 CSPM.savedVarsPieMenuManager = "CShortcutPieMenuSV"

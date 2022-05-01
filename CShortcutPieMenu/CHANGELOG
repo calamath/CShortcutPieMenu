@@ -1,3 +1,8 @@
+V0.9.12: [V912] by Calamath
+Hot Fix:
+- Reduced the 24 custom key binds slots consumed by this add-on.
+- To recover your custom key binds slots, please update to the latest version and login with each character.
+
 V0.9.11: [V911] by Calamath
 - Addressed an issue experienced by some users where the pie menu was difficult to navigate with the mouse in UI mode.
 - Added a mouse sensitivity option to Pie Menu Manager UI for those who experience that the mouse operation of the pie menu is not smooth in UI mode. Please adjust this option to a higher level before use.

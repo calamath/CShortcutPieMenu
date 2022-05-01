@@ -218,7 +218,7 @@ local pieMenuCount = pieMenuCount or 0
 CSPM_PieMenuController = ZO_InteractiveRadialMenuController:Subclass()
 
 function CSPM_PieMenuController:New(...)
-    return ZO_InteractiveRadialMenuController.New(self, ...)
+	return ZO_InteractiveRadialMenuController.New(self, ...)
 end
 
 function CSPM_PieMenuController:Initialize(control, entryTemplate, animationTemplate, entryAnimationTemplate)
@@ -249,11 +249,7 @@ function CSPM_PieMenuController:Initialize(control, entryTemplate, animationTemp
 			else
 				UnbindAllKeysFromAction(layer, category, action)
 			end
-			if IsProtectedFunction("BindKeyToAction") then
-				CallSecureProtected("BindKeyToAction", layer, category, action, 1, v[1], v[2], v[3], v[4], v[5])
-			else
-				BindKeyToAction(layer, category, action, 1,  v[1], v[2], v[3], v[4], v[5])
-			end
+			CreateDefaultActionBind(k, v[1], v[2], v[3], v[4], v[5])
 		end
 	end
 	self.selectedEntry = nil
@@ -290,15 +286,15 @@ function CSPM_PieMenuController:Initialize(control, entryTemplate, animationTemp
 end
 
 function CSPM_PieMenuController:SetOnSelectionChangedCallback(callback)
-    self.onSelectionChangedCallback = callback
+	self.onSelectionChangedCallback = callback
 end
 
 function CSPM_PieMenuController:SetOnUpdateRotationFunction(callback)
-    self.onUpdateRotationFunc = callback
+	self.onUpdateRotationFunc = callback
 end
 
 function CSPM_PieMenuController:SetPopulateMenuCallback(callback)
-    self.populateMenuCallback = callback
+	self.populateMenuCallback = callback
 end
 
 function CSPM_PieMenuController:OnGlobalKeyDown(key, ctrl, alt, shift, command)
@@ -457,24 +453,24 @@ function CSPM_PieMenuController:StopInteraction(clearSelection)
 end
 
 function CSPM_PieMenuController:OnUpdate()
-    if self.beginHold and GetFrameTimeMilliseconds() >= self.beginHold + self.timeToHoldKey then
-        self.beginHold = nil
-        if not self.isInteracting then
-            self:ShowMenu()
-        end
-    end
+	if self.beginHold and GetFrameTimeMilliseconds() >= self.beginHold + self.timeToHoldKey then
+		self.beginHold = nil
+		if not self.isInteracting then
+			self:ShowMenu()
+		end
+	end
 end
 
 function CSPM_PieMenuController:PrepareForInteraction()
 	LDL:Debug("PrepareForInteraction()")
 	local currentScene = SCENE_MANAGER:GetCurrentScene()
-    if not currentScene or currentScene:IsRemoteScene() then
+	if not currentScene or currentScene:IsRemoteScene() then
 		return false
 	end
-    if IsGameCameraActive() and IsGameCameraUIModeActive() and not self.allowActivateInUIMode then
+	if IsGameCameraActive() and IsGameCameraUIModeActive() and not self.allowActivateInUIMode then
 		return false
 	end
-    return true
+	return true
 end
 
 function CSPM_PieMenuController:SetupEntryControl(entryControl, data)
