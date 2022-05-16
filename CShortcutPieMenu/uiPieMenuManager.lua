@@ -13,7 +13,7 @@
 
 
 -- CShortcutPieMenu local definitions
-local CSPM = CShortcutPieMenu
+local CSPM = CShortcutPieMenu:GetSharedWorkspace()
 local L = GetString
 
 -- ---------------------------------------------------------------------------------------
@@ -95,15 +95,18 @@ local CSPM_LUT_UI_COLOR							= CSPM.lut.CSPM_LUT_UI_COLOR
 local CSPM_LUT_UI_ICON							= CSPM.lut.CSPM_LUT_UI_ICON
 
 
+-- ---------------------------------------------------------------------------------------
 -- Library
+-- ---------------------------------------------------------------------------------------
 local LAM = LibAddonMenu2
 if not LAM then d("[CSPM] Error : 'LibAddonMenu' not found.") return end
 
-
--- UI section locals
-local ui = ui or {}
-
-local function DoSetupDefault(slotId)
+-- ---------------------------------------------------------------------------------------
+-- Helper Functions
+-- ---------------------------------------------------------------------------------------
+local function ClearTable(luaTable)
+	luaTable = luaTable or {}
+	ZO_ClearTable(luaTable)
 end
 
 local function GetTableKeyForValue(luaTable, value)
@@ -115,18 +118,39 @@ local function GetTableKeyForValue(luaTable, value)
 	return
 end
 
-local function GetPresetDisplayNameByPresetId(presetId)
+-- ---------------------------------------------------------------------------------------
+-- PieMenuManager Panel Class
+-- ---------------------------------------------------------------------------------------
+local CSPM_PieMenuManagerPanel = ZO_InitializingObject:Subclass()
+function CSPM_PieMenuManagerPanel:Initialize(parent, currentSavedVars, accountWideSavedVars, defaults)
+	if CSPM then CSPM = parent end
+	self.name = "CSPM-ManagerPanel"
+	self.svCurrent = currentSavedVars or {}
+	self.svAccount = accountWideSavedVars or {}
+	self.SV_DEFAULT = defaults or {}
+	self.panelInitialized = false
+	self.panelOpened = false
+	self:RebuildPresetSelectionChoices()	-- 	presetChoices
+	CALLBACK_MANAGER:RegisterCallback("CSPM-UserPieMenuInfoUpdated", function(presetId)
+		self:OnUserPieMenuInfoUpdated(presetId)
+	end)
+	CALLBACK_MANAGER:RegisterCallback("CSPM-PieMenuRegistered", function(presetId)
+		self.presetSelectionIsDirty = true
+	end)
+end
+
+function CSPM_PieMenuManagerPanel:GetPresetDisplayNameByPresetId(presetId)
 	local name
-	local pieMenuName = CSPM:GetPieMenuInfo(presetId)
-	if CSPM:IsUserPieMenu(presetId) then
-		if CSPM:DoesPieMenuDataExist(presetId) then
+	local pieMenuName = CSPM.util.GetPieMenuInfo(presetId)
+	if CSPM.util.IsUserPieMenu(presetId) then
+		if CSPM.util.DoesPieMenuDataExist(presetId) then
 			if pieMenuName ~= "" then
 				name = zo_strformat(L(SI_CSPM_PRESET_NAME_FORMATTER), presetId, pieMenuName)
 			else
-				name = ZO_CachedStrFormat(L(SI_CSPM_PRESET_NO_NAME_FORMATTER), presetId)
+				name = zo_strformat(L(SI_CSPM_PRESET_NO_NAME_FORMATTER), presetId)
 			end
 		else
-			name = ZO_CachedStrFormat(L(SI_CSPM_PRESET_NAME_FORMATTER), presetId, L(SI_CSPM_COMMON_UNREGISTERED))
+			name = zo_strformat(L(SI_CSPM_PRESET_NAME_FORMATTER), presetId, L(SI_CSPM_COMMON_UNREGISTERED))
 		end
 	else
 		name = pieMenuName
@@ -134,118 +158,89 @@ local function GetPresetDisplayNameByPresetId(presetId)
 	return name
 end
 
-local function RefreshPanel_OnPieMenuInfoUpdated(presetId)
+function CSPM_PieMenuManagerPanel:OnUserPieMenuInfoUpdated(presetId)
 -- This function assumes that the preset attribute information in the user pie menu has just changed.
-	CSPM.LDL:Debug("RefreshManagerPanel-OnPieMenuInfoUpdated : ", presetId)
+	CSPM.LDL:Debug("OnUserPieMenuInfoUpdated : ", presetId)
 
 	-- NOTE : the preset selection choices will also be updated here.
-	if CSPM:IsUserPieMenu(presetId) then
-		ui.presetChoices[presetId] = GetPresetDisplayNameByPresetId(presetId)
+	if CSPM.util.IsUserPieMenu(presetId) then
+		self.presetChoices[presetId] = self:GetPresetDisplayNameByPresetId(presetId)
 	else
-		local key = GetTableKeyForValue(ui.presetChoicesValues, presetId)
+		local key = GetTableKeyForValue(self.presetChoicesValues, presetId)
 		if not key then return end
-		ui.presetChoices[key] = GetPresetDisplayNameByPresetId(presetId)
+		self.presetChoices[key] = self:GetPresetDisplayNameByPresetId(presetId)
 	end
-	if ui.panelInitialized then
-		CSPM_UI_MAN_PresetSelectMenuKeybinds1:UpdateChoices(ui.presetChoices, ui.presetChoicesValues, ui.presetChoicesTooltips)
+	if self.panelInitialized then
+		CSPM_UI_MAN_PresetSelectMenuKeybinds1:UpdateChoices(self.presetChoices, self.presetChoicesValues, self.presetChoicesTooltips)
 		CSPM_UI_MAN_PresetSelectMenuKeybinds1:UpdateValue()		-- Note : When called with no arguments, getFunc will be called, and setFunc will NOT be called.
-		CSPM_UI_MAN_PresetSelectMenuKeybinds2:UpdateChoices(ui.presetChoices, ui.presetChoicesValues, ui.presetChoicesTooltips)
+		CSPM_UI_MAN_PresetSelectMenuKeybinds2:UpdateChoices(self.presetChoices, self.presetChoicesValues, self.presetChoicesTooltips)
 		CSPM_UI_MAN_PresetSelectMenuKeybinds2:UpdateValue()
-		CSPM_UI_MAN_PresetSelectMenuKeybinds3:UpdateChoices(ui.presetChoices, ui.presetChoicesValues, ui.presetChoicesTooltips)
+		CSPM_UI_MAN_PresetSelectMenuKeybinds3:UpdateChoices(self.presetChoices, self.presetChoicesValues, self.presetChoicesTooltips)
 		CSPM_UI_MAN_PresetSelectMenuKeybinds3:UpdateValue()
-		CSPM_UI_MAN_PresetSelectMenuKeybinds4:UpdateChoices(ui.presetChoices, ui.presetChoicesValues, ui.presetChoicesTooltips)
+		CSPM_UI_MAN_PresetSelectMenuKeybinds4:UpdateChoices(self.presetChoices, self.presetChoicesValues, self.presetChoicesTooltips)
 		CSPM_UI_MAN_PresetSelectMenuKeybinds4:UpdateValue()
-		CSPM_UI_MAN_PresetSelectMenuKeybinds5:UpdateChoices(ui.presetChoices, ui.presetChoicesValues, ui.presetChoicesTooltips)
+		CSPM_UI_MAN_PresetSelectMenuKeybinds5:UpdateChoices(self.presetChoices, self.presetChoicesValues, self.presetChoicesTooltips)
 		CSPM_UI_MAN_PresetSelectMenuKeybinds5:UpdateValue()
 	end
 end
 
-local function RebuildPresetSelectionChoices()
+function CSPM_PieMenuManagerPanel:GetPresetSelectionChoices()
 	local choices = {}
 	local choicesValues = {}
 	for i = 1, CSPM_MAX_USER_PRESET do
-		choices[i] = GetPresetDisplayNameByPresetId(i)
+		choices[i] = self:GetPresetDisplayNameByPresetId(i)
 		choicesValues[i] = i
 	end
 
-	local externalPieMenuList = CSPM:GetExternalPieMenuList()
-	for _, presetId in pairs(externalPieMenuList) do
-		choices[#choices + 1] = GetPresetDisplayNameByPresetId(presetId)
-		choicesValues[#choicesValues + 1] = presetId
+	local externalPieMenuPresetIdList = CSPM.pieMenuManager:GetExternalPieMenuPresetIdList()
+	for _, presetId in pairs(externalPieMenuPresetIdList) do
+		table.insert(choices, self:GetPresetDisplayNameByPresetId(presetId))
+		table.insert(choicesValues, presetId)
 	end
-	-- In overridden custom tooltip functions, the ChoicesTooltips table uses the presetId value instead of a string.
+	-- In overridden custom tooltip functions, the choicesTooltips table uses the presetId value instead of a string.
 	return choices, choicesValues, choicesValues
 end
-
-local function DoTestButton()
+function CSPM_PieMenuManagerPanel:RebuildPresetSelectionChoices()
+	ClearTable(self.presetChoices)
+	ClearTable(self.presetChoicesValues)
+	ClearTable(self.presetChoicesTooltips)
+	self.presetChoices, self.presetChoicesValues, self.presetChoicesTooltips = self:GetPresetSelectionChoices()
+	self.presetSelectionIsDirty = false
 end
 
-local function OnLAMPanelControlsCreated(panel)
-	if (panel ~= ui.panel) then return end
-	CALLBACK_MANAGER:UnregisterCallback("LAM-PanelControlsCreated", OnLAMPanelControlsCreated)
-
-	-- override ScrollableDropdownHelper for CSPM_UI_MAN_PresetSelectMenuKeybindsX to customize dropdown choices tooltips
-	for i = 1, 5 do
-		_G["CSPM_UI_MAN_PresetSelectMenuKeybinds" .. i].scrollHelper.OnMouseEnter = function(self, control)
-			if control.m_data.tooltip then
-				CSPM.util.LayoutSlotActionTooltip(CSPM_ACTION_TYPE_PIE_MENU, CSPM_CATEGORY_NOTHING, control.m_data.tooltip, CSPM_UI_NONE)
-				CSPM.util.ShowSlotActionTooltip(control, TOPLEFT, 0, 0, BOTTOMRIGHT)
-			end
-		end
-		_G["CSPM_UI_MAN_PresetSelectMenuKeybinds" .. i].scrollHelper.OnMouseExit = function(self, control)
-			if control.m_data.tooltip then
-				CSPM.util.HideSlotActionTooltip()
-			end
-		end
-	end
-
-	ui.panelInitialized = true
+function CSPM_PieMenuManagerPanel:DoTestButton()
 end
 
-local function OnLAMPanelOpened(panel)
-	if (panel ~= ui.panel) then return end
-	ui.panelOpened = true
-	CSPM.LDL:Debug("OnLAMPanelOpened: PieMenu Manager")
+function CSPM_PieMenuManagerPanel:OnLAMPanelOpened(panel)
+	if (panel ~= self.panel) then return end
+	self.panelOpened = true
+--	CSPM.LDL:Debug("OnLAMPanelOpened")
 	-- update preset selection choices if needed.
 	-- NOTE : If an external pie menu is added by an external add-on after the previous construction of the choice, the pie menu preset choice should be rebuilt.
-	if ui.requestRebuildPresetSelectionChoices then
-		CSPM.LDL:Debug("uiPieMenuManager-PresetSelectionChoices Updated:")
-		ui.presetChoices, ui.presetChoicesValues, ui.presetChoicesTooltips = RebuildPresetSelectionChoices()
-		ui.requestRebuildPresetSelectionChoices = false
+	if self.presetSelectionIsDirty then
+		CSPM.LDL:Debug("PresetSelectionChoices Updated:")
+		self:RebuildPresetSelectionChoices()	-- 	presetChoices
 
-		CSPM_UI_MAN_PresetSelectMenuKeybinds1:UpdateChoices(ui.presetChoices, ui.presetChoicesValues, ui.presetChoicesTooltips)
+		CSPM_UI_MAN_PresetSelectMenuKeybinds1:UpdateChoices(self.presetChoices, self.presetChoicesValues, self.presetChoicesTooltips)
 		CSPM_UI_MAN_PresetSelectMenuKeybinds1:UpdateValue()		-- Note : When called with no arguments, getFunc will be called, and setFunc will NOT be called.
-		CSPM_UI_MAN_PresetSelectMenuKeybinds2:UpdateChoices(ui.presetChoices, ui.presetChoicesValues, ui.presetChoicesTooltips)
+		CSPM_UI_MAN_PresetSelectMenuKeybinds2:UpdateChoices(self.presetChoices, self.presetChoicesValues, self.presetChoicesTooltips)
 		CSPM_UI_MAN_PresetSelectMenuKeybinds2:UpdateValue()
-		CSPM_UI_MAN_PresetSelectMenuKeybinds3:UpdateChoices(ui.presetChoices, ui.presetChoicesValues, ui.presetChoicesTooltips)
+		CSPM_UI_MAN_PresetSelectMenuKeybinds3:UpdateChoices(self.presetChoices, self.presetChoicesValues, self.presetChoicesTooltips)
 		CSPM_UI_MAN_PresetSelectMenuKeybinds3:UpdateValue()
-		CSPM_UI_MAN_PresetSelectMenuKeybinds4:UpdateChoices(ui.presetChoices, ui.presetChoicesValues, ui.presetChoicesTooltips)
+		CSPM_UI_MAN_PresetSelectMenuKeybinds4:UpdateChoices(self.presetChoices, self.presetChoicesValues, self.presetChoicesTooltips)
 		CSPM_UI_MAN_PresetSelectMenuKeybinds4:UpdateValue()
-		CSPM_UI_MAN_PresetSelectMenuKeybinds5:UpdateChoices(ui.presetChoices, ui.presetChoicesValues, ui.presetChoicesTooltips)
+		CSPM_UI_MAN_PresetSelectMenuKeybinds5:UpdateChoices(self.presetChoices, self.presetChoicesValues, self.presetChoicesTooltips)
 		CSPM_UI_MAN_PresetSelectMenuKeybinds5:UpdateValue()
 	end
 end
 
-local function OnLAMPanelClosed(panel)
-	if (panel ~= ui.panel) then return end
-	ui.panelOpened = false
-	CSPM.LDL:Debug("OnLAMPanelClosed: PieMenu Manager")
+function CSPM_PieMenuManagerPanel:OnLAMPanelClosed(panel)
+	if (panel ~= self.panel) then return end
+	self.panelOpened = false
+--	CSPM.LDL:Debug("OnLAMPanelClosed")
 end
 
-local function OnExternalPieMenuRegistered(presetId)
-	ui.requestRebuildPresetSelectionChoices = true
-end
-
-function CSPM:InitializeManagerUI()
-	ui.panelInitialized = false
-	ui.panelOpened = false
-	ui.presetChoices, ui.presetChoicesValues, ui.presetChoicesTooltips = RebuildPresetSelectionChoices()
-	ui.requestRebuildPresetSelectionChoices = false
-	CALLBACK_MANAGER:RegisterCallback("CSPM-UserPieMenuInfoUpdated", RefreshPanel_OnPieMenuInfoUpdated)
-	CALLBACK_MANAGER:RegisterCallback("CSPM-PieMenuRegistered", OnExternalPieMenuRegistered)
-end
-
-function CSPM:CreateManagerPanel()
+function CSPM_PieMenuManagerPanel:CreateOptionsPanel()
 	local panelData = {
 		type = "panel", 
 		name = "Shortcut PieManager", 
@@ -260,8 +255,7 @@ function CSPM:CreateManagerPanel()
 		registerForDefaults = true, 
 --		resetFunc = nil, 
 	}
-	ui.panel = LAM:RegisterAddonPanel("CSPM_OptionsManager", panelData)
-	self.panelManager = ui.panel
+	self.panel = LAM:RegisterAddonPanel("CSPM_lamOptionsManager", panelData)
 
 	local optionsData = {}
 --[[
@@ -280,12 +274,12 @@ function CSPM:CreateManagerPanel()
 	optionsData[#optionsData + 1] = {
 		type = "checkbox",
 		name = L(SI_CSPM_UI_ACCOUNT_WIDE_OP_NAME), 
-		getFunc = function() return CSPM.svAccount.accountWide end, 
-		setFunc = function(newValue) CSPM.svAccount.accountWide = newValue end, 
+		getFunc = function() return self.svAccount.accountWide end, 
+		setFunc = function(newValue) self.svAccount.accountWide = newValue end, 
 		tooltip = L(SI_CSPM_UI_ACCOUNT_WIDE_OP_TIPS), 
 		width = "full", 
 		requiresReload = true, 
-		default = true, 
+		default = self.SV_DEFAULT.accountWide, 
 	}
 	optionsData[#optionsData + 1] = {
 		type = "header", 
@@ -296,75 +290,70 @@ function CSPM:CreateManagerPanel()
 		type = "dropdown", 
 		name = L(SI_BINDING_NAME_CSPM_PIE_MENU_INTERACTION), 
 		tooltip = L(SI_CSPM_UI_BINDINGS_INTERACTION1_TIPS), 
-		choices = ui.presetChoices, 	-- If choicesValue is defined, choices table is only used for UI display!
-		choicesValues = ui.presetChoicesValues, 
-		choicesTooltips = ui.presetChoicesTooltips, 
-		getFunc = function() return CSPM.svCurrent.keybinds[1] end, 
-		setFunc = function(newPreset) CSPM.svCurrent.keybinds[1] = newPreset end, 
---		sort = "name-up", --or "name-down", "numeric-up", "numeric-down", "value-up", "value-down", "numericvalue-up", "numericvalue-down" 
+		choices = self.presetChoices, 	-- If choicesValue is defined, choices table is only used for UI display!
+		choicesValues = self.presetChoicesValues, 
+		choicesTooltips = self.presetChoicesTooltips, 
+		getFunc = function() return self.svCurrent.keybinds[1] end, 
+		setFunc = function(newPreset) self.svCurrent.keybinds[1] = newPreset end, 
 		width = "full", 
 		scrollable = true, 
-		default = 1, 
+		default = self.SV_DEFAULT.keybinds[1], 
 		reference = "CSPM_UI_MAN_PresetSelectMenuKeybinds1", 
 	}
 	optionsData[#optionsData + 1] = {
 		type = "dropdown", 
 		name = L(SI_BINDING_NAME_CSPM_PIE_MENU_SECONDARY), 
 --		tooltip = "", 
-		choices = ui.presetChoices, 	-- If choicesValue is defined, choices table is only used for UI display!
-		choicesValues = ui.presetChoicesValues, 
-		choicesTooltips = ui.presetChoicesTooltips, 
-		getFunc = function() return CSPM.svCurrent.keybinds[2] end, 
-		setFunc = function(newPreset) CSPM.svCurrent.keybinds[2] = newPreset end, 
---		sort = "name-up", --or "name-down", "numeric-up", "numeric-down", "value-up", "value-down", "numericvalue-up", "numericvalue-down" 
+		choices = self.presetChoices, 	-- If choicesValue is defined, choices table is only used for UI display!
+		choicesValues = self.presetChoicesValues, 
+		choicesTooltips = self.presetChoicesTooltips, 
+		getFunc = function() return self.svCurrent.keybinds[2] end, 
+		setFunc = function(newPreset) self.svCurrent.keybinds[2] = newPreset end, 
 		width = "full", 
 		scrollable = true, 
-		default = 0, 
+		default = self.SV_DEFAULT.keybinds[2], 
 		reference = "CSPM_UI_MAN_PresetSelectMenuKeybinds2", 
 	}
 	optionsData[#optionsData + 1] = {
 		type = "dropdown", 
 		name = L(SI_BINDING_NAME_CSPM_PIE_MENU_TERTIARY), 
 --		tooltip = "", 
-		choices = ui.presetChoices, 	-- If choicesValue is defined, choices table is only used for UI display!
-		choicesValues = ui.presetChoicesValues, 
-		choicesTooltips = ui.presetChoicesTooltips, 
-		getFunc = function() return CSPM.svCurrent.keybinds[3] end, 
-		setFunc = function(newPreset) CSPM.svCurrent.keybinds[3] = newPreset end, 
---		sort = "name-up", --or "name-down", "numeric-up", "numeric-down", "value-up", "value-down", "numericvalue-up", "numericvalue-down" 
+		choices = self.presetChoices, 	-- If choicesValue is defined, choices table is only used for UI display!
+		choicesValues = self.presetChoicesValues, 
+		choicesTooltips = self.presetChoicesTooltips, 
+		getFunc = function() return self.svCurrent.keybinds[3] end, 
+		setFunc = function(newPreset) self.svCurrent.keybinds[3] = newPreset end, 
 		width = "full", 
 		scrollable = true, 
-		default = 0, 
+		default = self.SV_DEFAULT.keybinds[3], 
 		reference = "CSPM_UI_MAN_PresetSelectMenuKeybinds3", 
 	}
 	optionsData[#optionsData + 1] = {
 		type = "dropdown", 
 		name = L(SI_BINDING_NAME_CSPM_PIE_MENU_QUATERNARY), 
 --		tooltip = "", 
-		choices = ui.presetChoices, 	-- If choicesValue is defined, choices table is only used for UI display!
-		choicesValues = ui.presetChoicesValues, 
-		choicesTooltips = ui.presetChoicesTooltips, 
-		getFunc = function() return CSPM.svCurrent.keybinds[4] end, 
-		setFunc = function(newPreset) CSPM.svCurrent.keybinds[4] = newPreset end, 
---		sort = "name-up", --or "name-down", "numeric-up", "numeric-down", "value-up", "value-down", "numericvalue-up", "numericvalue-down" 
+		choices = self.presetChoices, 	-- If choicesValue is defined, choices table is only used for UI display!
+		choicesValues = self.presetChoicesValues, 
+		choicesTooltips = self.presetChoicesTooltips, 
+		getFunc = function() return self.svCurrent.keybinds[4] end, 
+		setFunc = function(newPreset) self.svCurrent.keybinds[4] = newPreset end, 
 		width = "full", 
 		scrollable = true, 
-		default = 0, 
+		default = self.SV_DEFAULT.keybinds[4], 
 		reference = "CSPM_UI_MAN_PresetSelectMenuKeybinds4", 
 	}
 	optionsData[#optionsData + 1] = {
 		type = "dropdown", 
 		name = L(SI_BINDING_NAME_CSPM_PIE_MENU_QUINARY), 
 --		tooltip = "", 
-		choices = ui.presetChoices, 	-- If choicesValue is defined, choices table is only used for UI display!
-		choicesValues = ui.presetChoicesValues, 
-		choicesTooltips = ui.presetChoicesTooltips, 
-		getFunc = function() return CSPM.svCurrent.keybinds[5] end, 
-		setFunc = function(newPreset) CSPM.svCurrent.keybinds[5] = newPreset end, 
---		sort = "name-up", --or "name-down", "numeric-up", "numeric-down", "value-up", "value-down", "numericvalue-up", "numericvalue-down" 
+		choices = self.presetChoices, 	-- If choicesValue is defined, choices table is only used for UI display!
+		choicesValues = self.presetChoicesValues, 
+		choicesTooltips = self.presetChoicesTooltips, 
+		getFunc = function() return self.svCurrent.keybinds[5] end, 
+		setFunc = function(newPreset) self.svCurrent.keybinds[5] = newPreset end, 
 		width = "full", 
 		scrollable = true, 
-		default = 0, 
+		default = self.SV_DEFAULT.keybinds[5], 
 		reference = "CSPM_UI_MAN_PresetSelectMenuKeybinds5", 
 	}
 	optionsData[#optionsData + 1] = {
@@ -379,37 +368,37 @@ function CSPM:CreateManagerPanel()
 		min = 0,
 		max = 300,
 		step = 1, 
-		getFunc = function() return CSPM.svCurrent.timeToHoldKey end, 
-		setFunc = function(newValue) CSPM.svCurrent.timeToHoldKey = newValue end, 
+		getFunc = function() return self.svCurrent.timeToHoldKey end, 
+		setFunc = function(newValue) self.svCurrent.timeToHoldKey = newValue end, 
 		clampInput = false, 
-		default = 250, 
+		default = self.SV_DEFAULT.timeToHoldKey, 
 	}
 	optionsData[#optionsData + 1] = {
 		type = "checkbox",
 		name = L(SI_CSPM_UI_BEHAVIOR_ACTIVATE_IN_UI_OP_NAME), 
-		getFunc = function() return CSPM.svCurrent.allowActivateInUIMode end, 
-		setFunc = function(newValue) CSPM.svCurrent.allowActivateInUIMode = newValue end, 
+		getFunc = function() return self.svCurrent.allowActivateInUIMode end, 
+		setFunc = function(newValue) self.svCurrent.allowActivateInUIMode = newValue end, 
 		tooltip = L(SI_CSPM_UI_BEHAVIOR_ACTIVATE_IN_UI_OP_TIPS), 
 		width = "full", 
-		default = true, 
+		default = self.SV_DEFAULT.allowActivateInUIMode, 
 	}
 	optionsData[#optionsData + 1] = {
 		type = "checkbox",
 		name = L(SI_CSPM_UI_BEHAVIOR_CLICKABLE_OP_NAME), 
-		getFunc = function() return CSPM.svCurrent.allowClickable end, 
-		setFunc = function(newValue) CSPM.svCurrent.allowClickable = newValue end, 
-		tooltip = ZO_CachedStrFormat(L(SI_CSPM_UI_BEHAVIOR_CLICKABLE_OP_TIPS), ZO_Keybindings_GenerateIconKeyMarkup(KEY_MOUSE_LEFT, 125), ZO_Keybindings_GenerateIconKeyMarkup(KEY_GAMEPAD_BUTTON_1, 125), "", ZO_Keybindings_GenerateIconKeyMarkup(KEY_MOUSE_RIGHT, 125), ZO_Keybindings_GenerateIconKeyMarkup(KEY_GAMEPAD_BUTTON_2, 125), ZO_Keybindings_GenerateTextKeyMarkup("ESC")), 
+		getFunc = function() return self.svCurrent.allowClickable end, 
+		setFunc = function(newValue) self.svCurrent.allowClickable = newValue end, 
+		tooltip = zo_strformat(L(SI_CSPM_UI_BEHAVIOR_CLICKABLE_OP_TIPS), ZO_Keybindings_GenerateIconKeyMarkup(KEY_MOUSE_LEFT, 125), ZO_Keybindings_GenerateIconKeyMarkup(KEY_GAMEPAD_BUTTON_1, 125), "", ZO_Keybindings_GenerateIconKeyMarkup(KEY_MOUSE_RIGHT, 125), ZO_Keybindings_GenerateIconKeyMarkup(KEY_GAMEPAD_BUTTON_2, 125), ZO_Keybindings_GenerateTextKeyMarkup("ESC")), 
 		width = "full", 
-		default = true, 
+		default = self.SV_DEFAULT.allowClickable, 
 	}
 	optionsData[#optionsData + 1] = {
 		type = "checkbox",
 		name = L(SI_CSPM_UI_BEHAVIOR_CENTER_AT_MOUSE_OP_NAME), 
-		getFunc = function() return CSPM.svCurrent.centeringAtMouseCursor end, 
-		setFunc = function(newValue) CSPM.svCurrent.centeringAtMouseCursor = newValue end, 
+		getFunc = function() return self.svCurrent.centeringAtMouseCursor end, 
+		setFunc = function(newValue) self.svCurrent.centeringAtMouseCursor = newValue end, 
 		tooltip = L(SI_CSPM_UI_BEHAVIOR_CENTER_AT_MOUSE_OP_TIPS), 
 		width = "full", 
-		default = false, 
+		default = self.SV_DEFAULT.centeringAtMouseCursor, 
 	}
 	optionsData[#optionsData + 1] = {
 		type = "dropdown", 
@@ -429,29 +418,62 @@ function CSPM:CreateManagerPanel()
 			12, 
 			20, 
 		}, 
-		getFunc = function() return CSPM.svCurrent.mouseDeltaScaleFactorInUIMode end, 
-		setFunc = function(newValue) CSPM.svCurrent.mouseDeltaScaleFactorInUIMode = newValue end, 
+		getFunc = function() return self.svCurrent.mouseDeltaScaleFactorInUIMode end, 
+		setFunc = function(newValue) self.svCurrent.mouseDeltaScaleFactorInUIMode = newValue end, 
 		width = "full", 
 		scrollable = true, 
-		default = 1, 
+		default = self.SV_DEFAULT.mouseDeltaScaleFactorInUIMode, 
 	}
 
 --[[
 	optionsData[#optionsData + 1] = {
 		type = "button", 
 		name = "Test", 
-		func = DoTestButton, 
+		func = function()
+			self:DoTestButton()
+		end, 
 --		width = "half", 
 	}
 ]]
-	LAM:RegisterOptionControls("CSPM_OptionsManager", optionsData)
+	LAM:RegisterOptionControls("CSPM_lamOptionsManager", optionsData)
+
+	local function OnLAMPanelControlsCreated(panel)
+		if (panel ~= self.panel) then return end
+		CALLBACK_MANAGER:UnregisterCallback("LAM-PanelControlsCreated", OnLAMPanelControlsCreated)
+
+		-- override ScrollableDropdownHelper for CSPM_UI_MAN_PresetSelectMenuKeybindsX to customize dropdown choices tooltips
+		for i = 1, 5 do
+			_G["CSPM_UI_MAN_PresetSelectMenuKeybinds" .. i].scrollHelper.OnMouseEnter = function(scrollHelper, control)
+				if control.m_data.tooltip then
+					CSPM.util.LayoutSlotActionTooltip(CSPM_ACTION_TYPE_PIE_MENU, CSPM_CATEGORY_NOTHING, control.m_data.tooltip, CSPM_UI_NONE)
+					CSPM.util.ShowSlotActionTooltip(control, TOPLEFT, 0, 0, BOTTOMRIGHT)
+				end
+			end
+			_G["CSPM_UI_MAN_PresetSelectMenuKeybinds" .. i].scrollHelper.OnMouseExit = function(scrollHelper, control)
+				if control.m_data.tooltip then
+					CSPM.util.HideSlotActionTooltip()
+				end
+			end
+		end
+		self.panelInitialized = true
+	end
 	CALLBACK_MANAGER:RegisterCallback("LAM-PanelControlsCreated", OnLAMPanelControlsCreated)
-	CALLBACK_MANAGER:RegisterCallback("LAM-PanelOpened", OnLAMPanelOpened)
-	CALLBACK_MANAGER:RegisterCallback("LAM-PanelClosed", OnLAMPanelClosed)
+	CALLBACK_MANAGER:RegisterCallback("LAM-PanelOpened", function(panel)
+		self:OnLAMPanelOpened(panel)
+	end)
+	CALLBACK_MANAGER:RegisterCallback("LAM-PanelClosed", function(panel)
+		self:OnLAMPanelClosed(panel)
+	end)
 end
 
-function CSPM:OpenManagerPanel()
-	if self.panelManager then
-		LAM:OpenToPanel(self.panelManager)
+function CSPM_PieMenuManagerPanel:GetOptionsPanel()
+	return self.panel
+end
+
+function CSPM_PieMenuManagerPanel:OpenOptionsPanel()
+	if self.panel then
+		LAM:OpenToPanel(self.panel)
 	end
 end
+
+CShortcutPieMenu:RegisterClassObject("PieMenuManagerPanel", CSPM_PieMenuManagerPanel)

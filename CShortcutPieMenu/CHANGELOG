@@ -1,3 +1,6 @@
+V0.10.0: [V1000] by Calamath
+- Refactoring add-on framework.
+
 V0.9.12: [V912] by Calamath
 Hot Fix:
 - Reduced the 24 custom key binds slots consumed by this add-on.

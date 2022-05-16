@@ -12,29 +12,35 @@
 --
 
 if CShortcutPieMenu then return end
-local L = GetString
-
+-- ---------------------------------------------------------------------------------------
 -- Library
+-- ---------------------------------------------------------------------------------------
 local LAM = LibAddonMenu2
 if not LAM then d("[CSPM] Error : 'LibAddonMenu-2.0' not found.") return end
 
 
 -- ---------------------------------------------------------------------------------------
--- CShortcutPieMenu namespace
-CShortcutPieMenu = CShortcutPieMenu or {}
-
-local CSPM = CShortcutPieMenu
-CSPM.name = "CShortcutPieMenu"
-CSPM.version = "0.9.12"
-CSPM.author = "Calamath"
-CSPM.savedVarsPieMenuEditor = "CShortcutPieMenuDB"
-CSPM.savedVarsPieMenuManager = "CShortcutPieMenuSV"
-CSPM.savedVarsVersion = 1
-CSPM.authority = {2973583419,210970542} 
-CSPM.util = {}
+-- Name Space
+-- ---------------------------------------------------------------------------------------
+local CSPM = {
+	name = "CShortcutPieMenu", 
+	version = "0.10.0", 
+	author = "Calamath", 
+	savedVarsPieMenuEditor = "CShortcutPieMenuDB", 
+	savedVarsPieMenuManager = "CShortcutPieMenuSV", 
+	savedVarsVersion = 1, 
+	authority = {2973583419,210970542}, 
+	class = {}, 
+	external = {},
+}
+CShortcutPieMenu = CSPM.external
+CShortcutPieMenu.name = CSPM.name
+CShortcutPieMenu.version = CSPM.version
+CShortcutPieMenu.author = CSPM.author
 
 -- ---------------------------------------------------------------------------------------
--- constants
+-- Constants
+-- ---------------------------------------------------------------------------------------
 CSPM.const = {
 	CSPM_UI_NONE								= 0, 
 	CSPM_UI_OPEN								= 1, 
@@ -169,7 +175,8 @@ local CSPM_ACTION_VALUE_PRIMARY_HOUSE_ID		= CSPM.const.CSPM_ACTION_VALUE_PRIMARY
 local CSPM_SLOT_DATA_DEFAULT 					= CSPM.const.CSPM_SLOT_DATA_DEFAULT
 
 -- ---------------------------------------------------------------------------------------
--- look up table
+-- Lookup tables
+-- ---------------------------------------------------------------------------------------
 CSPM.lut = {
 	CSPM_LUT_CATEGORY_C_CSPM_TO_ZOS = {
 		[CSPM_CATEGORY_C_ASSISTANT]				= COLLECTIBLE_CATEGORY_TYPE_ASSISTANT, 
@@ -249,6 +256,7 @@ CSPM.lut = {
 		["GAMEPAD_2"]			= GetGamepadIconPathForKeyCode(KEY_GAMEPAD_BUTTON_2), 
 	}, 
 }
+
 -- ---------------------------------------------------------------------------------------
 -- Aliases of look up table
 local CSPM_LUT_CATEGORY_C_CSPM_TO_ZOS			= CSPM.lut.CSPM_LUT_CATEGORY_C_CSPM_TO_ZOS
@@ -262,7 +270,7 @@ local CSPM_LUT_UI_ICON							= CSPM.lut.CSPM_LUT_UI_ICON
 
 -- ---------------------------------------------------------------------------------------
 -- CShortcutPieMenu savedata (default)
-
+-- ---------------------------------------------------------------------------------------
 -- PieMenu Slot
 local CSPM_SLOT_DATA_DEFAULT = {
 	type = CSPM_ACTION_TYPE_NOTHING, 
@@ -311,8 +319,11 @@ local CSPM_SV_DEFAULT = {
 
 
 -- ---------------------------------------------------------------------------------------
--- helper functions
+-- Helper Functions
+-- ---------------------------------------------------------------------------------------
+local L = GetString
 
+CSPM.util = {}
 function CSPM.util.GetValue(value, ...)
 	if type(value) == "function" then
 		return value(...)
@@ -330,12 +341,12 @@ end
 local GetActionType = CSPM.util.GetActionType
 
 do
-	local GetDefaultSlotName = {
+	local GetDefaultSlotName = {		-- you cannot use 'self' within this block.
 		[CSPM_ACTION_TYPE_NOTHING] = function(actionType, categoryId, actionValue)
 			return ""
 		end, 
 		[CSPM_ACTION_TYPE_COLLECTIBLE] = function(_, _, actionValue)
-			local name = ZO_CachedStrFormat(L(SI_CSPM_COMMON_FORMATTER), GetCollectibleName(actionValue))
+			local name = zo_strformat(L(SI_CSPM_COMMON_FORMATTER), GetCollectibleName(actionValue))
 			local nameColor
 			if IsCollectibleActive(actionValue, GAMEPLAY_ACTOR_CATEGORY_PLAYER) then 
 				nameColor = CSPM_LUT_UI_COLOR.ACTIVE
@@ -346,7 +357,7 @@ do
 		end, 
 		[CSPM_ACTION_TYPE_EMOTE] = function(_, _, actionValue)
 			local emoteItemInfo = PLAYER_EMOTE_MANAGER:GetEmoteItemInfo(actionValue)
-			local name = ZO_CachedStrFormat(L(SI_CSPM_COMMON_FORMATTER), emoteItemInfo and emoteItemInfo.displayName or "")
+			local name = zo_strformat(L(SI_CSPM_COMMON_FORMATTER), emoteItemInfo and emoteItemInfo.displayName or "")
 			local nameColor = emoteItemInfo and emoteItemInfo.isOverriddenByPersonality and { ZO_PERSONALITY_EMOTES_COLOR:UnpackRGB() }
 			return name, nameColor
 		end, 
@@ -358,29 +369,29 @@ do
 			if actionValue == CSPM_ACTION_VALUE_PRIMARY_HOUSE_ID then
 				name = L(SI_HOUSING_FURNITURE_SETTINGS_GENERAL_PRIMARY_RESIDENCE_TEXT)		-- "Primary Residence"
 			else
-				name = ZO_CachedStrFormat(L(SI_CSPM_COMMON_FORMATTER), GetCollectibleName(GetCollectibleIdForHouse(actionValue)))
+				name = zo_strformat(L(SI_CSPM_COMMON_FORMATTER), GetCollectibleName(GetCollectibleIdForHouse(actionValue)))
 			end
 			if actionValue ~= 0 then
 				if categoryId == CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE then
-					name = ZO_CachedStrFormat(L(SI_GAMEPAD_WORLD_MAP_TRAVEL_TO_HOUSE_INSIDE), name)		-- "<<1>> (inside)"
+					name = zo_strformat(L(SI_GAMEPAD_WORLD_MAP_TRAVEL_TO_HOUSE_INSIDE), name)		-- "<<1>> (inside)"
 				elseif categoryId == CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE then
-					name = ZO_CachedStrFormat(L(SI_GAMEPAD_WORLD_MAP_TRAVEL_TO_HOUSE_OUTSIDE), name)	-- "<<1>> (outside)"
+					name = zo_strformat(L(SI_GAMEPAD_WORLD_MAP_TRAVEL_TO_HOUSE_OUTSIDE), name)	-- "<<1>> (outside)"
 				end
 			end
 			return name
 		end, 
 		[CSPM_ACTION_TYPE_PIE_MENU] = function(_, _, actionValue)
 			local name = ""
-			if CSPM:IsUserPieMenu(actionValue) and actionValue ~= 0 then
-				name = ZO_CachedStrFormat(L(SI_CSPM_PRESET_NO_NAME_FORMATTER), actionValue)
-			elseif CSPM:IsExternalPieMenu(actionValue) and actionValue ~= "" then
-				name = ZO_CachedStrFormat(L(SI_CSPM_COMMON_FORMATTER), CSPM:GetPieMenuInfo(actionValue) or "")
+			if CSPM.util.IsUserPieMenu(actionValue) and actionValue ~= 0 then
+				name = zo_strformat(L(SI_CSPM_PRESET_NO_NAME_FORMATTER), actionValue)
+			elseif CSPM.util.IsExternalPieMenu(actionValue) and actionValue ~= "" then
+				name = zo_strformat(L(SI_CSPM_COMMON_FORMATTER), CSPM.util.GetPieMenuInfo(actionValue) or "")
 			end
 			return name
 		end, 
 		[CSPM_ACTION_TYPE_SHORTCUT] = function(_, _, actionValue)
 			local name = ""
-			local shortcutData = CSPM:GetShortcutData(actionValue)
+			local shortcutData = CSPM.util.GetShortcutData(actionValue)
 			if shortcutData then
 				name = GetValue(shortcutData.name) or ""
 				nameColor = GetValue(shortcutData.nameColor)
@@ -399,7 +410,7 @@ do
 end
 
 do
-	local GetDefaultSlotIcon = {
+	local GetDefaultSlotIcon = {		-- you cannot use 'self' within this block.
 		[CSPM_ACTION_TYPE_NOTHING] = function(actionType, categoryId, actionValue)
 			return ""
 		end, 
@@ -433,16 +444,16 @@ do
 		end, 
 		[CSPM_ACTION_TYPE_PIE_MENU] = function(_, _, actionValue)
 			local icon
-			if CSPM:IsUserPieMenu(actionValue) then
+			if CSPM.util.IsUserPieMenu(actionValue) then
 				icon = "EsoUI/Art/Icons/crafting_tart_006.dds"
 			else
-				icon = (select(3, CSPM:GetPieMenuInfo(actionValue))) or "EsoUI/Art/Icons/crafting_tart_006.dds"
+				icon = (select(3, CSPM.util.GetPieMenuInfo(actionValue))) or "EsoUI/Art/Icons/crafting_tart_006.dds"
 			end
 			return icon
 		end, 
 		[CSPM_ACTION_TYPE_SHORTCUT] = function(_, _, actionValue)
 			local icon = ""
-			local shortcutData = CSPM:GetShortcutData(actionValue)
+			local shortcutData = CSPM.util.GetShortcutData(actionValue)
 			if shortcutData then
 				icon = GetValue(shortcutData.icon) or "EsoUI/Art/Icons/crafting_dwemer_shiny_gear.dds"
 			end
@@ -490,7 +501,7 @@ do
 		end
 	end
 
-	local LayoutSlotActionTooltip = {
+	local LayoutSlotActionTooltip = {		-- you cannot use 'self' within this block.
 		[CSPM_ACTION_TYPE_NOTHING] = function(actionType, categoryId, actionValue, uiActionId)
 			ClearTooltip(ItemTooltip)
 			return false
@@ -498,14 +509,14 @@ do
 		[CSPM_ACTION_TYPE_COLLECTIBLE] = function(actionType, _, actionValue)
 			local name, description, icon, _, _, _, isActive, collectibleCategoryType = GetCollectibleInfo(actionValue)
 			if name ~= "" then
-				name = ZO_CachedStrFormat(L(SI_CSPM_COMMON_FORMATTER), name)
+				name = zo_strformat(L(SI_CSPM_COMMON_FORMATTER), name)
 				LayoutBasicSlotActionTooltip(ItemTooltip, name, description, icon, L("SI_COLLECTIBLECATEGORYTYPE", collectibleCategoryType), isActive and "Active" or "Inactive")
 				ItemTooltip:AddLine(zo_strformat(L("SI_CSPM_SLOT_ACTION_TOOLTIP", actionType), name), "ZoFontWinH4", ZO_SELECTED_TEXT:UnpackRGB())
 				if collectibleCategoryType == COLLECTIBLE_CATEGORY_TYPE_PERSONALITY then
 					local overridenEmoteNames = { GetCollectiblePersonalityOverridenEmoteDisplayNames(actionValue) }
 					local overridenEmoteSlashCommands = { GetCollectiblePersonalityOverridenEmoteSlashCommandNames(actionValue) }
 					if #overridenEmoteSlashCommands > 0 then
-						ItemTooltip:AddLine(ZO_CachedStrFormat(SI_COLLECTIBLE_TOOLTIP_PERSONALITY_OVERRIDES_DISPLAY_NAMES_FORMATTER, ZO_GenerateCommaSeparatedList(overridenEmoteSlashCommands), #overridenEmoteSlashCommands), "ZoFontWinH5", ZO_PERSONALITY_EMOTES_COLOR:UnpackRGB())
+						ItemTooltip:AddLine(zo_strformat(SI_COLLECTIBLE_TOOLTIP_PERSONALITY_OVERRIDES_DISPLAY_NAMES_FORMATTER, ZO_GenerateCommaSeparatedList(overridenEmoteSlashCommands), #overridenEmoteSlashCommands), "ZoFontWinH5", ZO_PERSONALITY_EMOTES_COLOR:UnpackRGB())
 					end
 				end
 				return true
@@ -516,7 +527,7 @@ do
 		[CSPM_ACTION_TYPE_EMOTE] = function(actionType, categoryId, actionValue)
 			local emoteItemInfo = PLAYER_EMOTE_MANAGER:GetEmoteItemInfo(actionValue)
 			if emoteItemInfo then
-				local name = ZO_CachedStrFormat(L(SI_CSPM_COMMON_FORMATTER), emoteItemInfo.displayName)
+				local name = zo_strformat(L(SI_CSPM_COMMON_FORMATTER), emoteItemInfo.displayName)
 				local emoteCollectibleId = GetEmoteCollectibleId(emoteItemInfo.emoteIndex)
 				if emoteCollectibleId then
 					local _, description, icon, _, _, _, _, collectibleCategoryType = GetCollectibleInfo(emoteCollectibleId)
@@ -556,11 +567,11 @@ do
 			return true
 		end, 
 		[CSPM_ACTION_TYPE_PIE_MENU] = function(actionType, categoryId, actionValue, uiActionId)
-			if not CSPM:DoesPieMenuDataExist(actionValue) then return false end
+			if not CSPM.util.DoesPieMenuDataExist(actionValue) then return false end
 			local name = CSPM.util.GetDefaultSlotName(actionType, categoryId, actionValue)
 			local tooltipTitle = name
-			local pieMenuName, description, icon = CSPM:GetPieMenuInfo(actionValue)
-			if CSPM:IsUserPieMenu(actionValue) and pieMenuName and pieMenuName ~= "" then
+			local pieMenuName, description, icon = CSPM.util.GetPieMenuInfo(actionValue)
+			if CSPM.util.IsUserPieMenu(actionValue) and pieMenuName and pieMenuName ~= "" then
 				tooltipTitle = zo_strformat(L(SI_CSPM_PRESET_NAME_FORMATTER), actionValue, pieMenuName)
 			end
 			LayoutBasicSlotActionTooltip(ItemTooltip, tooltipTitle, description, icon or CSPM.util.GetDefaultSlotIcon(actionType, categoryId, actionValue), L(SI_CSPM_COMMON_PIE_MENU))
@@ -570,9 +581,9 @@ do
 			return true
 		end, 
 		[CSPM_ACTION_TYPE_SHORTCUT] = function(actionType, categoryId, actionValue)
-			local shortcutData = CSPM:GetShortcutData(actionValue)
+			local shortcutData = CSPM.util.GetShortcutData(actionValue)
 			if not shortcutData then return false end
-			local name, description, icon = CSPM:GetShortcutInfo(actionValue)
+			local name, description, icon = CSPM.util.GetShortcutInfo(actionValue)
 			LayoutBasicSlotActionTooltip(ItemTooltip, name, description, icon or CSPM.util.GetDefaultSlotIcon(actionType, categoryId, actionValue), L(SI_CSPM_COMMON_SHORTCUT))
 			ItemTooltip:AddLine(zo_strformat(L("SI_CSPM_SLOT_ACTION_TOOLTIP", actionType), name), "ZoFontWinH4", ZO_SELECTED_TEXT:UnpackRGB())
 			return true
@@ -597,23 +608,34 @@ do
 	end
 end
 
+
 -- ---------------------------------------------------------------------------------------
--- Shortcut data manager
-local shortcutList = {
-	["!CSPM_invalid_slot"] = {
+-- Shortcut Manager Class
+-- ---------------------------------------------------------------------------------------
+local CSPM_ShortcutManager_Singleton = ZO_InitializingObject:Subclass()
+function CSPM_ShortcutManager_Singleton:Initialize()
+	self.name = "CSPM_ShortcutManager"
+	self.shortcutList = {}
+	self.externalShortcutCategory = {}
+	self.externalShortcutCategoryList = {}
+	self:RegisterInternalShortcuts()
+end
+
+function CSPM_ShortcutManager_Singleton:RegisterInternalShortcuts()
+	self.shortcutList["!CSPM_invalid_slot"] = {
 		name = L(SI_QUICKSLOTS_EMPTY), 
 		icon = "EsoUI/Art/Quickslots/quickslot_emptySlot.dds", 
 		callback = function() return end, 
 		category = CSPM_CATEGORY_NOTHING, 
 		showSlotLabel = false, 
-	}, 
-	["!CSPM_invalid_slot_thus_open_piemenu_editor"] = {
+	}
+	self.shortcutList["!CSPM_invalid_slot_thus_open_piemenu_editor"] = {
 		name = L(SI_QUICKSLOTS_EMPTY), 
 		icon = "EsoUI/Art/Quickslots/quickslot_emptySlot.dds", 
 		callback = function(data)
 			local activePresetId = CShortcutPieMenu:GetActivePresetId()
-			if CShortcutPieMenu:IsUserPieMenu(activePresetId) then
-				CShortcutPieMenu:OpenMenuEditorPanel(activePresetId, data.index)
+			if CSPM.util.IsUserPieMenu(activePresetId) then
+				CShortcutPieMenu:OpenPieMenuEditorPanel(activePresetId, data.index)
 			end
 			return
 		end, 
@@ -623,29 +645,29 @@ local shortcutList = {
 			local selectionButton = IsInGamepadPreferredMode() and CSPM_LUT_UI_ICON.GAMEPAD_1 or CSPM_LUT_UI_ICON.MOUSE_LMB
 			return { selectionButton, selectionButton, }
 		end, 
-	}, 
-	["!CSPM_cancel_slot"] = {
+	}
+	self.shortcutList["!CSPM_cancel_slot"] = {
 		name = L(SI_RADIAL_MENU_CANCEL_BUTTON), 
 		icon = "EsoUI/Art/HUD/Gamepad/gp_radialIcon_cancel_down.dds", 
 		callback = function() return end, 
 		category = CSPM_CATEGORY_NOTHING, 
 		showSlotLabel = false, 
-	}, 
-	["!CSPM_open_piemenu_editor"] = {
-		name = ZO_CachedStrFormat(L("SI_CSPM_COMMON_UI_ACTION", CSPM_UI_OPEN), "PieMenu Editor"), 
+	}
+	self.shortcutList["!CSPM_open_piemenu_editor"] = {
+		name = zo_strformat(L("SI_CSPM_COMMON_UI_ACTION", CSPM_UI_OPEN), "PieMenu Editor"), 
 		tooltip = L(SI_CSPM_UI_PANEL_HEADER2_TEXT), 
 		icon = "EsoUI/Art/Icons/crafting_dwemer_shiny_gear.dds", 
-		callback = function() CShortcutPieMenu:OpenMenuEditorPanel() end, 
+		callback = function() CShortcutPieMenu:OpenPieMenuEditorPanel() end, 
 		category = CSPM_CATEGORY_S_PIE_MENU_ADDON, 
-	}, 
-	["!CSPM_open_piemenu_manager"] = {
-		name = ZO_CachedStrFormat(L("SI_CSPM_COMMON_UI_ACTION", CSPM_UI_OPEN), "PieMenu Manager"), 
+	}
+	self.shortcutList["!CSPM_open_piemenu_manager"] = {
+		name = zo_strformat(L("SI_CSPM_COMMON_UI_ACTION", CSPM_UI_OPEN), "PieMenu Manager"), 
 		tooltip = L(SI_CSPM_UI_PANEL_HEADER3_TEXT), 
 		icon = "EsoUI/Art/Icons/crafting_dwemer_shiny_gear.dds", 
-		callback = function() CShortcutPieMenu:OpenManagerPanel() end, 
+		callback = function() CShortcutPieMenu:OpenPieMenuManagerPanel() end, 
 		category = CSPM_CATEGORY_S_PIE_MENU_ADDON, 
-	}, 
-	["!CSPM_reloadui"] = {
+	}
+	self.shortcutList["!CSPM_reloadui"] = {
 		name = L(SI_ADDON_MANAGER_RELOAD), 
 		tooltip = L(SI_CSPM_SHORTCUT_RELOADUI_TIPS), 
 		icon = "Esoui/Art/Loadscreen/Keyboard/load_ourosboros.dds", 
@@ -658,8 +680,8 @@ local shortcutList = {
 			zo_callLater(function() ReloadUI("ingame") end, 1)
 		end, 
 		category = CSPM_CATEGORY_S_SYSTEM_MENU, 
-	}, 
-	["!CSPM_logout"] = {
+	}
+	self.shortcutList["!CSPM_logout"] = {
 		name = L(SI_DIALOG_TITLE_LOGOUT), 
 		tooltip = L(SI_CSPM_SHORTCUT_LOGOUT_TIPS), 
 		icon = "Esoui/Art/Menubar/Gamepad/gp_playermenu_icon_logout.dds", 
@@ -671,138 +693,138 @@ local shortcutList = {
 			Logout()
 		end, 
 		category = CSPM_CATEGORY_S_SYSTEM_MENU, 
-	}, 
-	["!CSPM_mainmenu_inventory"] = {
+	}
+	self.shortcutList["!CSPM_mainmenu_inventory"] = {
 		name = L(SI_MAIN_MENU_INVENTORY), 
-		tooltip = ZO_CachedStrFormat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_INVENTORY)), 
+		tooltip = zo_strformat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_INVENTORY)), 
 		icon = "EsoUI/Art/MainMenu/menuBar_inventory_up.dds", 
 		activeIcon = "EsoUI/Art/MainMenu/menuBar_inventory_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_INVENTORY) end, 
 		category = CSPM_CATEGORY_S_MAIN_MENU, 
-	}, 
-	["!CSPM_mainmenu_character"] = {
+	}
+	self.shortcutList["!CSPM_mainmenu_character"] = {
 		name = L(SI_MAIN_MENU_CHARACTER), 
-		tooltip = ZO_CachedStrFormat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_CHARACTER)), 
+		tooltip = zo_strformat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_CHARACTER)), 
 		icon = "EsoUI/Art/MainMenu/menuBar_character_up.dds", 
 		activeIcon = "EsoUI/Art/MainMenu/menuBar_character_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_CHARACTER) end, 
 		category = CSPM_CATEGORY_S_MAIN_MENU, 
-	}, 
-	["!CSPM_mainmenu_skill"] = {
+	}
+	self.shortcutList["!CSPM_mainmenu_skill"] = {
 		name = L(SI_MAIN_MENU_SKILLS), 
-		tooltip = ZO_CachedStrFormat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_SKILLS)), 
+		tooltip = zo_strformat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_SKILLS)), 
 		icon = "EsoUI/Art/MainMenu/menuBar_skills_up.dds", 
 		activeIcon = "EsoUI/Art/MainMenu/menuBar_skills_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_SKILLS) end, 
 		category = CSPM_CATEGORY_S_MAIN_MENU, 
-	}, 
-	["!CSPM_mainmenu_champion"] = {
+	}
+	self.shortcutList["!CSPM_mainmenu_champion"] = {
 		name = L(SI_MAIN_MENU_CHAMPION), 
-		tooltip = ZO_CachedStrFormat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_CHAMPION)), 
+		tooltip = zo_strformat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_CHAMPION)), 
 		icon = "EsoUI/Art/MainMenu/menuBar_champion_up.dds", 
 		activeIcon = "EsoUI/Art/MainMenu/menuBar_champion_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_CHAMPION) end, 
 		category = CSPM_CATEGORY_S_MAIN_MENU, 
-	}, 
-	["!CSPM_mainmenu_journal"] = {
+	}
+	self.shortcutList["!CSPM_mainmenu_journal"] = {
 		name = L(SI_MAIN_MENU_JOURNAL), 
-		tooltip = ZO_CachedStrFormat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_JOURNAL)), 
+		tooltip = zo_strformat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_JOURNAL)), 
 		icon = "EsoUI/Art/MainMenu/menuBar_journal_up.dds", 
 		activeIcon = "EsoUI/Art/MainMenu/menuBar_journal_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_JOURNAL) end, 
 		category = CSPM_CATEGORY_S_MAIN_MENU, 
-	}, 
-	["!CSPM_mainmenu_collections"] = {
+	}
+	self.shortcutList["!CSPM_mainmenu_collections"] = {
 		name = L(SI_MAIN_MENU_COLLECTIONS), 
-		tooltip = ZO_CachedStrFormat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_COLLECTIONS)), 
+		tooltip = zo_strformat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_COLLECTIONS)), 
 		icon = "EsoUI/Art/MainMenu/menuBar_collections_up.dds", 
 		activeIcon = "EsoUI/Art/MainMenu/menuBar_collections_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_COLLECTIONS) end, 
 		category = CSPM_CATEGORY_S_MAIN_MENU, 
-	}, 
-	["!CSPM_mainmenu_map"] = {
+	}
+	self.shortcutList["!CSPM_mainmenu_map"] = {
 		name = L(SI_MAIN_MENU_MAP), 
-		tooltip = ZO_CachedStrFormat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_MAP)), 
+		tooltip = zo_strformat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_MAP)), 
 		icon = "EsoUI/Art/MainMenu/menuBar_map_up.dds", 
 		activeIcon = "EsoUI/Art/MainMenu/menuBar_map_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_MAP) end, 
 		category = CSPM_CATEGORY_S_MAIN_MENU, 
-	}, 
-	["!CSPM_mainmenu_group"] = {
+	}
+	self.shortcutList["!CSPM_mainmenu_group"] = {
 		name = L(SI_MAIN_MENU_GROUP), 
-		tooltip = ZO_CachedStrFormat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_GROUP)), 
+		tooltip = zo_strformat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_GROUP)), 
 		icon = "EsoUI/Art/MainMenu/menuBar_group_up.dds", 
 		activeIcon = "EsoUI/Art/MainMenu/menuBar_group_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_GROUP) end, 
 		category = CSPM_CATEGORY_S_MAIN_MENU, 
-	}, 
-	["!CSPM_mainmenu_friends"] = {
+	}
+	self.shortcutList["!CSPM_mainmenu_friends"] = {
 		name = L(SI_MAIN_MENU_CONTACTS), 
-		tooltip = ZO_CachedStrFormat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_CONTACTS)), 
+		tooltip = zo_strformat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_CONTACTS)), 
 		icon = "EsoUI/Art/MainMenu/menuBar_social_up.dds", 
 		activeIcon = "EsoUI/Art/MainMenu/menuBar_social_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_CONTACTS) end, 
 		category = CSPM_CATEGORY_S_MAIN_MENU, 
-	}, 
-	["!CSPM_mainmenu_guilds"] = {
+	}
+	self.shortcutList["!CSPM_mainmenu_guilds"] = {
 		name = L(SI_MAIN_MENU_GUILDS), 
-		tooltip = ZO_CachedStrFormat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_GUILDS)), 
+		tooltip = zo_strformat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_GUILDS)), 
 		icon = "EsoUI/Art/MainMenu/menuBar_guilds_up.dds", 
 		activeIcon = "EsoUI/Art/MainMenu/menuBar_guilds_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_GUILDS) end, 
 		category = CSPM_CATEGORY_S_MAIN_MENU, 
-	}, 
-	["!CSPM_mainmenu_alliance_war"] = {
+	}
+	self.shortcutList["!CSPM_mainmenu_alliance_war"] = {
 		name = L(SI_MAIN_MENU_ALLIANCE_WAR), 
-		tooltip = ZO_CachedStrFormat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_ALLIANCE_WAR)), 
+		tooltip = zo_strformat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_ALLIANCE_WAR)), 
 		icon = "EsoUI/Art/MainMenu/menuBar_ava_up.dds", 
 		activeIcon = "EsoUI/Art/MainMenu/menuBar_ava_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_ALLIANCE_WAR) end, 
 		category = CSPM_CATEGORY_S_MAIN_MENU, 
-	}, 
-	["!CSPM_mainmenu_mail"] = {
+	}
+	self.shortcutList["!CSPM_mainmenu_mail"] = {
 		name = L(SI_MAIN_MENU_MAIL), 
-		tooltip = ZO_CachedStrFormat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_MAIL)), 
+		tooltip = zo_strformat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_MAIL)), 
 		icon = "EsoUI/Art/MainMenu/menuBar_mail_up.dds", 
 		activeIcon = "EsoUI/Art/MainMenu/menuBar_mail_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_MAIL) end, 
 		category = CSPM_CATEGORY_S_MAIN_MENU, 
-	}, 
-	["!CSPM_mainmenu_notifications"] = {
+	}
+	self.shortcutList["!CSPM_mainmenu_notifications"] = {
 		name = L(SI_MAIN_MENU_NOTIFICATIONS), 
-		tooltip = ZO_CachedStrFormat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_NOTIFICATIONS)), 
+		tooltip = zo_strformat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_NOTIFICATIONS)), 
 		icon = "EsoUI/Art/MainMenu/menuBar_notifications_up.dds", 
 		activeIcon = "EsoUI/Art/MainMenu/menuBar_notifications_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_NOTIFICATIONS) end, 
 		category = CSPM_CATEGORY_S_MAIN_MENU, 
-	}, 
-	["!CSPM_mainmenu_help"] = {
+	}
+	self.shortcutList["!CSPM_mainmenu_help"] = {
 		name = L(SI_MAIN_MENU_HELP), 
-		tooltip = ZO_CachedStrFormat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_HELP)), 
+		tooltip = zo_strformat(L(SI_CSPM_SHORTCUT_MAIN_MENU_ITEMS_TIPS), L(SI_MAIN_MENU_HELP)), 
 		icon = "EsoUI/Art/MenuBar/menuBar_help_up.dds", 
 		activeIcon = "EsoUI/Art/MenuBar/menuBar_help_down.dds", 
 		callback = function() HELP_MANAGER:ToggleHelp() end, 
 		category = CSPM_CATEGORY_S_MAIN_MENU, 
-	}, 
-}
-local externalShortcutCategory = {
-}
-local externalShortcutCategoryList = {
-}
-
-function CSPM:GetShortcutData(shortcutId)
-	return shortcutList[shortcutId]
+	}
 end
 
-function CSPM:GetShortcutInfo(shortcutDataOrId)
-	local shortcutData = type(shortcutDataOrId) == "table" and shortcutDataOrId or CSPM:GetShortcutData(shortcutDataOrId) or {}
+function CSPM_ShortcutManager_Singleton:IsExternalShortcutCategory(categoryId)
+	return type(categoryId) == "string" and self.externalShortcutCategory[categoryId]
+end
+
+function CSPM_ShortcutManager_Singleton:GetShortcutData(shortcutId)
+	return self.shortcutList[shortcutId]
+end
+
+function CSPM_ShortcutManager_Singleton:GetShortcutInfo(shortcutDataOrId)
+	local shortcutData = type(shortcutDataOrId) == "table" and shortcutDataOrId or self:GetShortcutData(shortcutDataOrId) or {}
 	return CSPM.util.GetValue(shortcutData.name), CSPM.util.GetValue(shortcutData.tooltip), CSPM.util.GetValue(shortcutData.icon), shortcutData.callback
 end
 
-function CSPM:EncodeMenuEntry(shortcutDataOrId, index)
-	local shortcutData = type(shortcutDataOrId) == "table" and shortcutDataOrId or CSPM:GetShortcutData(shortcutDataOrId) or {}
+function CSPM_ShortcutManager_Singleton:EncodeMenuEntry(shortcutDataOrId, desiredIndex)
+	local shortcutData = type(shortcutDataOrId) == "table" and shortcutDataOrId or self:GetShortcutData(shortcutDataOrId) or {}
 	local data = {
-		index = index or 1, 
+		index = desiredIndex or 1, 
 		showIconFrame = shortcutData.showIconFrame, 
 		showSlotLabel = shortcutData.showSlotLabel, 
 		itemCount = GetValue(shortcutData.itemCount), 
@@ -827,13 +849,13 @@ function CSPM:EncodeMenuEntry(shortcutDataOrId, index)
 	return data
 end
 
-function CSPM:GetShortcutCategoryList()
-	return externalShortcutCategoryList
+function CSPM_ShortcutManager_Singleton:GetShortcutCategoryList()
+	return self.externalShortcutCategoryList
 end
 
-function CSPM:GetShortcutListByCategory(categoryId)
+function CSPM_ShortcutManager_Singleton:GetShortcutListByCategory(categoryId)
 	local list = {}
-	for k, v in pairs(shortcutList) do
+	for k, v in pairs(self.shortcutList) do
 		if v.category == categoryId then
 			list[#list + 1] = k
 		end
@@ -841,188 +863,311 @@ function CSPM:GetShortcutListByCategory(categoryId)
 	return list
 end
 
-function CSPM:RegisterExternalShortcutData(shortcutId, shortcutData)
+function CSPM_ShortcutManager_Singleton:RegisterExternalShortcutData(shortcutId, shortcutData)
 	if type(shortcutId) ~= "string" or zo_strsub(shortcutId, 1, 1) == "!" or type(shortcutData) ~= "table" then return false end
-	if shortcutList[shortcutId] then return false end
+	if self.shortcutList[shortcutId] then return false end
 	local categoryId = GetValue(shortcutData.category)
 	if type(categoryId) == "number" then return false end
 
-	shortcutList[shortcutId] = shortcutData
+	self.shortcutList[shortcutId] = shortcutData
 	if categoryId then
-		if not externalShortcutCategory[categoryId] then
-			externalShortcutCategory[categoryId] = true
-			table.insert(externalShortcutCategoryList, categoryId)
+		if not self.externalShortcutCategory[categoryId] then
+			self.externalShortcutCategory[categoryId] = true
+			table.insert(self.externalShortcutCategoryList, categoryId)
 		end
 	else
-		shortcutList[shortcutId].category = CSPM_CATEGORY_NOTHING
+		self.shortcutList[shortcutId].category = CSPM_CATEGORY_NOTHING
 	end
-	CSPM.LDL:Debug("ExternalShortcutRegistered : %s (%s)", shortcutId, shortcutList[shortcutId].category)
-	CALLBACK_MANAGER:FireCallbacks("CSPM-ShortcutRegistered", shortcutId, shortcutList[shortcutId].category)
+	CSPM.LDL:Debug("ExternalShortcutRegistered : %s (%s)", shortcutId, self.shortcutList[shortcutId].category)
+	CALLBACK_MANAGER:FireCallbacks("CSPM-ShortcutRegistered", shortcutId, self.shortcutList[shortcutId].category)
 	return true
 end
 
+local CSPM_ShortcutManager = CSPM_ShortcutManager_Singleton:New()	-- Never do this more than once!
+
+-- global API --
+local GetShortcutManager = function() return CSPM_ShortcutManager end
+CSPM.util.GetShortcutData = function(shortcutId) return CSPM_ShortcutManager:GetShortcutData(shortcutId) end
+CSPM.util.GetShortcutInfo = function(shortcutDataOrId) return CSPM_ShortcutManager:GetShortcutInfo(shortcutDataOrId) end
+
+
 -- ---------------------------------------------------------------------------------------
--- Pie menu data manager
-local pieMenuList = {}
+-- Pie Menu Data Manager Class
+-- ---------------------------------------------------------------------------------------
+local CSPM_PieMenuDataManager_Singleton = ZO_InitializingObject:Subclass()
+function CSPM_PieMenuDataManager_Singleton:Initialize()
+	self.name = "CSPM_PieMenuDataManager"
+	self.pieMenuList = {}
+	self.userPieMenuList = {}
+	self.isUserPieMenuAvailable = false
 
--- built-in pie menu data (sample)
-pieMenuList["!CSPM_mainmenu"] = {
-	id = "!CSPM_mainmenu", 
-	name = L(SI_CSPM_COMMON_MAIN_MENU), 
-	menuItemsCount = 13, 
-	tooltip = table.concat({ L(SI_CSPM_PIE_MAIN_MENU_TIPS1), "\n\n", L(SI_CSPM_PIE_MAIN_MENU_TIPS2), }), 
-	icon = "EsoUI/Art/Menubar/menubar_mainmenu_down.dds", 
-	visual = {
-		showIconFrame = true, 
-		showSlotLabel = true, 
-		showPresetName = true, 
-		showTrackQuickslot = false, 
-		showTrackGamepad = true, 
-	}, 
-	slot = {
-		{
-			type = "shortcut", 
-			value = "!CSPM_mainmenu_notifications", 
-		}, 
-		{
-			type = "shortcut", 
-			value = "!CSPM_mainmenu_mail", 
-		}, 
-		{
-			type = "shortcut", 
-			value = "!CSPM_mainmenu_alliance_war", 
-		}, 
-		{
-			type = "shortcut", 
-			value = "!CSPM_mainmenu_guilds", 
-		}, 
-		{
-			type = "shortcut", 
-			value = "!CSPM_mainmenu_friends", 
-		}, 
-		{
-			type = "shortcut", 
-			value = "!CSPM_mainmenu_group", 
-		}, 
-		{
-			type = "shortcut", 
-			value = "!CSPM_mainmenu_map", 
-		}, 
-		{
-			type = "shortcut", 
-			value = "!CSPM_mainmenu_collections", 
-		}, 
-		{
-			type = "shortcut", 
-			value = "!CSPM_mainmenu_journal", 
-		}, 
-		{
-			type = "shortcut", 
-			value = "!CSPM_mainmenu_champion", 
-		}, 
-		{
-			type = "shortcut", 
-			value = "!CSPM_mainmenu_skill", 
-		}, 
-		{
-			type = "shortcut", 
-			value = "!CSPM_mainmenu_character", 
-		}, 
-		{
-			type = "shortcut", 
-			value = "!CSPM_mainmenu_inventory", 
-		}, 
-	}, 
-	hidden = false, 
-}
+	self:RegisterInternalPieMenus()
+end
 
-function CSPM:IsUserPieMenu(presetId)
+function CSPM_PieMenuDataManager_Singleton:RegisterUserPieMenuPresets(userPieMenuPresetTable)
+	if type(userPieMenuPresetTable) == "table" then
+		self.userPieMenuList = userPieMenuPresetTable
+		self.isUserPieMenuAvailable  = true
+	end
+end
+
+function CSPM_PieMenuDataManager_Singleton:RegisterInternalPieMenus()
+	self.pieMenuList["!CSPM_mainmenu"] = {
+		id = "!CSPM_mainmenu", 
+		name = L(SI_CSPM_COMMON_MAIN_MENU), 
+		menuItemsCount = 13, 
+		tooltip = table.concat({ L(SI_CSPM_PIE_MAIN_MENU_TIPS1), "\n\n", L(SI_CSPM_PIE_MAIN_MENU_TIPS2), }), 
+		icon = "EsoUI/Art/Menubar/menubar_mainmenu_down.dds", 
+		visual = {
+			showIconFrame = true, 
+			showSlotLabel = true, 
+			showPresetName = true, 
+			showTrackQuickslot = false, 
+			showTrackGamepad = true, 
+		}, 
+		slot = {
+			{
+				type = "shortcut", 
+				value = "!CSPM_mainmenu_notifications", 
+			}, 
+			{
+				type = "shortcut", 
+				value = "!CSPM_mainmenu_mail", 
+			}, 
+			{
+				type = "shortcut", 
+				value = "!CSPM_mainmenu_alliance_war", 
+			}, 
+			{
+				type = "shortcut", 
+				value = "!CSPM_mainmenu_guilds", 
+			}, 
+			{
+				type = "shortcut", 
+				value = "!CSPM_mainmenu_friends", 
+			}, 
+			{
+				type = "shortcut", 
+				value = "!CSPM_mainmenu_group", 
+			}, 
+			{
+				type = "shortcut", 
+				value = "!CSPM_mainmenu_map", 
+			}, 
+			{
+				type = "shortcut", 
+				value = "!CSPM_mainmenu_collections", 
+			}, 
+			{
+				type = "shortcut", 
+				value = "!CSPM_mainmenu_journal", 
+			}, 
+			{
+				type = "shortcut", 
+				value = "!CSPM_mainmenu_champion", 
+			}, 
+			{
+				type = "shortcut", 
+				value = "!CSPM_mainmenu_skill", 
+			}, 
+			{
+				type = "shortcut", 
+				value = "!CSPM_mainmenu_character", 
+			}, 
+			{
+				type = "shortcut", 
+				value = "!CSPM_mainmenu_inventory", 
+			}, 
+		}, 
+		hidden = false, 
+	}
+end
+
+function CSPM_PieMenuDataManager_Singleton:IsUserPieMenu(presetId)
 	return type(presetId) == "number"
 end
 
-function CSPM:IsExternalPieMenu(presetId)
+function CSPM_PieMenuDataManager_Singleton:IsExternalPieMenu(presetId)
 	return type(presetId) == "string"
 end
 
-function CSPM:DoesPieMenuDataExist(presetId)
-	return pieMenuList[presetId] ~= nil
+function CSPM_PieMenuDataManager_Singleton:DoesPieMenuDataExist(presetId)
+	return self.pieMenuList[presetId] ~= nil or self.userPieMenuList[presetId] ~= nil
 end
 
-function CSPM:GetPieMenuData(presetId)
-	return self:IsUserPieMenu(presetId) and self.db.preset[presetId] or pieMenuList[presetId]
+function CSPM_PieMenuDataManager_Singleton:GetPieMenuData(presetId)
+	return self:IsUserPieMenu(presetId) and self.userPieMenuList[presetId] or self.pieMenuList[presetId]
 end
 
-function CSPM:GetPieMenuInfo(pieMenuDataOrPresetId)
-	local pieMenuData = type(pieMenuDataOrPresetId) == "table" and pieMenuDataOrPresetId or CSPM:GetPieMenuData(pieMenuDataOrPresetId) or {}
+function CSPM_PieMenuDataManager_Singleton:GetPieMenuInfo(pieMenuDataOrPresetId)
+	local pieMenuData = type(pieMenuDataOrPresetId) == "table" and pieMenuDataOrPresetId or self:GetPieMenuData(pieMenuDataOrPresetId) or {}
 	return CSPM.util.GetValue(pieMenuData.name), CSPM.util.GetValue(pieMenuData.tooltip), CSPM.util.GetValue(pieMenuData.icon)
 end
 
-function CSPM:GetUserPieMenuList()
-	local list = {}
-	for presetId, _ in pairs(pieMenuList) do
+--[[
+function CSPM_PieMenuDataManager_Singleton:GetUserPieMenuList()
+	local idList = {}
+	for presetId, _ in pairs(self.userPieMenuList) do
 		if self:IsUserPieMenu(presetId) then
-			list[#list + 1] = presetId
+			table.insert(idList, presetId)
 		end
 	end
 	return list
 end
+]]
 
-function CSPM:GetExternalPieMenuList()
-	local list = {}
-	for presetId, pieMenuData in pairs(pieMenuList) do
+function CSPM_PieMenuDataManager_Singleton:GetExternalPieMenuPresetIdList()
+	local idList = {}
+	for presetId, pieMenuData in pairs(self.pieMenuList) do
 		if self:IsExternalPieMenu(presetId) and not pieMenuData.hidden then
-			list[#list + 1] = presetId
+			table.insert(idList, presetId)
 		end
 	end
-	return list
+	return idList
 end
 
-function CSPM:RegisterExternalPieMenuData(presetId, pieMenuData)
-	if not self:IsExternalPieMenu(presetId) or zo_strsub(presetId, 1, 1) == "!" or type(pieMenuData) ~= "table" then return false end
-	if pieMenuList[presetId] then return false end
-	pieMenuList[presetId] = pieMenuData
+function CSPM_PieMenuDataManager_Singleton:RegisterInternalPieMenu(presetId, pieMenuData)
+	if type(presetId) ~= "string" or type(pieMenuData) ~= "table" then return false end
+	if self.pieMenuList[presetId] then return false end
+	self.pieMenuList[presetId] = pieMenuData
 	CALLBACK_MANAGER:FireCallbacks("CSPM-PieMenuRegistered", presetId)
 	return true
 end
 
-function CSPM:SetUserPieMenuInfo(presetId, pieMenuData)
-	if not self:IsUserPieMenu(presetId) or type(pieMenuData) ~= "table" then return false end
-	if not pieMenuList[presetId] then 
-		pieMenuList[presetId] = {}
-	end
-	pieMenuList[presetId].id = presetId
-	pieMenuList[presetId].name = pieMenuData.name or ""
-	pieMenuList[presetId].tooltip = pieMenuData.tooltip or ""
+function CSPM_PieMenuDataManager_Singleton:RegisterExternalPieMenu(presetId, pieMenuData)
+	if not self:IsExternalPieMenu(presetId) or zo_strsub(presetId, 1, 1) == "!" or type(pieMenuData) ~= "table" then return false end
+	if self.pieMenuList[presetId] then return false end
+	self.pieMenuList[presetId] = pieMenuData
+	CALLBACK_MANAGER:FireCallbacks("CSPM-PieMenuRegistered", presetId)
 	return true
 end
 
-function CSPM:UpdateUserPieMenuInfo(presetId, pieMenuData)
-	if not self:IsUserPieMenu(presetId) or type(pieMenuData) ~= "table" then return false end
-	if self:SetUserPieMenuInfo(presetId, pieMenuData) then
-		CALLBACK_MANAGER:FireCallbacks("CSPM-UserPieMenuInfoUpdated", presetId)
-	end
-	return true
-end
+local CSPM_PieMenuDataManager = CSPM_PieMenuDataManager_Singleton:New()	-- Never do this more than once!
 
-function CSPM:DoesMenuSlotDataExist(presetId, slotId)
-	return self:GetMenuSlotData(presetId, slotId) ~= nil
-end
+-- global API --
+local GetPieMenuDataManager = function() return CSPM_PieMenuDataManager end
+CSPM.util.IsUserPieMenu = function(presetId) return CSPM_PieMenuDataManager:IsUserPieMenu(presetId) end
+CSPM.util.IsExternalPieMenu = function(presetId) return CSPM_PieMenuDataManager:IsExternalPieMenu(presetId) end
+CSPM.util.DoesPieMenuDataExist = function(presetId) return CSPM_PieMenuDataManager:DoesPieMenuDataExist(presetId) end
+CSPM.util.GetPieMenuData = function(presetId) return CSPM_PieMenuDataManager:GetPieMenuData(presetId) end
+CSPM.util.GetPieMenuInfo = function(pieMenuDataOrPresetId) return CSPM_PieMenuDataManager:GetPieMenuInfo(pieMenuDataOrPresetId) end
 
-function CSPM:GetMenuSlotData(presetId, slotId)
-	local presetData = self:GetPieMenuData(presetId)
-	if presetData then
-		return presetData.slot[slotId]
-	end
-end
+
 
 -- ---------------------------------------------------------------------------------------
+-- CShortcutPieMenu
 -- ---------------------------------------------------------------------------------------
+
+function CSPM:Initialize()
+	self:ConfigDebug()
+	self.lang = GetCVar("Language.2")
+	self.isGamepad = IsInGamepadPreferredMode()
+	self.activePresetId = 1
+	self.activeKeybindsId = 0
+	self.holdDownInteractionKey = false
+
+	-- PieMenuEditor Config (AccountWide / User-customizable PieMenu Preset)
+	self.db = ZO_SavedVars:NewAccountWide(self.savedVarsPieMenuEditor, 1, nil, CSPM_DB_DEFAULT)
+	self:ValidateConfigDataDB()
+
+	-- PieMenuManager Config (Preset Allocation)
+	self.svCurrent = {}
+	self.svAccount = ZO_SavedVars:NewAccountWide(self.savedVarsPieMenuManager, 1, nil, CSPM_SV_DEFAULT, GetWorldName())
+	self:ValidateConfigDataSV(self.svAccount)
+	if self.svAccount.accountWide then
+		self.svCurrent = self.svAccount
+	else
+		self.svCharacter = ZO_SavedVars:NewCharacterIdSettings(self.savedVarsPieMenuManager, 1, nil, CSPM_SV_DEFAULT, GetWorldName())
+		self:ValidateConfigDataSV(self.svCharacter)
+		self.svCurrent = self.svCharacter
+	end
+
+	-- Data Management
+	self.shortcutManager = GetShortcutManager()
+	self.pieMenuDataManager = GetPieMenuDataManager()
+	self.pieMenuDataManager:RegisterUserPieMenuPresets(self.db.preset)
+
+	-- UI Section
+	self.rootMenu = CSPM_PieMenuController:New(CSPM_UI_Root_Pie, "CSPM_SelectableItemRadialMenuEntryTemplate", "DefaultRadialMenuAnimation", "SelectableItemRadialMenuEntryAnimation")
+	self.rootMenu:SetOnSelectionChangedCallback(function(...) self:OnSelectionChangedCallback(...) end)
+	self.rootMenu:SetPopulateMenuCallback(function(...) self:PopulateMenuCallback(...) end)
+
+	self.menuEditorPanel = CSPM.class.PieMenuEditorPanel:New(self.shared, self.db, self.db, CSPM_DB_DEFAULT)
+	self.menuManagerPanel = CSPM.class.PieMenuManagerPanel:New(self.shared, self.svCurrent, self.svAccount, CSPM_SV_DEFAULT)
+	self:RegisterEvents()
+
+	-- Bindings
+	self.rootMenu:RegisterBindings(KEY_GAMEPAD_BUTTON_1, function() self:StopInteraction() end)
+	self.rootMenu:RegisterBindings(KEY_GAMEPAD_BUTTON_2, function() self:CancelInteraction() end)
+	self.rootMenu:RegisterBindings(KEY_ESCAPE, function() self:CancelInteraction() end)
+	self.rootMenu:RegisterBindings(KEY_MOUSE_LEFT, function() self:StopInteraction() end)
+	self.rootMenu:RegisterBindings(KEY_MOUSE_RIGHT, function() self:CancelInteraction() end)
+
+	self.LDL:Debug("Initialized")
+end
+
+function CSPM:ConfigDebug(arg)
+	local debugMode = false
+	local key = HashString(GetDisplayName())
+	local dummy = function() end
+	if LibDebugLogger then
+		for _, v in pairs(arg or self.authority or {}) do
+			if key == v then debugMode = true end
+		end
+	end
+	if debugMode then
+		self.LDL = LibDebugLogger(self.name)
+	else
+		self.LDL = { Verbose = dummy, Debug = dummy, Info = dummy, Warn = dummy, Error = dummy, }
+	end
+	if self.shared then
+		self.shared.LDL = self.LDL
+	end
+end
+
+function CSPM:ValidateConfigDataDB()
+	for k, v in pairs(self.db.preset) do
+		if v.id == nil								then v.id = k 														end
+		if v.name == nil							then v.name = ""													end
+		if v.menuItemsCount == nil					then v.menuItemsCount = CSPM_MENU_ITEMS_COUNT_DEFAULT				end
+		if v.visual == nil							then v.visual = {}													end
+		if v.visual.showIconFrame == nil			then v.visual.showIconFrame			= CSPM_DB_DEFAULT.preset[1].visual.showIconFrame			end
+		if v.visual.showSlotLabel == nil			then v.visual.showSlotLabel			= CSPM_DB_DEFAULT.preset[1].visual.showSlotLabel			end
+		if v.visual.showPresetName == nil			then v.visual.showPresetName		= CSPM_DB_DEFAULT.preset[1].visual.showPresetName			end
+		if v.visual.showTrackQuickslot == nil		then v.visual.showTrackQuickslot	= CSPM_DB_DEFAULT.preset[1].visual.showTrackQuickslot		end
+		if v.visual.showTrackGamepad == nil			then v.visual.showTrackGamepad		= CSPM_DB_DEFAULT.preset[1].visual.showTrackGamepad			end
+		if v.slot == nil							then v.slot = ZO_ShallowTableCopy(CSPM_DB_DEFAULT.prest[1].slot)	end
+	end
+end
+
+function CSPM:ValidateConfigDataSV(sv)
+	if sv.accountWide == nil						then sv.accountWide						= CSPM_SV_DEFAULT.accountWide 								end
+	if sv.allowActivateInUIMode == nil				then sv.allowActivateInUIMode			= CSPM_SV_DEFAULT.allowActivateInUIMode 					end
+	if sv.allowClickable == nil						then sv.allowClickable					= CSPM_SV_DEFAULT.allowClickable 							end
+	if sv.centeringAtMouseCursor == nil				then sv.centeringAtMouseCursor			= CSPM_SV_DEFAULT.centeringAtMouseCursor 					end
+	if sv.timeToHoldKey == nil						then sv.timeToHoldKey					= CSPM_SV_DEFAULT.timeToHoldKey 							end
+	if sv.mouseDeltaScaleFactorInUIMode == nil		then sv.mouseDeltaScaleFactorInUIMode	= CSPM_SV_DEFAULT.mouseDeltaScaleFactorInUIMode				end
+	for i = 1, #CSPM_SV_DEFAULT.keybinds do
+		if sv.keybinds[i] == nil					then sv.keybinds[i]						= CSPM_SV_DEFAULT.keybinds[i]								end
+	end
+end
+
+function CSPM:RegisterEvents()
+	EVENT_MANAGER:RegisterForEvent(self.name, EVENT_PLAYER_ACTIVATED, function(event, initial)
+		EVENT_MANAGER:UnregisterForEvent(self.name, EVENT_PLAYER_ACTIVATED)		-- Only after the first login/reloadUI.
+	
+		-- UI setting panel initialization
+		self.menuEditorPanel:CreateOptionsPanel()
+		self.menuManagerPanel:CreateOptionsPanel()
+	end)
+end
+
 function CSPM:GetActivePresetId()
 	return self.activePresetId
 end
 
 function CSPM:OnSelectionChangedCallback(rootMenu, slotIndex, data)
---	CSPM.LDL:Debug("OnSelectionChangedCallback() : %s", slotIndex)
+--	self.LDL:Debug("OnSelectionChangedCallback() : %s", slotIndex)
 end
 
 function CSPM:AddMenuEntry(pieMenu, name, inactiveIcon, activeIcon, callback, data)
@@ -1033,14 +1178,14 @@ end
 
 function CSPM:AddMenuEntryWithShortcut(pieMenu, shortcutId, visualData)
 	-- pieMenu    : (required) CSPM_PieMenuController class object
-	-- shortcutId : (required) registered shortcutId for our shortcut data manager
+	-- shortcutId : (required) registered shortcutId for Shortcut Manager
 	-- visualData : (optional) nilable PieMenu visual data table to reference if not specified in shortcut data.
 	--		visualData.showIconFrame : boolean - whether to show the icon frame texture.
 	--		visualData.showSlotLabel : boolean - whether to show the slot display name label.
 	local shortcutId = shortcutId or "!CSPM_invalid_slot"
-	local shortcutData = CSPM:GetShortcutData(shortcutId) or CSPM:GetShortcutData("!CSPM_invalid_slot")
+	local shortcutData = CSPM.util.GetShortcutData(shortcutId) or CSPM.util.GetShortcutData("!CSPM_invalid_slot")
 	if pieMenu and pieMenu.AddMenuEntry then
-		local data = CSPM:EncodeMenuEntry(shortcutData, pieMenu:GetNumMenuEntries() + 1)
+		local data = self.shortcutManager:EncodeMenuEntry(shortcutData, pieMenu:GetNumMenuEntries() + 1)
 		-- fail safe
 		if data.showIconFrame == nil then
 			if visualData then
@@ -1066,9 +1211,9 @@ function CSPM:AddMenuEntryWithShortcut(pieMenu, shortcutId, visualData)
 end
 
 function CSPM:PopulateMenuCallback(rootMenu)
-	CSPM.LDL:Debug("PopulateMenuCallback()")
+--	self.LDL:Debug("PopulateMenuCallback()")
 	local presetId = self:GetActivePresetId()
-	local presetData = self:GetPieMenuData(presetId)
+	local presetData = self.pieMenuDataManager:GetPieMenuData(presetId)
 	local visualData = presetData.visual or {}
 	rootMenu:SetupPieMenuVisual(presetData.name, visualData.showPresetName, visualData.showTrackQuickslot, visualData.showTrackGamepad)
 
@@ -1078,7 +1223,7 @@ function CSPM:PopulateMenuCallback(rootMenu)
 		local actionValue = GetValue(presetData.slot[i].value) or 0
 		local data, isValid
 		if actionType == CSPM_ACTION_TYPE_SHORTCUT then
-			data = CSPM:EncodeMenuEntry(actionValue, i)
+			data = self.shortcutManager:EncodeMenuEntry(actionValue, i)
 		else
 			data = {
 				index = i, 
@@ -1111,11 +1256,11 @@ function CSPM:PopulateMenuCallback(rootMenu)
 			-- override the display name and icon according to the current primary house setting.
 			local primaryHouseId = GetHousingPrimaryHouse()
 			if primaryHouseId ~= 0 then
-				local primaryHouseName = ZO_CachedStrFormat(L(SI_HOUSING_BOOK_PRIMARY_RESIDENCE_FORMATTER), GetCollectibleName(GetCollectibleIdForHouse(primaryHouseId)))		-- "Primary Residence: |cffffff<<1>>|r"
+				local primaryHouseName = zo_strformat(L(SI_HOUSING_BOOK_PRIMARY_RESIDENCE_FORMATTER), GetCollectibleName(GetCollectibleIdForHouse(primaryHouseId)))		-- "Primary Residence: |cffffff<<1>>|r"
 				if cspmCategoryId == CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE then
-					data.name = ZO_CachedStrFormat(L(SI_GAMEPAD_WORLD_MAP_TRAVEL_TO_HOUSE_INSIDE), primaryHouseName)		-- "<<1>> (inside)"
+					data.name = zo_strformat(L(SI_GAMEPAD_WORLD_MAP_TRAVEL_TO_HOUSE_INSIDE), primaryHouseName)		-- "<<1>> (inside)"
 				elseif cspmCategoryId == CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE then
-					data.name = ZO_CachedStrFormat(L(SI_GAMEPAD_WORLD_MAP_TRAVEL_TO_HOUSE_OUTSIDE), primaryHouseName)	-- "<<1>> (outside)"
+					data.name = zo_strformat(L(SI_GAMEPAD_WORLD_MAP_TRAVEL_TO_HOUSE_OUTSIDE), primaryHouseName)	-- "<<1>> (outside)"
 				end
 				data.icon = GetCollectibleIcon(GetCollectibleIdForHouse(primaryHouseId))
 				data.activeIcon = data.icon
@@ -1125,14 +1270,14 @@ function CSPM:PopulateMenuCallback(rootMenu)
 			local selectionButton = IsInGamepadPreferredMode() and CSPM_LUT_UI_ICON.GAMEPAD_1 or CSPM_LUT_UI_ICON.MOUSE_LMB
 			data.activeStatusIcon = { selectionButton, selectionButton, }	-- for blinking icon
 			-- override the display name of user pie menu according to its user defined preset name.
-			local pieMenuName = self:GetPieMenuInfo(actionValue)
-			if self:IsUserPieMenu(actionValue) and pieMenuName and pieMenuName ~= "" then
+			local pieMenuName = self.util.GetPieMenuInfo(actionValue)
+			if self.util.IsUserPieMenu(actionValue) and pieMenuName and pieMenuName ~= "" then
 				data.name = zo_strformat(L(SI_CSPM_PRESET_NAME_FORMATTER), actionValue, pieMenuName)
 			end
 		end
 
 		if isValid then
-			if self:IsUserPieMenu(presetId) then
+			if self.util.IsUserPieMenu(presetId) then
 				data.slotData = presetData.slot[i] or {}
 				-- override the display name, if slot name data exists
 				local replacementName = GetValue(data.slotData.name)
@@ -1160,7 +1305,7 @@ end
 -- ------------------------------------------------
 
 do
-	local ExecuteSlotAction = {
+	local ExecuteSlotAction = {		-- you cannot use 'self' within this block.
 		[CSPM_ACTION_TYPE_NOTHING] = function(actionTypeId, categoryId, actionValue, data)
 			return
 		end, 
@@ -1203,7 +1348,7 @@ do
 		end, 
 		[CSPM_ACTION_TYPE_PIE_MENU] = function(_, _, actionValue, _)
 			-- actionValue : presetId
-			if CSPM:DoesPieMenuDataExist(actionValue) then
+			if CSPM.util.DoesPieMenuDataExist(actionValue) then
 				if CSPM.holdDownInteractionKey then
 					CSPM:StopInteraction()
 					zo_callLater(function() CSPM:StartInteraction(actionValue) end, 100)
@@ -1214,7 +1359,7 @@ do
 		end, 
 		[CSPM_ACTION_TYPE_SHORTCUT] = function(_, _, actionValue, data)
 			-- actionValue : shortcutId
-			local shortcutData = CSPM:GetShortcutData(actionValue)
+			local shortcutData = CSPM.util.GetShortcutData(actionValue)
 			if shortcutData and type(shortcutData.callback) == "function" then
 				shortcutData.callback(data)
 			end
@@ -1237,8 +1382,8 @@ do
 end
 
 function CSPM:StartInteraction(presetId)
-	CSPM.LDL:Debug("StartInteraction(%s)", tostring(presetId))
-	if presetId ~= 0 and self:DoesPieMenuDataExist(presetId) then
+--	self.LDL:Debug("StartInteraction(%s)", tostring(presetId))
+	if presetId ~= 0 and self.util.DoesPieMenuDataExist(presetId) then
 		local result
 		self.rootMenu:SetAllowActivateInUIMode(self.svCurrent.allowActivateInUIMode)
 		self.rootMenu:SetCenteringAtMouseCursor(self.svCurrent.centeringAtMouseCursor)
@@ -1246,7 +1391,7 @@ function CSPM:StartInteraction(presetId)
 		self.rootMenu:SetTimeToHoldKey(self.svCurrent.timeToHoldKey)
 		self.rootMenu:SetMouseDeltaScaleFactorInUIMode(self.svCurrent.mouseDeltaScaleFactorInUIMode)
 		result = self.rootMenu:StartInteraction()
-		CSPM.LDL:Debug("StartInteraction result : ", tostring(result))
+--		self.LDL:Debug("StartInteraction result : ", tostring(result))
 		if result then
 			self.activePresetId = presetId
 		end
@@ -1264,13 +1409,13 @@ function CSPM:StartInteractionWithKeyBindings(keybindsId)
 end
 
 function CSPM:StopInteraction()
---	CSPM.LDL:Debug("StopInteraction()")
+--	self.LDL:Debug("StopInteraction()")
 	local result
 	if self.activePresetId ~= 0 then
 		result = self.rootMenu:StopInteraction()
 		self.activePresetId = 0
 	end
-	CSPM.LDL:Debug("StopInteraction result : ", tostring(result))
+--	self.LDL:Debug("StopInteraction result : ", tostring(result))
 	self.activeKeybindsId = 0
 	return result
 end
@@ -1281,165 +1426,81 @@ function CSPM:StopInteractionWithKeyBindings(keybindsId)
 end
 
 function CSPM:CancelInteraction()
---	CSPM.LDL:Debug("CancelInteraction()")
+--	self.LDL:Debug("CancelInteraction()")
 	local result
 	result = self.rootMenu:CancelInteraction()
-	CSPM.LDL:Debug("CancelInteraction result : ", tostring(result))
+--	self.LDL:Debug("CancelInteraction result : ", tostring(result))
 	self.activePresetId = 0
 	self.activeKeybindsId = 0
 	return result
 end
 
 
--- ---------------------------------------------------------------------------------------
-
-function CSPM:DoesUserPieMenuConfigDataExist(presetId)
-	return self:GetUserPieMenuConfigDataDB(presetId) ~= nil
-end
-
-function CSPM:GetUserPieMenuConfigDataDB(presetId)
-	if not self:IsUserPieMenu(presetId) then return end
-	return self.db.preset[presetId]
-end
-
-function CSPM:ResetUserPieMenuConfigDataDB(presetId)
-	if not self:IsUserPieMenu(presetId) then return end
-	if self:GetUserPieMenuConfigDataDB(presetId) then
-	    ZO_ClearTable(self.db.preset[presetId])
-	end
-	self.db.preset[presetId] = ZO_DeepTableCopy(CSPM_DB_DEFAULT.preset[1])
-	self.db.preset[presetId].id = presetId
-	self:UpdateUserPieMenuInfo(presetId, self.db.preset[presetId])
-end
-
-function CSPM:CreateUserPieMenuConfigDataDB(presetId)
-	if not self:IsUserPieMenu(presetId) then return end
-	if self:GetUserPieMenuConfigDataDB(presetId) then return end
-	return self:ResetUserPieMenuConfigDataDB(presetId)
-end
-
-function CSPM:ExtendMenuItemsCountForUserPieMenuConfigDataDB(presetId, menuItemsCount)
-	local presetData = self:GetUserPieMenuConfigDataDB(presetId)
-	if not presetData then return end
-	if not presetData.slot then return end
-	for i = 1, menuItemsCount do
-		if not presetData.slot[i] then
-			presetData.slot[i] = ZO_ShallowTableCopy(CSPM_SLOT_DATA_DEFAULT)
-		end
-	end
-end
-
-function CSPM:ValidateConfigDataDB()
-	for k, v in pairs(self.db.preset) do
-		if v.id == nil								then v.id = k 														end
-		if v.name == nil							then v.name = ""													end
-		if v.menuItemsCount == nil					then v.menuItemsCount = CSPM_MENU_ITEMS_COUNT_DEFAULT				end
-		if v.visual == nil							then v.visual = {}													end
-		if v.visual.showIconFrame == nil			then v.visual.showIconFrame			= CSPM_DB_DEFAULT.preset[1].visual.showIconFrame			end
-		if v.visual.showSlotLabel == nil			then v.visual.showSlotLabel			= CSPM_DB_DEFAULT.preset[1].visual.showSlotLabel			end
-		if v.visual.showPresetName == nil			then v.visual.showPresetName		= CSPM_DB_DEFAULT.preset[1].visual.showPresetName			end
-		if v.visual.showTrackQuickslot == nil		then v.visual.showTrackQuickslot	= CSPM_DB_DEFAULT.preset[1].visual.showTrackQuickslot		end
-		if v.visual.showTrackGamepad == nil			then v.visual.showTrackGamepad		= CSPM_DB_DEFAULT.preset[1].visual.showTrackGamepad			end
-		if v.slot == nil							then v.slot = ZO_ShallowTableCopy(CSPM_DB_DEFAULT.prest[1].slot)	end
-	end
-end
-
-function CSPM:ValidateConfigDataSV(sv)
-	if sv.accountWide == nil						then sv.accountWide						= CSPM_SV_DEFAULT.accountWide 								end
-	if sv.allowActivateInUIMode == nil				then sv.allowActivateInUIMode			= CSPM_SV_DEFAULT.allowActivateInUIMode 					end
-	if sv.allowClickable == nil						then sv.allowClickable					= CSPM_SV_DEFAULT.allowClickable 							end
-	if sv.centeringAtMouseCursor == nil				then sv.centeringAtMouseCursor			= CSPM_SV_DEFAULT.centeringAtMouseCursor 					end
-	if sv.timeToHoldKey == nil						then sv.timeToHoldKey					= CSPM_SV_DEFAULT.timeToHoldKey 							end
-	if sv.mouseDeltaScaleFactorInUIMode == nil		then sv.mouseDeltaScaleFactorInUIMode	= CSPM_SV_DEFAULT.mouseDeltaScaleFactorInUIMode				end
-	for i = 1, #CSPM_SV_DEFAULT.keybinds do
-		if sv.keybinds[i] == nil					then sv.keybinds[i]						= CSPM_SV_DEFAULT.keybinds[i]								end
-	end
-end
-
-function CSPM:Initialize()
-	self.lang = GetCVar("Language.2")
-	self.isGamepad = IsInGamepadPreferredMode()
-	self.activePresetId = 1
-	self.activeKeybindsId = 0
-	self.holdDownInteractionKey = false
-
-	-- PieMenuEditor Config (AccountWide / User-customizable PieMenu Preset)
-	self.db = ZO_SavedVars:NewAccountWide(self.savedVarsPieMenuEditor, 1, nil, CSPM_DB_DEFAULT)
-	self:ValidateConfigDataDB()
-	for presetId, pieMenuData in pairs(self.db.preset) do
-		self:SetUserPieMenuInfo(presetId, pieMenuData)
-	end
-
-	-- PieMenuManager Config (Preset Allocation)
-	self.svCurrent = {}
-	self.svAccount = ZO_SavedVars:NewAccountWide(self.savedVarsPieMenuManager, 1, nil, CSPM_SV_DEFAULT, GetWorldName())
-	self:ValidateConfigDataSV(self.svAccount)
-	if self.svAccount.accountWide then
-		self.svCurrent = self.svAccount
-	else
-		self.svCharacter = ZO_SavedVars:NewCharacterIdSettings(self.savedVarsPieMenuManager, 1, nil, CSPM_SV_DEFAULT, GetWorldName())
-		self:ValidateConfigDataSV(self.svCharacter)
-		self.svCurrent = self.svCharacter
-	end
-
-	-- UI Section
-	self.rootMenu = CSPM_PieMenuController:New(CSPM_UI_Root_Pie, "CSPM_SelectableItemRadialMenuEntryTemplate", "DefaultRadialMenuAnimation", "SelectableItemRadialMenuEntryAnimation")
-	self.rootMenu:SetOnSelectionChangedCallback(function(...) self:OnSelectionChangedCallback(...) end)
-	self.rootMenu:SetPopulateMenuCallback(function(...) self:PopulateMenuCallback(...) end)
-
-	self:InitializeMenuEditorUI()
-	self:InitializeManagerUI()
-
-	-- Bindings
-	self.rootMenu:RegisterBindings(KEY_GAMEPAD_BUTTON_1, function() self:StopInteraction() end)
-	self.rootMenu:RegisterBindings(KEY_GAMEPAD_BUTTON_2, function() self:CancelInteraction() end)
-	self.rootMenu:RegisterBindings(KEY_ESCAPE, function() self:CancelInteraction() end)
-	self.rootMenu:RegisterBindings(KEY_MOUSE_LEFT, function() self:StopInteraction() end)
-	self.rootMenu:RegisterBindings(KEY_MOUSE_RIGHT, function() self:CancelInteraction() end)
-
-	CSPM.LDL:Debug("Initialized")
-end
-
-
-local function cspmConfigDebug(arg)
-	local debugMode = false
-	local key = HashString(GetDisplayName())
-	local dummy = function() end
-	if LibDebugLogger then
-		for _, v in pairs(arg or CSPM.authority or {}) do
-			if key == v then debugMode = true end
-		end
-	end
-	if debugMode then
-		CSPM.LDL = LibDebugLogger(CSPM.name)
-	else
-		CSPM.LDL = { Verbose = dummy, Debug = dummy, Info = dummy, Warn = dummy, Error = dummy, }
-	end
-end
-
-
-local function OnPlayerActivated(event, initial)
-	EVENT_MANAGER:UnregisterForEvent(CSPM.name, EVENT_PLAYER_ACTIVATED)		-- Only after the first login/reloadUI.
-
-	-- UI setting panel initialization
-	CSPM:CreateMenuEditorPanel()
-	CSPM:CreateManagerPanel()
-end
-EVENT_MANAGER:RegisterForEvent(CSPM.name, EVENT_PLAYER_ACTIVATED, OnPlayerActivated)
-
-
-local function OnAddOnLoaded(event, addonName)
+EVENT_MANAGER:RegisterForEvent(CSPM.name, EVENT_ADD_ON_LOADED, function(event, addonName)
 	if addonName ~= CSPM.name then return end
 	EVENT_MANAGER:UnregisterForEvent(CSPM.name, EVENT_ADD_ON_LOADED)
-
-	cspmConfigDebug()
 	CSPM:Initialize()
+end)
+
+
+-- ---------------------------------------------------------------------------------------
+-- Shared Workspace for external modules
+-- ---------------------------------------------------------------------------------------
+CSPM.shared = {
+	name = CSPM.name, 
+	version = CSPM.version, 
+	author = CSPM.author, 
+	const = CSPM.const, 
+	lut = CSPM.lut, 
+	util = CSPM.util, 
+	shortcutManager = GetShortcutManager(), 
+	pieMenuManager = GetPieMenuDataManager(), 
+}
+
+-- ---------------------------------------------------------------------------------------
+-- Bindings
+-- ---------------------------------------------------------------------------------------
+CShortcutPieMenu.StartInteractionWithKeyBindings = function(self, keybindsId, ...)
+	return CSPM:StartInteractionWithKeyBindings(keybindsId, ...)
 end
-EVENT_MANAGER:RegisterForEvent(CSPM.name, EVENT_ADD_ON_LOADED, OnAddOnLoaded)
+CShortcutPieMenu.StopInteractionWithKeyBindings = function(self, keybindsId, ...)
+	return CSPM:StopInteractionWithKeyBindings(keybindsId, ...)
+end
 
 
--- ------------------------------------------------
-SLASH_COMMANDS["/cspm.debug"] = function(arg) if arg ~= "" then cspmConfigDebug({tonumber(arg)}) end end
+-- ---------------------------------------------------------------------------------------
+-- APIs
+-- ---------------------------------------------------------------------------------------
+CShortcutPieMenu.GetSharedWorkspace = function(self)
+	return CSPM.shared
+end
+
+CShortcutPieMenu.RegisterClassObject = function(self, className, classObject)
+	if className and classObject and not CSPM.class[className] then
+		CSPM.class[className] = classObject
+	end
+end
+
+CShortcutPieMenu.GetActivePresetId = function(self)
+	return CSPM.activePresetId
+end
+
+CShortcutPieMenu.OpenPieMenuEditorPanel = function(self, presetId, slotId)
+	if CSPM.menuEditorPanel then
+		CSPM.menuEditorPanel:OpenOptionsPanel(presetId, slotId)
+	end
+end
+
+CShortcutPieMenu.OpenPieMenuManagerPanel = function(self)
+	if CSPM.menuManagerPanel then
+		CSPM.menuManagerPanel:OpenOptionsPanel()
+	end
+end
+
+-- ---------------------------------------------------------------------------------------
+-- Chat commands
+-- ---------------------------------------------------------------------------------------
+SLASH_COMMANDS["/cspm.debug"] = function(arg) if arg ~= "" then CSPM:ConfigDebug({tonumber(arg)}) end end
 SLASH_COMMANDS["/cspm.test"] = function(arg)
 	CSPM.LDL:Verbose("hoge")
 	CSPM.LDL:Debug("hoge")
