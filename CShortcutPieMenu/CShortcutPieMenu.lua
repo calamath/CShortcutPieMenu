@@ -24,7 +24,7 @@ if not LAM then d("[CSPM] Error : 'LibAddonMenu-2.0' not found.") return end
 -- ---------------------------------------------------------------------------------------
 local CSPM = {
 	name = "CShortcutPieMenu", 
-	version = "0.10.0", 
+	version = "0.10.1", 
 	author = "Calamath", 
 	savedVarsPieMenuEditor = "CShortcutPieMenuDB", 
 	savedVarsPieMenuManager = "CShortcutPieMenuSV", 
@@ -42,207 +42,140 @@ CShortcutPieMenu.author = CSPM.author
 -- Constants
 -- ---------------------------------------------------------------------------------------
 CSPM.const = {
-	CSPM_UI_NONE								= 0, 
-	CSPM_UI_OPEN								= 1, 
-	CSPM_UI_CLOSE								= 2, 
-	CSPM_UI_COPY								= 3, 
-	CSPM_UI_PASTE								= 4, 
-	CSPM_UI_CLEAR								= 5, 
-	CSPM_UI_RESET								= 6, 
-	CSPM_UI_PREVIEW								= 7, 
-	CSPM_UI_SELECT								= 8, 
-	CSPM_UI_CANCEL								= 9, 
-	CSPM_UI_EXECUTE								= 10, 
+	UI_NONE									= 0, 
+	UI_OPEN									= 1, 
+	UI_CLOSE								= 2, 
+	UI_COPY									= 3, 
+	UI_PASTE								= 4, 
+	UI_CLEAR								= 5, 
+	UI_RESET								= 6, 
+	UI_PREVIEW								= 7, 
+	UI_SELECT								= 8, 
+	UI_CANCEL								= 9, 
+	UI_EXECUTE								= 10, 
 
-	CSPM_MAX_USER_PRESET						= 10, 
-	CSPM_MENU_ITEMS_COUNT_DEFAULT				= 2, 
-	CSPM_ACTION_TYPE_NOTHING					= 0, 
-	CSPM_ACTION_TYPE_COLLECTIBLE				= 1, 
-	CSPM_ACTION_TYPE_EMOTE						= 2, 
-	CSPM_ACTION_TYPE_CHAT_COMMAND				= 3, 
-	CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE			= 4, 
-	CSPM_ACTION_TYPE_PIE_MENU					= 5, 
-	CSPM_ACTION_TYPE_SHORTCUT					= 6, 
-	CSPM_ACTION_TYPE_COLLECTIBLE_APPEARANCE		= 11, 	-- alias of CSPM_ACTION_TYPE_COLLECTIBLE
-	CSPM_ACTION_TYPE_SHORTCUT_ADDON				= 16, 	-- alias of CSPM_ACTION_TYPE_SHORTCUT
-	CSPM_CATEGORY_NOTHING						= 0, 
-	CSPM_CATEGORY_IMMEDIATE_VALUE				= 1, 
-	CSPM_CATEGORY_C_ASSISTANT					= 11, 
-	CSPM_CATEGORY_C_COMPANION					= 12, 
-	CSPM_CATEGORY_C_MEMENTO						= 13, 
-	CSPM_CATEGORY_C_VANITY_PET					= 14, 
-	CSPM_CATEGORY_C_MOUNT						= 15, 
-	CSPM_CATEGORY_C_PERSONALITY					= 16, 
-	CSPM_CATEGORY_C_ABILITY_SKIN				= 17, 
-	CSPM_CATEGORY_E_CEREMONIAL					= 31, 
-	CSPM_CATEGORY_E_CHEERS_AND_JEERS			= 32, 
-	CSPM_CATEGORY_E_EMOTION						= 33, 
-	CSPM_CATEGORY_E_ENTERTAINMENT				= 34, 
-	CSPM_CATEGORY_E_FOOD_AND_DRINK				= 35, 
-	CSPM_CATEGORY_E_GIVE_DIRECTIONS				= 36, 
-	CSPM_CATEGORY_E_PHYSICAL					= 37, 
-	CSPM_CATEGORY_E_POSES_AND_FIDGETS			= 38, 
-	CSPM_CATEGORY_E_PROP						= 39, 
-	CSPM_CATEGORY_E_SOCIAL						= 40, 
-	CSPM_CATEGORY_E_COLLECTED					= 41, 
-	CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE		= 51, 
-	CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE		= 52, 
-	CSPM_CATEGORY_P_OPEN_USER_PIE_MENU			= 61, 
-	CSPM_CATEGORY_P_OPEN_EXTERNAL_PIE_MENU		= 62, 
-	CSPM_CATEGORY_S_PIE_MENU_ADDON				= 71, 
-	CSPM_CATEGORY_S_MAIN_MENU					= 72, 
-	CSPM_CATEGORY_S_SYSTEM_MENU					= 73, 
-	CSPM_CATEGORY_S_USEFUL_SHORTCUT				= 74, 
-	CSPM_CATEGORY_C_HAT							= 81, 
-	CSPM_CATEGORY_C_HAIR						= 82, 
-	CSPM_CATEGORY_C_HEAD_MARKING				= 83, 
-	CSPM_CATEGORY_C_FACIAL_HAIR_HORNS			= 84, 
-	CSPM_CATEGORY_C_FACIAL_ACCESSORY			= 85, 
-	CSPM_CATEGORY_C_PIERCING_JEWELRY			= 86, 
-	CSPM_CATEGORY_C_COSTUME						= 87, 
-	CSPM_CATEGORY_C_BODY_MARKING				= 88, 
-	CSPM_CATEGORY_C_SKIN						= 89, 
-	CSPM_CATEGORY_C_POLYMORPH					= 90, 
-	CSPM_ACTION_VALUE_PRIMARY_HOUSE_ID			= -1, 
+	MAX_USER_PRESET							= 10, 
+	MENU_ITEMS_COUNT_DEFAULT				= 2, 
+	ACTION_TYPE_NOTHING						= 0, 
+	ACTION_TYPE_COLLECTIBLE					= 1, 
+	ACTION_TYPE_EMOTE						= 2, 
+	ACTION_TYPE_CHAT_COMMAND				= 3, 
+	ACTION_TYPE_TRAVEL_TO_HOUSE				= 4, 
+	ACTION_TYPE_PIE_MENU					= 5, 
+	ACTION_TYPE_SHORTCUT					= 6, 
+	ACTION_TYPE_COLLECTIBLE_APPEARANCE		= 11, 	-- alias of ACTION_TYPE_COLLECTIBLE
+	ACTION_TYPE_SHORTCUT_ADDON				= 16, 	-- alias of ACTION_TYPE_SHORTCUT
+	CATEGORY_NOTHING						= 0, 
+	CATEGORY_IMMEDIATE_VALUE				= 1, 
+	CATEGORY_C_ASSISTANT					= 11, 
+	CATEGORY_C_COMPANION					= 12, 
+	CATEGORY_C_MEMENTO						= 13, 
+	CATEGORY_C_VANITY_PET					= 14, 
+	CATEGORY_C_MOUNT						= 15, 
+	CATEGORY_C_PERSONALITY					= 16, 
+	CATEGORY_C_ABILITY_SKIN					= 17, 
+	CATEGORY_E_CEREMONIAL					= 31, 
+	CATEGORY_E_CHEERS_AND_JEERS				= 32, 
+	CATEGORY_E_EMOTION						= 33, 
+	CATEGORY_E_ENTERTAINMENT				= 34, 
+	CATEGORY_E_FOOD_AND_DRINK				= 35, 
+	CATEGORY_E_GIVE_DIRECTIONS				= 36, 
+	CATEGORY_E_PHYSICAL						= 37, 
+	CATEGORY_E_POSES_AND_FIDGETS			= 38, 
+	CATEGORY_E_PROP							= 39, 
+	CATEGORY_E_SOCIAL						= 40, 
+	CATEGORY_E_COLLECTED					= 41, 
+	CATEGORY_H_UNLOCKED_HOUSE_INSIDE		= 51, 
+	CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE		= 52, 
+	CATEGORY_P_OPEN_USER_PIE_MENU			= 61, 
+	CATEGORY_P_OPEN_EXTERNAL_PIE_MENU		= 62, 
+	CATEGORY_S_PIE_MENU_ADDON				= 71, 
+	CATEGORY_S_MAIN_MENU					= 72, 
+	CATEGORY_S_SYSTEM_MENU					= 73, 
+	CATEGORY_S_USEFUL_SHORTCUT				= 74, 
+	CATEGORY_C_HAT							= 81, 
+	CATEGORY_C_HAIR							= 82, 
+	CATEGORY_C_HEAD_MARKING					= 83, 
+	CATEGORY_C_FACIAL_HAIR_HORNS			= 84, 
+	CATEGORY_C_FACIAL_ACCESSORY				= 85, 
+	CATEGORY_C_PIERCING_JEWELRY				= 86, 
+	CATEGORY_C_COSTUME						= 87, 
+	CATEGORY_C_BODY_MARKING					= 88, 
+	CATEGORY_C_SKIN							= 89, 
+	CATEGORY_C_POLYMORPH					= 90, 
+	ACTION_VALUE_PRIMARY_HOUSE_ID			= -1, 
 }
-
--- ---------------------------------------------------------------------------------------
--- Aliases of constants
-local CSPM_UI_NONE								= CSPM.const.CSPM_UI_NONE
-local CSPM_UI_OPEN								= CSPM.const.CSPM_UI_OPEN
-local CSPM_UI_CLOSE								= CSPM.const.CSPM_UI_CLOSE
-local CSPM_UI_COPY								= CSPM.const.CSPM_UI_COPY
-local CSPM_UI_PASTE								= CSPM.const.CSPM_UI_PASTE
-local CSPM_UI_CLEAR								= CSPM.const.CSPM_UI_CLEAR
-local CSPM_UI_RESET								= CSPM.const.CSPM_UI_RESET
-local CSPM_UI_PREVIEW							= CSPM.const.CSPM_UI_PREVIEW
-local CSPM_UI_SELECT							= CSPM.const.CSPM_UI_SELECT
-local CSPM_UI_CANCEL							= CSPM.const.CSPM_UI_CANCEL
-local CSPM_UI_EXECUTE							= CSPM.const.CSPM_UI_EXECUTE
-
-local CSPM_MAX_USER_PRESET						= CSPM.const.CSPM_MAX_USER_PRESET
-local CSPM_MENU_ITEMS_COUNT_DEFAULT				= CSPM.const.CSPM_MENU_ITEMS_COUNT_DEFAULT
-local CSPM_ACTION_TYPE_NOTHING					= CSPM.const.CSPM_ACTION_TYPE_NOTHING
-local CSPM_ACTION_TYPE_COLLECTIBLE				= CSPM.const.CSPM_ACTION_TYPE_COLLECTIBLE
-local CSPM_ACTION_TYPE_EMOTE					= CSPM.const.CSPM_ACTION_TYPE_EMOTE
-local CSPM_ACTION_TYPE_CHAT_COMMAND				= CSPM.const.CSPM_ACTION_TYPE_CHAT_COMMAND
-local CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE			= CSPM.const.CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE
-local CSPM_ACTION_TYPE_PIE_MENU					= CSPM.const.CSPM_ACTION_TYPE_PIE_MENU
-local CSPM_ACTION_TYPE_SHORTCUT					= CSPM.const.CSPM_ACTION_TYPE_SHORTCUT
-local CSPM_ACTION_TYPE_COLLECTIBLE_APPEARANCE	= CSPM.const.CSPM_ACTION_TYPE_COLLECTIBLE_APPEARANCE
-local CSPM_ACTION_TYPE_SHORTCUT_ADDON			= CSPM.const.CSPM_ACTION_TYPE_SHORTCUT_ADDON
-
-local CSPM_CATEGORY_NOTHING						= CSPM.const.CSPM_CATEGORY_NOTHING
-local CSPM_CATEGORY_IMMEDIATE_VALUE				= CSPM.const.CSPM_CATEGORY_IMMEDIATE_VALUE
-local CSPM_CATEGORY_C_ASSISTANT					= CSPM.const.CSPM_CATEGORY_C_ASSISTANT
-local CSPM_CATEGORY_C_COMPANION					= CSPM.const.CSPM_CATEGORY_C_COMPANION
-local CSPM_CATEGORY_C_MEMENTO					= CSPM.const.CSPM_CATEGORY_C_MEMENTO
-local CSPM_CATEGORY_C_VANITY_PET				= CSPM.const.CSPM_CATEGORY_C_VANITY_PET
-local CSPM_CATEGORY_C_MOUNT						= CSPM.const.CSPM_CATEGORY_C_MOUNT
-local CSPM_CATEGORY_C_PERSONALITY				= CSPM.const.CSPM_CATEGORY_C_PERSONALITY
-local CSPM_CATEGORY_C_ABILITY_SKIN				= CSPM.const.CSPM_CATEGORY_C_ABILITY_SKIN
-local CSPM_CATEGORY_E_CEREMONIAL				= CSPM.const.CSPM_CATEGORY_E_CEREMONIAL
-local CSPM_CATEGORY_E_CHEERS_AND_JEERS			= CSPM.const.CSPM_CATEGORY_E_CHEERS_AND_JEERS
-local CSPM_CATEGORY_E_EMOTION					= CSPM.const.CSPM_CATEGORY_E_EMOTION
-local CSPM_CATEGORY_E_ENTERTAINMENT				= CSPM.const.CSPM_CATEGORY_E_ENTERTAINMENT
-local CSPM_CATEGORY_E_FOOD_AND_DRINK			= CSPM.const.CSPM_CATEGORY_E_FOOD_AND_DRINK
-local CSPM_CATEGORY_E_GIVE_DIRECTIONS			= CSPM.const.CSPM_CATEGORY_E_GIVE_DIRECTIONS
-local CSPM_CATEGORY_E_PHYSICAL					= CSPM.const.CSPM_CATEGORY_E_PHYSICAL
-local CSPM_CATEGORY_E_POSES_AND_FIDGETS			= CSPM.const.CSPM_CATEGORY_E_POSES_AND_FIDGETS
-local CSPM_CATEGORY_E_PROP						= CSPM.const.CSPM_CATEGORY_E_PROP
-local CSPM_CATEGORY_E_SOCIAL					= CSPM.const.CSPM_CATEGORY_E_SOCIAL
-local CSPM_CATEGORY_E_COLLECTED					= CSPM.const.CSPM_CATEGORY_E_COLLECTED
-local CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE		= CSPM.const.CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE
-local CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE	= CSPM.const.CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE
-local CSPM_CATEGORY_P_OPEN_USER_PIE_MENU		= CSPM.const.CSPM_CATEGORY_P_OPEN_USER_PIE_MENU
-local CSPM_CATEGORY_P_OPEN_EXTERNAL_PIE_MENU	= CSPM.const.CSPM_CATEGORY_P_OPEN_EXTERNAL_PIE_MENU
-local CSPM_CATEGORY_S_PIE_MENU_ADDON			= CSPM.const.CSPM_CATEGORY_S_PIE_MENU_ADDON
-local CSPM_CATEGORY_S_MAIN_MENU					= CSPM.const.CSPM_CATEGORY_S_MAIN_MENU
-local CSPM_CATEGORY_S_SYSTEM_MENU				= CSPM.const.CSPM_CATEGORY_S_SYSTEM_MENU
-local CSPM_CATEGORY_S_USEFUL_SHORTCUT			= CSPM.const.CSPM_CATEGORY_S_USEFUL_SHORTCUT
-local CSPM_CATEGORY_C_HAT						= CSPM.const.CSPM_CATEGORY_C_HAT
-local CSPM_CATEGORY_C_HAIR						= CSPM.const.CSPM_CATEGORY_C_HAIR
-local CSPM_CATEGORY_C_HEAD_MARKING				= CSPM.const.CSPM_CATEGORY_C_HEAD_MARKING
-local CSPM_CATEGORY_C_FACIAL_HAIR_HORNS			= CSPM.const.CSPM_CATEGORY_C_FACIAL_HAIR_HORNS
-local CSPM_CATEGORY_C_FACIAL_ACCESSORY			= CSPM.const.CSPM_CATEGORY_C_FACIAL_ACCESSORY
-local CSPM_CATEGORY_C_PIERCING_JEWELRY			= CSPM.const.CSPM_CATEGORY_C_PIERCING_JEWELRY
-local CSPM_CATEGORY_C_COSTUME					= CSPM.const.CSPM_CATEGORY_C_COSTUME
-local CSPM_CATEGORY_C_BODY_MARKING				= CSPM.const.CSPM_CATEGORY_C_BODY_MARKING
-local CSPM_CATEGORY_C_SKIN						= CSPM.const.CSPM_CATEGORY_C_SKIN
-local CSPM_CATEGORY_C_POLYMORPH					= CSPM.const.CSPM_CATEGORY_C_POLYMORPH
-local CSPM_ACTION_VALUE_PRIMARY_HOUSE_ID		= CSPM.const.CSPM_ACTION_VALUE_PRIMARY_HOUSE_ID
-
-local CSPM_SLOT_DATA_DEFAULT 					= CSPM.const.CSPM_SLOT_DATA_DEFAULT
+local C = CSPM.const
 
 -- ---------------------------------------------------------------------------------------
 -- Lookup tables
 -- ---------------------------------------------------------------------------------------
 CSPM.lut = {
-	CSPM_LUT_CATEGORY_C_CSPM_TO_ZOS = {
-		[CSPM_CATEGORY_C_ASSISTANT]				= COLLECTIBLE_CATEGORY_TYPE_ASSISTANT, 
-		[CSPM_CATEGORY_C_COMPANION]				= COLLECTIBLE_CATEGORY_TYPE_COMPANION, 
-		[CSPM_CATEGORY_C_MEMENTO]				= COLLECTIBLE_CATEGORY_TYPE_MEMENTO, 
-		[CSPM_CATEGORY_C_VANITY_PET]			= COLLECTIBLE_CATEGORY_TYPE_VANITY_PET, 
-		[CSPM_CATEGORY_C_MOUNT]					= COLLECTIBLE_CATEGORY_TYPE_MOUNT, 
-		[CSPM_CATEGORY_C_PERSONALITY]			= COLLECTIBLE_CATEGORY_TYPE_PERSONALITY, 
-		[CSPM_CATEGORY_C_ABILITY_SKIN]			= COLLECTIBLE_CATEGORY_TYPE_ABILITY_SKIN, 
-		[CSPM_CATEGORY_C_HAT]					= COLLECTIBLE_CATEGORY_TYPE_HAT, 
-		[CSPM_CATEGORY_C_HAIR]					= COLLECTIBLE_CATEGORY_TYPE_HAIR, 
-		[CSPM_CATEGORY_C_HEAD_MARKING]			= COLLECTIBLE_CATEGORY_TYPE_HEAD_MARKING, 
-		[CSPM_CATEGORY_C_FACIAL_HAIR_HORNS]		= COLLECTIBLE_CATEGORY_TYPE_FACIAL_HAIR_HORNS, 
-		[CSPM_CATEGORY_C_FACIAL_ACCESSORY]		= COLLECTIBLE_CATEGORY_TYPE_FACIAL_ACCESSORY, 
-		[CSPM_CATEGORY_C_PIERCING_JEWELRY]		= COLLECTIBLE_CATEGORY_TYPE_PIERCING_JEWELRY, 
-		[CSPM_CATEGORY_C_COSTUME]				= COLLECTIBLE_CATEGORY_TYPE_COSTUME, 
-		[CSPM_CATEGORY_C_BODY_MARKING]			= COLLECTIBLE_CATEGORY_TYPE_BODY_MARKING, 
-		[CSPM_CATEGORY_C_SKIN]					= COLLECTIBLE_CATEGORY_TYPE_SKIN, 
-		[CSPM_CATEGORY_C_POLYMORPH]				= COLLECTIBLE_CATEGORY_TYPE_POLYMORPH, 
+	CategoryId_To_CollectibleCategoryType = {
+		[C.CATEGORY_C_ASSISTANT]			= COLLECTIBLE_CATEGORY_TYPE_ASSISTANT, 
+		[C.CATEGORY_C_COMPANION]			= COLLECTIBLE_CATEGORY_TYPE_COMPANION, 
+		[C.CATEGORY_C_MEMENTO]				= COLLECTIBLE_CATEGORY_TYPE_MEMENTO, 
+		[C.CATEGORY_C_VANITY_PET]			= COLLECTIBLE_CATEGORY_TYPE_VANITY_PET, 
+		[C.CATEGORY_C_MOUNT]				= COLLECTIBLE_CATEGORY_TYPE_MOUNT, 
+		[C.CATEGORY_C_PERSONALITY]			= COLLECTIBLE_CATEGORY_TYPE_PERSONALITY, 
+		[C.CATEGORY_C_ABILITY_SKIN]			= COLLECTIBLE_CATEGORY_TYPE_ABILITY_SKIN, 
+		[C.CATEGORY_C_HAT]					= COLLECTIBLE_CATEGORY_TYPE_HAT, 
+		[C.CATEGORY_C_HAIR]					= COLLECTIBLE_CATEGORY_TYPE_HAIR, 
+		[C.CATEGORY_C_HEAD_MARKING]			= COLLECTIBLE_CATEGORY_TYPE_HEAD_MARKING, 
+		[C.CATEGORY_C_FACIAL_HAIR_HORNS]	= COLLECTIBLE_CATEGORY_TYPE_FACIAL_HAIR_HORNS, 
+		[C.CATEGORY_C_FACIAL_ACCESSORY]		= COLLECTIBLE_CATEGORY_TYPE_FACIAL_ACCESSORY, 
+		[C.CATEGORY_C_PIERCING_JEWELRY]		= COLLECTIBLE_CATEGORY_TYPE_PIERCING_JEWELRY, 
+		[C.CATEGORY_C_COSTUME]				= COLLECTIBLE_CATEGORY_TYPE_COSTUME, 
+		[C.CATEGORY_C_BODY_MARKING]			= COLLECTIBLE_CATEGORY_TYPE_BODY_MARKING, 
+		[C.CATEGORY_C_SKIN]					= COLLECTIBLE_CATEGORY_TYPE_SKIN, 
+		[C.CATEGORY_C_POLYMORPH]			= COLLECTIBLE_CATEGORY_TYPE_POLYMORPH, 
 	}, 
-	CSPM_LUT_CATEGORY_E_CSPM_TO_ZOS = {
-		[CSPM_CATEGORY_E_CEREMONIAL]			= EMOTE_CATEGORY_CEREMONIAL, 
-		[CSPM_CATEGORY_E_CHEERS_AND_JEERS]		= EMOTE_CATEGORY_CHEERS_AND_JEERS, 
-		[CSPM_CATEGORY_E_EMOTION]				= EMOTE_CATEGORY_EMOTION, 
-		[CSPM_CATEGORY_E_ENTERTAINMENT]			= EMOTE_CATEGORY_ENTERTAINMENT, 
-		[CSPM_CATEGORY_E_FOOD_AND_DRINK]		= EMOTE_CATEGORY_FOOD_AND_DRINK, 
-		[CSPM_CATEGORY_E_GIVE_DIRECTIONS]		= EMOTE_CATEGORY_GIVE_DIRECTIONS, 
-		[CSPM_CATEGORY_E_PHYSICAL]				= EMOTE_CATEGORY_PHYSICAL, 
-		[CSPM_CATEGORY_E_POSES_AND_FIDGETS]		= EMOTE_CATEGORY_POSES_AND_FIDGETS, 
-		[CSPM_CATEGORY_E_PROP]					= EMOTE_CATEGORY_PROP, 
-		[CSPM_CATEGORY_E_SOCIAL]				= EMOTE_CATEGORY_SOCIAL, 
-		[CSPM_CATEGORY_E_COLLECTED] 			= EMOTE_CATEGORY_COLLECTED, 
+	CategoryId_To_EmoteCategory = {
+		[C.CATEGORY_E_CEREMONIAL]			= EMOTE_CATEGORY_CEREMONIAL, 
+		[C.CATEGORY_E_CHEERS_AND_JEERS]		= EMOTE_CATEGORY_CHEERS_AND_JEERS, 
+		[C.CATEGORY_E_EMOTION]				= EMOTE_CATEGORY_EMOTION, 
+		[C.CATEGORY_E_ENTERTAINMENT]		= EMOTE_CATEGORY_ENTERTAINMENT, 
+		[C.CATEGORY_E_FOOD_AND_DRINK]		= EMOTE_CATEGORY_FOOD_AND_DRINK, 
+		[C.CATEGORY_E_GIVE_DIRECTIONS]		= EMOTE_CATEGORY_GIVE_DIRECTIONS, 
+		[C.CATEGORY_E_PHYSICAL]				= EMOTE_CATEGORY_PHYSICAL, 
+		[C.CATEGORY_E_POSES_AND_FIDGETS]	= EMOTE_CATEGORY_POSES_AND_FIDGETS, 
+		[C.CATEGORY_E_PROP]					= EMOTE_CATEGORY_PROP, 
+		[C.CATEGORY_E_SOCIAL]				= EMOTE_CATEGORY_SOCIAL, 
+		[C.CATEGORY_E_COLLECTED] 			= EMOTE_CATEGORY_COLLECTED, 
 	}, 
-	CSPM_LUT_CATEGORY_E_CSPM_TO_ICON = {
-		[CSPM_CATEGORY_NOTHING]					= "EsoUI/Art/Inventory/inventory_tabIcon_quickslot_up.dds", 
-		[CSPM_CATEGORY_IMMEDIATE_VALUE]			= "EsoUI/Art/Icons/Emotes/emotecategoryicon_common.dds", 
-		[CSPM_CATEGORY_E_CEREMONIAL]			= GetSharedEmoteIconForCategory(EMOTE_CATEGORY_CEREMONIAL), 
-		[CSPM_CATEGORY_E_CHEERS_AND_JEERS]		= GetSharedEmoteIconForCategory(EMOTE_CATEGORY_CHEERS_AND_JEERS), 
-		[CSPM_CATEGORY_E_EMOTION]				= GetSharedEmoteIconForCategory(EMOTE_CATEGORY_EMOTION), 
-		[CSPM_CATEGORY_E_ENTERTAINMENT]			= GetSharedEmoteIconForCategory(EMOTE_CATEGORY_ENTERTAINMENT), 
-		[CSPM_CATEGORY_E_FOOD_AND_DRINK]		= GetSharedEmoteIconForCategory(EMOTE_CATEGORY_FOOD_AND_DRINK), 
-		[CSPM_CATEGORY_E_GIVE_DIRECTIONS]		= GetSharedEmoteIconForCategory(EMOTE_CATEGORY_GIVE_DIRECTIONS), 
-		[CSPM_CATEGORY_E_PHYSICAL]				= GetSharedEmoteIconForCategory(EMOTE_CATEGORY_PHYSICAL), 
-		[CSPM_CATEGORY_E_POSES_AND_FIDGETS]		= GetSharedEmoteIconForCategory(EMOTE_CATEGORY_POSES_AND_FIDGETS), 
-		[CSPM_CATEGORY_E_PROP]					= GetSharedEmoteIconForCategory(EMOTE_CATEGORY_PROP), 
-		[CSPM_CATEGORY_E_SOCIAL]				= GetSharedEmoteIconForCategory(EMOTE_CATEGORY_SOCIAL), 
-		[CSPM_CATEGORY_E_COLLECTED] 			= GetSharedEmoteIconForCategory(EMOTE_CATEGORY_COLLECTED), 
+	CategoryId_To_Icon = {
+		[C.CATEGORY_NOTHING]				= "EsoUI/Art/Inventory/inventory_tabIcon_quickslot_up.dds", 
+		[C.CATEGORY_IMMEDIATE_VALUE]		= "EsoUI/Art/Icons/Emotes/emotecategoryicon_common.dds", 
+		[C.CATEGORY_E_CEREMONIAL]			= GetSharedEmoteIconForCategory(EMOTE_CATEGORY_CEREMONIAL), 
+		[C.CATEGORY_E_CHEERS_AND_JEERS]		= GetSharedEmoteIconForCategory(EMOTE_CATEGORY_CHEERS_AND_JEERS), 
+		[C.CATEGORY_E_EMOTION]				= GetSharedEmoteIconForCategory(EMOTE_CATEGORY_EMOTION), 
+		[C.CATEGORY_E_ENTERTAINMENT]		= GetSharedEmoteIconForCategory(EMOTE_CATEGORY_ENTERTAINMENT), 
+		[C.CATEGORY_E_FOOD_AND_DRINK]		= GetSharedEmoteIconForCategory(EMOTE_CATEGORY_FOOD_AND_DRINK), 
+		[C.CATEGORY_E_GIVE_DIRECTIONS]		= GetSharedEmoteIconForCategory(EMOTE_CATEGORY_GIVE_DIRECTIONS), 
+		[C.CATEGORY_E_PHYSICAL]				= GetSharedEmoteIconForCategory(EMOTE_CATEGORY_PHYSICAL), 
+		[C.CATEGORY_E_POSES_AND_FIDGETS]	= GetSharedEmoteIconForCategory(EMOTE_CATEGORY_POSES_AND_FIDGETS), 
+		[C.CATEGORY_E_PROP]					= GetSharedEmoteIconForCategory(EMOTE_CATEGORY_PROP), 
+		[C.CATEGORY_E_SOCIAL]				= GetSharedEmoteIconForCategory(EMOTE_CATEGORY_SOCIAL), 
+		[C.CATEGORY_E_COLLECTED] 			= GetSharedEmoteIconForCategory(EMOTE_CATEGORY_COLLECTED), 
 	}, 
-	CSPM_LUT_ACTION_TYPE_API_STRINGS = {
-		["collectible"] 		= CSPM_ACTION_TYPE_COLLECTIBLE, 
-		["emote"] 				= CSPM_ACTION_TYPE_EMOTE, 
-		["chat_command"] 		= CSPM_ACTION_TYPE_CHAT_COMMAND, 
-		["travel_to_house"] 	= CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE, 
-		["pie_menu"] 			= CSPM_ACTION_TYPE_PIE_MENU, 
-		["shortcut"] 			= CSPM_ACTION_TYPE_SHORTCUT, 
+	ActionTypeApiStrings = {
+		["collectible"] 		= C.ACTION_TYPE_COLLECTIBLE, 
+		["emote"] 				= C.ACTION_TYPE_EMOTE, 
+		["chat_command"] 		= C.ACTION_TYPE_CHAT_COMMAND, 
+		["travel_to_house"] 	= C.ACTION_TYPE_TRAVEL_TO_HOUSE, 
+		["pie_menu"] 			= C.ACTION_TYPE_PIE_MENU, 
+		["shortcut"] 			= C.ACTION_TYPE_SHORTCUT, 
 	}, 
-	CSPM_LUT_ACTION_TYPE_ALIAS = {
-		[CSPM_ACTION_TYPE_COLLECTIBLE_APPEARANCE]		= CSPM_ACTION_TYPE_COLLECTIBLE, 
-		[CSPM_ACTION_TYPE_SHORTCUT_ADDON]				= CSPM_ACTION_TYPE_SHORTCUT, 
+	ActionTypeAlias = {
+		[C.ACTION_TYPE_COLLECTIBLE_APPEARANCE]		= C.ACTION_TYPE_COLLECTIBLE, 
+		[C.ACTION_TYPE_SHORTCUT_ADDON]				= C.ACTION_TYPE_SHORTCUT, 
 	}, 
-	CSPM_LUT_UI_COLOR = {
+	UI_Color = {
 		["NORMAL"]				= { 1, 1, 1, }, 
 		["ACTIVE"]				= { 0.6, 1, 0, }, 
 		["BLOCKED"]				= { 1, 0.3, 0, }, 
 	}, 
-	CSPM_LUT_UI_ICON = {
+	UI_Icon = {
 		["CHECK"]				= "EsoUI/Art/Miscellaneous/check_icon_32.dds", 
 		["LOCKED"]				= "EsoUI/Art/Miscellaneous/status_locked.dds", 
 		["UNLOCKED"]			= "EsoUI/Art/Miscellaneous/Gamepad/gp_icon_unlocked32.dds", 
@@ -256,25 +189,15 @@ CSPM.lut = {
 		["GAMEPAD_2"]			= GetGamepadIconPathForKeyCode(KEY_GAMEPAD_BUTTON_2), 
 	}, 
 }
-
--- ---------------------------------------------------------------------------------------
--- Aliases of look up table
-local CSPM_LUT_CATEGORY_C_CSPM_TO_ZOS			= CSPM.lut.CSPM_LUT_CATEGORY_C_CSPM_TO_ZOS
-local CSPM_LUT_CATEGORY_E_CSPM_TO_ZOS			= CSPM.lut.CSPM_LUT_CATEGORY_E_CSPM_TO_ZOS
-local CSPM_LUT_CATEGORY_E_CSPM_TO_ICON			= CSPM.lut.CSPM_LUT_CATEGORY_E_CSPM_TO_ICON
-local CSPM_LUT_ACTION_TYPE_API_STRINGS			= CSPM.lut.CSPM_LUT_ACTION_TYPE_API_STRINGS
-local CSPM_LUT_ACTION_TYPE_ALIAS				= CSPM.lut.CSPM_LUT_ACTION_TYPE_ALIAS
-local CSPM_LUT_UI_COLOR							= CSPM.lut.CSPM_LUT_UI_COLOR
-local CSPM_LUT_UI_ICON							= CSPM.lut.CSPM_LUT_UI_ICON
-
+local LUT = CSPM.lut
 
 -- ---------------------------------------------------------------------------------------
 -- CShortcutPieMenu savedata (default)
 -- ---------------------------------------------------------------------------------------
 -- PieMenu Slot
 local CSPM_SLOT_DATA_DEFAULT = {
-	type = CSPM_ACTION_TYPE_NOTHING, 
-	category = CSPM_CATEGORY_NOTHING, 
+	type = C.ACTION_TYPE_NOTHING, 
+	category = C.CATEGORY_NOTHING, 
 	value = 0, 
 } 
 
@@ -284,7 +207,7 @@ local CSPM_DB_DEFAULT = {
 		[1] = {
 			id = 1, 
 			name = "", 
-			menuItemsCount = CSPM_MENU_ITEMS_COUNT_DEFAULT, 
+			menuItemsCount = C.MENU_ITEMS_COUNT_DEFAULT, 
 			visual = {
 				showIconFrame = true, 
 				showSlotLabel = true, 
@@ -317,7 +240,6 @@ local CSPM_SV_DEFAULT = {
 	}, 
 }
 
-
 -- ---------------------------------------------------------------------------------------
 -- Helper Functions
 -- ---------------------------------------------------------------------------------------
@@ -335,52 +257,52 @@ local GetValue = CSPM.util.GetValue
 
 function CSPM.util.GetActionType(value)
 	local value = GetValue(value)
-	local actionType = type(value) == "string" and CSPM_LUT_ACTION_TYPE_API_STRINGS[zo_strlower(value)] or value or CSPM_ACTION_TYPE_NOTHING
-	return CSPM_LUT_ACTION_TYPE_ALIAS[actionType] or actionType
+	local actionType = type(value) == "string" and LUT.ActionTypeApiStrings[zo_strlower(value)] or value or C.ACTION_TYPE_NOTHING
+	return LUT.ActionTypeAlias[actionType] or actionType
 end
 local GetActionType = CSPM.util.GetActionType
 
 do
 	local GetDefaultSlotName = {		-- you cannot use 'self' within this block.
-		[CSPM_ACTION_TYPE_NOTHING] = function(actionType, categoryId, actionValue)
+		[C.ACTION_TYPE_NOTHING] = function(actionType, categoryId, actionValue)
 			return ""
 		end, 
-		[CSPM_ACTION_TYPE_COLLECTIBLE] = function(_, _, actionValue)
+		[C.ACTION_TYPE_COLLECTIBLE] = function(_, _, actionValue)
 			local name = zo_strformat(L(SI_CSPM_COMMON_FORMATTER), GetCollectibleName(actionValue))
 			local nameColor
 			if IsCollectibleActive(actionValue, GAMEPLAY_ACTOR_CATEGORY_PLAYER) then 
-				nameColor = CSPM_LUT_UI_COLOR.ACTIVE
+				nameColor = LUT.UI_Color.ACTIVE
 			elseif GetCollectibleBlockReason(actionValue) ~= COLLECTIBLE_USAGE_BLOCK_REASON_NOT_BLOCKED then
-				nameColor = CSPM_LUT_UI_COLOR.BLOCKED
+				nameColor = LUT.UI_Color.BLOCKED
 			end
 			return name, nameColor
 		end, 
-		[CSPM_ACTION_TYPE_EMOTE] = function(_, _, actionValue)
+		[C.ACTION_TYPE_EMOTE] = function(_, _, actionValue)
 			local emoteItemInfo = PLAYER_EMOTE_MANAGER:GetEmoteItemInfo(actionValue)
 			local name = zo_strformat(L(SI_CSPM_COMMON_FORMATTER), emoteItemInfo and emoteItemInfo.displayName or "")
 			local nameColor = emoteItemInfo and emoteItemInfo.isOverriddenByPersonality and { ZO_PERSONALITY_EMOTES_COLOR:UnpackRGB() }
 			return name, nameColor
 		end, 
-		[CSPM_ACTION_TYPE_CHAT_COMMAND] = function(_, _, actionValue)
+		[C.ACTION_TYPE_CHAT_COMMAND] = function(_, _, actionValue)
 			return tostring(actionValue)
 		end, 
-		[CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE] = function(_, categoryId, actionValue)
+		[C.ACTION_TYPE_TRAVEL_TO_HOUSE] = function(_, categoryId, actionValue)
 			local name = ""
-			if actionValue == CSPM_ACTION_VALUE_PRIMARY_HOUSE_ID then
+			if actionValue == C.ACTION_VALUE_PRIMARY_HOUSE_ID then
 				name = L(SI_HOUSING_FURNITURE_SETTINGS_GENERAL_PRIMARY_RESIDENCE_TEXT)		-- "Primary Residence"
 			else
 				name = zo_strformat(L(SI_CSPM_COMMON_FORMATTER), GetCollectibleName(GetCollectibleIdForHouse(actionValue)))
 			end
 			if actionValue ~= 0 then
-				if categoryId == CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE then
+				if categoryId == C.CATEGORY_H_UNLOCKED_HOUSE_INSIDE then
 					name = zo_strformat(L(SI_GAMEPAD_WORLD_MAP_TRAVEL_TO_HOUSE_INSIDE), name)		-- "<<1>> (inside)"
-				elseif categoryId == CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE then
+				elseif categoryId == C.CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE then
 					name = zo_strformat(L(SI_GAMEPAD_WORLD_MAP_TRAVEL_TO_HOUSE_OUTSIDE), name)	-- "<<1>> (outside)"
 				end
 			end
 			return name
 		end, 
-		[CSPM_ACTION_TYPE_PIE_MENU] = function(_, _, actionValue)
+		[C.ACTION_TYPE_PIE_MENU] = function(_, _, actionValue)
 			local name = ""
 			if CSPM.util.IsUserPieMenu(actionValue) and actionValue ~= 0 then
 				name = zo_strformat(L(SI_CSPM_PRESET_NO_NAME_FORMATTER), actionValue)
@@ -389,7 +311,7 @@ do
 			end
 			return name
 		end, 
-		[CSPM_ACTION_TYPE_SHORTCUT] = function(_, _, actionValue)
+		[C.ACTION_TYPE_SHORTCUT] = function(_, _, actionValue)
 			local name = ""
 			local shortcutData = CSPM.util.GetShortcutData(actionValue)
 			if shortcutData then
@@ -399,7 +321,7 @@ do
 			return name, nameColor
 		end, 
 	}
-	setmetatable(GetDefaultSlotName, { __index = function(self, key) return rawget(self, CSPM_ACTION_TYPE_NOTHING) end, })
+	setmetatable(GetDefaultSlotName, { __index = function(self, key) return rawget(self, C.ACTION_TYPE_NOTHING) end, })
 
 	function CSPM.util.GetDefaultSlotName(actionType, categoryId, actionValue)
 		local actionType = GetActionType(actionType)
@@ -411,13 +333,13 @@ end
 
 do
 	local GetDefaultSlotIcon = {		-- you cannot use 'self' within this block.
-		[CSPM_ACTION_TYPE_NOTHING] = function(actionType, categoryId, actionValue)
+		[C.ACTION_TYPE_NOTHING] = function(actionType, categoryId, actionValue)
 			return ""
 		end, 
-		[CSPM_ACTION_TYPE_COLLECTIBLE] = function(_, _, actionValue)
+		[C.ACTION_TYPE_COLLECTIBLE] = function(_, _, actionValue)
 			return GetCollectibleIcon(actionValue)
 		end, 
-		[CSPM_ACTION_TYPE_EMOTE] = function(_, categoryId, actionValue)
+		[C.ACTION_TYPE_EMOTE] = function(_, categoryId, actionValue)
 			local icon = ""
 			local emoteItemInfo = PLAYER_EMOTE_MANAGER:GetEmoteItemInfo(actionValue)
 			if emoteItemInfo then
@@ -425,24 +347,24 @@ do
 				if emoteCollectibleId then
 					icon = GetCollectibleIcon(emoteCollectibleId)
 				else
-					icon = CSPM_LUT_CATEGORY_E_CSPM_TO_ICON[categoryId] or CSPM_LUT_CATEGORY_E_CSPM_TO_ICON[CSPM_CATEGORY_NOTHING]
+					icon = LUT.CategoryId_To_Icon[categoryId] or LUT.CategoryId_To_Icon[C.CATEGORY_NOTHING]
 				end
 			end
 			return icon
 		end, 
-		[CSPM_ACTION_TYPE_CHAT_COMMAND] = function(_, _, _)
+		[C.ACTION_TYPE_CHAT_COMMAND] = function(_, _, _)
 			return "EsoUI/Art/Icons/crafting_dwemer_shiny_cog.dds"
 		end, 
-		[CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE] = function(_, _, actionValue)
+		[C.ACTION_TYPE_TRAVEL_TO_HOUSE] = function(_, _, actionValue)
 			local icon = ""
-			if actionValue == CSPM_ACTION_VALUE_PRIMARY_HOUSE_ID then
+			if actionValue == C.ACTION_VALUE_PRIMARY_HOUSE_ID then
 				icon = "EsoUI/Art/Worldmap/map_indexicon_housing_up.dds"
 			else
 				icon = GetCollectibleIcon(GetCollectibleIdForHouse(actionValue))
 			end
 			return icon
 		end, 
-		[CSPM_ACTION_TYPE_PIE_MENU] = function(_, _, actionValue)
+		[C.ACTION_TYPE_PIE_MENU] = function(_, _, actionValue)
 			local icon
 			if CSPM.util.IsUserPieMenu(actionValue) then
 				icon = "EsoUI/Art/Icons/crafting_tart_006.dds"
@@ -451,7 +373,7 @@ do
 			end
 			return icon
 		end, 
-		[CSPM_ACTION_TYPE_SHORTCUT] = function(_, _, actionValue)
+		[C.ACTION_TYPE_SHORTCUT] = function(_, _, actionValue)
 			local icon = ""
 			local shortcutData = CSPM.util.GetShortcutData(actionValue)
 			if shortcutData then
@@ -460,7 +382,7 @@ do
 			return icon
 		end, 
 	}
-	setmetatable(GetDefaultSlotIcon, { __index = function(self, key) return rawget(self, CSPM_ACTION_TYPE_NOTHING) end, })
+	setmetatable(GetDefaultSlotIcon, { __index = function(self, key) return rawget(self, C.ACTION_TYPE_NOTHING) end, })
 
 	function CSPM.util.GetDefaultSlotIcon(actionType, categoryId, actionValue)
 		local actionType = GetActionType(actionType)
@@ -502,11 +424,11 @@ do
 	end
 
 	local LayoutSlotActionTooltip = {		-- you cannot use 'self' within this block.
-		[CSPM_ACTION_TYPE_NOTHING] = function(actionType, categoryId, actionValue, uiActionId)
+		[C.ACTION_TYPE_NOTHING] = function(actionType, categoryId, actionValue, uiActionId)
 			ClearTooltip(ItemTooltip)
 			return false
 		end, 
-		[CSPM_ACTION_TYPE_COLLECTIBLE] = function(actionType, _, actionValue)
+		[C.ACTION_TYPE_COLLECTIBLE] = function(actionType, _, actionValue)
 			local name, description, icon, _, _, _, isActive, collectibleCategoryType = GetCollectibleInfo(actionValue)
 			if name ~= "" then
 				name = zo_strformat(L(SI_CSPM_COMMON_FORMATTER), name)
@@ -524,7 +446,7 @@ do
 				return false
 			end
 		end, 
-		[CSPM_ACTION_TYPE_EMOTE] = function(actionType, categoryId, actionValue)
+		[C.ACTION_TYPE_EMOTE] = function(actionType, categoryId, actionValue)
 			local emoteItemInfo = PLAYER_EMOTE_MANAGER:GetEmoteItemInfo(actionValue)
 			if emoteItemInfo then
 				local name = zo_strformat(L(SI_CSPM_COMMON_FORMATTER), emoteItemInfo.displayName)
@@ -533,7 +455,7 @@ do
 					local _, description, icon, _, _, _, _, collectibleCategoryType = GetCollectibleInfo(emoteCollectibleId)
 					LayoutBasicSlotActionTooltip(ItemTooltip, name, description, icon, L("SI_COLLECTIBLECATEGORYTYPE", collectibleCategoryType))
 				else
-					LayoutBasicSlotActionTooltip(ItemTooltip, name, nil, CSPM_LUT_CATEGORY_E_CSPM_TO_ICON[categoryId] or CSPM_LUT_CATEGORY_E_CSPM_TO_ICON[CSPM_CATEGORY_NOTHING], L("SI_COLLECTIBLECATEGORYTYPE", COLLECTIBLE_CATEGORY_TYPE_EMOTE))
+					LayoutBasicSlotActionTooltip(ItemTooltip, name, nil, LUT.CategoryId_To_Icon[categoryId] or LUT.CategoryId_To_Icon[C.CATEGORY_NOTHING], L("SI_COLLECTIBLECATEGORYTYPE", COLLECTIBLE_CATEGORY_TYPE_EMOTE))
 				end
 				ItemTooltip:AddLine(zo_strformat(L("SI_CSPM_SLOT_ACTION_TOOLTIP", actionType), emoteItemInfo.emoteSlashName), "ZoFontWinH4", ZO_SELECTED_TEXT:UnpackRGB())
 				return true
@@ -541,18 +463,18 @@ do
 				return false
 			end
 		end, 
-		[CSPM_ACTION_TYPE_CHAT_COMMAND] = function(actionType, categoryId, actionValue)
+		[C.ACTION_TYPE_CHAT_COMMAND] = function(actionType, categoryId, actionValue)
 			local name = CSPM.util.GetDefaultSlotName(actionType, categoryId, actionValue)
 			local icon = CSPM.util.GetDefaultSlotIcon(actionType, categoryId, actionValue)
 			LayoutBasicSlotActionTooltip(ItemTooltip, name, nil, icon, L(SI_CSPM_COMMON_CHAT_COMMAND))
 			ItemTooltip:AddLine(zo_strformat(L("SI_CSPM_SLOT_ACTION_TOOLTIP", actionType), name), "ZoFontWinH4", ZO_SELECTED_TEXT:UnpackRGB())
 			return true
 		end, 
-		[CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE] = function(actionType, categoryId, actionValue)
+		[C.ACTION_TYPE_TRAVEL_TO_HOUSE] = function(actionType, categoryId, actionValue)
 			local name = CSPM.util.GetDefaultSlotName(actionType, categoryId, actionValue)
 			local icon = CSPM.util.GetDefaultSlotIcon(actionType, categoryId, actionValue)
 			local houseCollectibleId, description
-			if actionValue == CSPM_ACTION_VALUE_PRIMARY_HOUSE_ID then
+			if actionValue == C.ACTION_VALUE_PRIMARY_HOUSE_ID then
 				houseCollectibleId = GetHousingPrimaryHouse()
 				_, description = GetHelpInfo(GetHelpIndicesFromHelpLink("|H1:help:278|h|h"))	-- Tutorial: Houseing - Permissions
 			else
@@ -566,7 +488,7 @@ do
 			ItemTooltip:AddLine(zo_strformat(L(SI_HOUSING_BOOK_LOCATION_FORMATTER), GetZoneNameById(GetHouseFoundInZoneId(actionValue))), "ZoFontWinH5", ZO_TOOLTIP_DEFAULT_COLOR:UnpackRGB())
 			return true
 		end, 
-		[CSPM_ACTION_TYPE_PIE_MENU] = function(actionType, categoryId, actionValue, uiActionId)
+		[C.ACTION_TYPE_PIE_MENU] = function(actionType, categoryId, actionValue, uiActionId)
 			if not CSPM.util.DoesPieMenuDataExist(actionValue) then return false end
 			local name = CSPM.util.GetDefaultSlotName(actionType, categoryId, actionValue)
 			local tooltipTitle = name
@@ -575,12 +497,12 @@ do
 				tooltipTitle = zo_strformat(L(SI_CSPM_PRESET_NAME_FORMATTER), actionValue, pieMenuName)
 			end
 			LayoutBasicSlotActionTooltip(ItemTooltip, tooltipTitle, description, icon or CSPM.util.GetDefaultSlotIcon(actionType, categoryId, actionValue), L(SI_CSPM_COMMON_PIE_MENU))
-			if uiActionId ~= CSPM_UI_NONE then
+			if uiActionId ~= C.UI_NONE then
 				ItemTooltip:AddLine(zo_strformat(L("SI_CSPM_SLOT_ACTION_TOOLTIP", actionType), name), "ZoFontWinH4", ZO_SELECTED_TEXT:UnpackRGB())
 			end
 			return true
 		end, 
-		[CSPM_ACTION_TYPE_SHORTCUT] = function(actionType, categoryId, actionValue)
+		[C.ACTION_TYPE_SHORTCUT] = function(actionType, categoryId, actionValue)
 			local shortcutData = CSPM.util.GetShortcutData(actionValue)
 			if not shortcutData then return false end
 			local name, description, icon = CSPM.util.GetShortcutInfo(actionValue)
@@ -589,7 +511,7 @@ do
 			return true
 		end, 
 	}
-	setmetatable(LayoutSlotActionTooltip, { __index = function(self, key) return rawget(self, CSPM_ACTION_TYPE_NOTHING) end, })
+	setmetatable(LayoutSlotActionTooltip, { __index = function(self, key) return rawget(self, C.ACTION_TYPE_NOTHING) end, })
 
 	function CSPM.util.LayoutSlotActionTooltip(actionType, categoryId, actionValue, uiActionId)
 		local actionType = GetActionType(actionType)
@@ -626,7 +548,7 @@ function CSPM_ShortcutManager_Singleton:RegisterInternalShortcuts()
 		name = L(SI_QUICKSLOTS_EMPTY), 
 		icon = "EsoUI/Art/Quickslots/quickslot_emptySlot.dds", 
 		callback = function() return end, 
-		category = CSPM_CATEGORY_NOTHING, 
+		category = C.CATEGORY_NOTHING, 
 		showSlotLabel = false, 
 	}
 	self.shortcutList["!CSPM_invalid_slot_thus_open_piemenu_editor"] = {
@@ -639,10 +561,10 @@ function CSPM_ShortcutManager_Singleton:RegisterInternalShortcuts()
 			end
 			return
 		end, 
-		category = CSPM_CATEGORY_NOTHING, 
+		category = C.CATEGORY_NOTHING, 
 		showSlotLabel = false, 
 		activeStatusIcon = function()
-			local selectionButton = IsInGamepadPreferredMode() and CSPM_LUT_UI_ICON.GAMEPAD_1 or CSPM_LUT_UI_ICON.MOUSE_LMB
+			local selectionButton = IsInGamepadPreferredMode() and LUT.UI_Icon.GAMEPAD_1 or LUT.UI_Icon.MOUSE_LMB
 			return { selectionButton, selectionButton, }
 		end, 
 	}
@@ -650,22 +572,22 @@ function CSPM_ShortcutManager_Singleton:RegisterInternalShortcuts()
 		name = L(SI_RADIAL_MENU_CANCEL_BUTTON), 
 		icon = "EsoUI/Art/HUD/Gamepad/gp_radialIcon_cancel_down.dds", 
 		callback = function() return end, 
-		category = CSPM_CATEGORY_NOTHING, 
+		category = C.CATEGORY_NOTHING, 
 		showSlotLabel = false, 
 	}
 	self.shortcutList["!CSPM_open_piemenu_editor"] = {
-		name = zo_strformat(L("SI_CSPM_COMMON_UI_ACTION", CSPM_UI_OPEN), "PieMenu Editor"), 
+		name = zo_strformat(L("SI_CSPM_COMMON_UI_ACTION", C.UI_OPEN), "PieMenu Editor"), 
 		tooltip = L(SI_CSPM_UI_PANEL_HEADER2_TEXT), 
 		icon = "EsoUI/Art/Icons/crafting_dwemer_shiny_gear.dds", 
 		callback = function() CShortcutPieMenu:OpenPieMenuEditorPanel() end, 
-		category = CSPM_CATEGORY_S_PIE_MENU_ADDON, 
+		category = C.CATEGORY_S_PIE_MENU_ADDON, 
 	}
 	self.shortcutList["!CSPM_open_piemenu_manager"] = {
-		name = zo_strformat(L("SI_CSPM_COMMON_UI_ACTION", CSPM_UI_OPEN), "PieMenu Manager"), 
+		name = zo_strformat(L("SI_CSPM_COMMON_UI_ACTION", C.UI_OPEN), "PieMenu Manager"), 
 		tooltip = L(SI_CSPM_UI_PANEL_HEADER3_TEXT), 
 		icon = "EsoUI/Art/Icons/crafting_dwemer_shiny_gear.dds", 
 		callback = function() CShortcutPieMenu:OpenPieMenuManagerPanel() end, 
-		category = CSPM_CATEGORY_S_PIE_MENU_ADDON, 
+		category = C.CATEGORY_S_PIE_MENU_ADDON, 
 	}
 	self.shortcutList["!CSPM_reloadui"] = {
 		name = L(SI_ADDON_MANAGER_RELOAD), 
@@ -675,11 +597,11 @@ function CSPM_ShortcutManager_Singleton:RegisterInternalShortcuts()
 		callback = function()
 			local messageParams = CENTER_SCREEN_ANNOUNCE:CreateMessageParams(CSA_CATEGORY_MAJOR_TEXT, SOUNDS.NONE)
 			messageParams:SetCSAType(CENTER_SCREEN_ANNOUNCE_TYPE_DISPLAY_ANNOUNCEMENT)
-			messageParams:SetText(zo_strformat(L("SI_CSPM_SLOT_ACTION_TOOLTIP", CSPM_ACTION_TYPE_SHORTCUT), L(SI_ADDON_MANAGER_RELOAD)))
+			messageParams:SetText(zo_strformat(L("SI_CSPM_SLOT_ACTION_TOOLTIP", C.ACTION_TYPE_SHORTCUT), L(SI_ADDON_MANAGER_RELOAD)))
 			CENTER_SCREEN_ANNOUNCE:DisplayMessage(messageParams)
 			zo_callLater(function() ReloadUI("ingame") end, 1)
 		end, 
-		category = CSPM_CATEGORY_S_SYSTEM_MENU, 
+		category = C.CATEGORY_S_SYSTEM_MENU, 
 	}
 	self.shortcutList["!CSPM_logout"] = {
 		name = L(SI_DIALOG_TITLE_LOGOUT), 
@@ -688,11 +610,11 @@ function CSPM_ShortcutManager_Singleton:RegisterInternalShortcuts()
 		callback = function()
 			local messageParams = CENTER_SCREEN_ANNOUNCE:CreateMessageParams(CSA_CATEGORY_MAJOR_TEXT, SOUNDS.NONE)
 			messageParams:SetCSAType(CENTER_SCREEN_ANNOUNCE_TYPE_DISPLAY_ANNOUNCEMENT)
-			messageParams:SetText(zo_strformat(L("SI_CSPM_SLOT_ACTION_TOOLTIP", CSPM_ACTION_TYPE_SHORTCUT), L(SI_DIALOG_TITLE_LOGOUT)))
+			messageParams:SetText(zo_strformat(L("SI_CSPM_SLOT_ACTION_TOOLTIP", C.ACTION_TYPE_SHORTCUT), L(SI_DIALOG_TITLE_LOGOUT)))
 			CENTER_SCREEN_ANNOUNCE:DisplayMessage(messageParams)
 			Logout()
 		end, 
-		category = CSPM_CATEGORY_S_SYSTEM_MENU, 
+		category = C.CATEGORY_S_SYSTEM_MENU, 
 	}
 	self.shortcutList["!CSPM_mainmenu_inventory"] = {
 		name = L(SI_MAIN_MENU_INVENTORY), 
@@ -700,7 +622,7 @@ function CSPM_ShortcutManager_Singleton:RegisterInternalShortcuts()
 		icon = "EsoUI/Art/MainMenu/menuBar_inventory_up.dds", 
 		activeIcon = "EsoUI/Art/MainMenu/menuBar_inventory_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_INVENTORY) end, 
-		category = CSPM_CATEGORY_S_MAIN_MENU, 
+		category = C.CATEGORY_S_MAIN_MENU, 
 	}
 	self.shortcutList["!CSPM_mainmenu_character"] = {
 		name = L(SI_MAIN_MENU_CHARACTER), 
@@ -708,7 +630,7 @@ function CSPM_ShortcutManager_Singleton:RegisterInternalShortcuts()
 		icon = "EsoUI/Art/MainMenu/menuBar_character_up.dds", 
 		activeIcon = "EsoUI/Art/MainMenu/menuBar_character_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_CHARACTER) end, 
-		category = CSPM_CATEGORY_S_MAIN_MENU, 
+		category = C.CATEGORY_S_MAIN_MENU, 
 	}
 	self.shortcutList["!CSPM_mainmenu_skill"] = {
 		name = L(SI_MAIN_MENU_SKILLS), 
@@ -716,7 +638,7 @@ function CSPM_ShortcutManager_Singleton:RegisterInternalShortcuts()
 		icon = "EsoUI/Art/MainMenu/menuBar_skills_up.dds", 
 		activeIcon = "EsoUI/Art/MainMenu/menuBar_skills_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_SKILLS) end, 
-		category = CSPM_CATEGORY_S_MAIN_MENU, 
+		category = C.CATEGORY_S_MAIN_MENU, 
 	}
 	self.shortcutList["!CSPM_mainmenu_champion"] = {
 		name = L(SI_MAIN_MENU_CHAMPION), 
@@ -724,7 +646,7 @@ function CSPM_ShortcutManager_Singleton:RegisterInternalShortcuts()
 		icon = "EsoUI/Art/MainMenu/menuBar_champion_up.dds", 
 		activeIcon = "EsoUI/Art/MainMenu/menuBar_champion_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_CHAMPION) end, 
-		category = CSPM_CATEGORY_S_MAIN_MENU, 
+		category = C.CATEGORY_S_MAIN_MENU, 
 	}
 	self.shortcutList["!CSPM_mainmenu_journal"] = {
 		name = L(SI_MAIN_MENU_JOURNAL), 
@@ -732,7 +654,7 @@ function CSPM_ShortcutManager_Singleton:RegisterInternalShortcuts()
 		icon = "EsoUI/Art/MainMenu/menuBar_journal_up.dds", 
 		activeIcon = "EsoUI/Art/MainMenu/menuBar_journal_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_JOURNAL) end, 
-		category = CSPM_CATEGORY_S_MAIN_MENU, 
+		category = C.CATEGORY_S_MAIN_MENU, 
 	}
 	self.shortcutList["!CSPM_mainmenu_collections"] = {
 		name = L(SI_MAIN_MENU_COLLECTIONS), 
@@ -740,7 +662,7 @@ function CSPM_ShortcutManager_Singleton:RegisterInternalShortcuts()
 		icon = "EsoUI/Art/MainMenu/menuBar_collections_up.dds", 
 		activeIcon = "EsoUI/Art/MainMenu/menuBar_collections_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_COLLECTIONS) end, 
-		category = CSPM_CATEGORY_S_MAIN_MENU, 
+		category = C.CATEGORY_S_MAIN_MENU, 
 	}
 	self.shortcutList["!CSPM_mainmenu_map"] = {
 		name = L(SI_MAIN_MENU_MAP), 
@@ -748,7 +670,7 @@ function CSPM_ShortcutManager_Singleton:RegisterInternalShortcuts()
 		icon = "EsoUI/Art/MainMenu/menuBar_map_up.dds", 
 		activeIcon = "EsoUI/Art/MainMenu/menuBar_map_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_MAP) end, 
-		category = CSPM_CATEGORY_S_MAIN_MENU, 
+		category = C.CATEGORY_S_MAIN_MENU, 
 	}
 	self.shortcutList["!CSPM_mainmenu_group"] = {
 		name = L(SI_MAIN_MENU_GROUP), 
@@ -756,7 +678,7 @@ function CSPM_ShortcutManager_Singleton:RegisterInternalShortcuts()
 		icon = "EsoUI/Art/MainMenu/menuBar_group_up.dds", 
 		activeIcon = "EsoUI/Art/MainMenu/menuBar_group_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_GROUP) end, 
-		category = CSPM_CATEGORY_S_MAIN_MENU, 
+		category = C.CATEGORY_S_MAIN_MENU, 
 	}
 	self.shortcutList["!CSPM_mainmenu_friends"] = {
 		name = L(SI_MAIN_MENU_CONTACTS), 
@@ -764,7 +686,7 @@ function CSPM_ShortcutManager_Singleton:RegisterInternalShortcuts()
 		icon = "EsoUI/Art/MainMenu/menuBar_social_up.dds", 
 		activeIcon = "EsoUI/Art/MainMenu/menuBar_social_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_CONTACTS) end, 
-		category = CSPM_CATEGORY_S_MAIN_MENU, 
+		category = C.CATEGORY_S_MAIN_MENU, 
 	}
 	self.shortcutList["!CSPM_mainmenu_guilds"] = {
 		name = L(SI_MAIN_MENU_GUILDS), 
@@ -772,7 +694,7 @@ function CSPM_ShortcutManager_Singleton:RegisterInternalShortcuts()
 		icon = "EsoUI/Art/MainMenu/menuBar_guilds_up.dds", 
 		activeIcon = "EsoUI/Art/MainMenu/menuBar_guilds_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_GUILDS) end, 
-		category = CSPM_CATEGORY_S_MAIN_MENU, 
+		category = C.CATEGORY_S_MAIN_MENU, 
 	}
 	self.shortcutList["!CSPM_mainmenu_alliance_war"] = {
 		name = L(SI_MAIN_MENU_ALLIANCE_WAR), 
@@ -780,7 +702,7 @@ function CSPM_ShortcutManager_Singleton:RegisterInternalShortcuts()
 		icon = "EsoUI/Art/MainMenu/menuBar_ava_up.dds", 
 		activeIcon = "EsoUI/Art/MainMenu/menuBar_ava_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_ALLIANCE_WAR) end, 
-		category = CSPM_CATEGORY_S_MAIN_MENU, 
+		category = C.CATEGORY_S_MAIN_MENU, 
 	}
 	self.shortcutList["!CSPM_mainmenu_mail"] = {
 		name = L(SI_MAIN_MENU_MAIL), 
@@ -788,7 +710,7 @@ function CSPM_ShortcutManager_Singleton:RegisterInternalShortcuts()
 		icon = "EsoUI/Art/MainMenu/menuBar_mail_up.dds", 
 		activeIcon = "EsoUI/Art/MainMenu/menuBar_mail_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_MAIL) end, 
-		category = CSPM_CATEGORY_S_MAIN_MENU, 
+		category = C.CATEGORY_S_MAIN_MENU, 
 	}
 	self.shortcutList["!CSPM_mainmenu_notifications"] = {
 		name = L(SI_MAIN_MENU_NOTIFICATIONS), 
@@ -796,7 +718,7 @@ function CSPM_ShortcutManager_Singleton:RegisterInternalShortcuts()
 		icon = "EsoUI/Art/MainMenu/menuBar_notifications_up.dds", 
 		activeIcon = "EsoUI/Art/MainMenu/menuBar_notifications_down.dds", 
 		callback = function() SYSTEMS:GetObject("mainMenu"):ToggleCategory(MENU_CATEGORY_NOTIFICATIONS) end, 
-		category = CSPM_CATEGORY_S_MAIN_MENU, 
+		category = C.CATEGORY_S_MAIN_MENU, 
 	}
 	self.shortcutList["!CSPM_mainmenu_help"] = {
 		name = L(SI_MAIN_MENU_HELP), 
@@ -804,7 +726,7 @@ function CSPM_ShortcutManager_Singleton:RegisterInternalShortcuts()
 		icon = "EsoUI/Art/MenuBar/menuBar_help_up.dds", 
 		activeIcon = "EsoUI/Art/MenuBar/menuBar_help_down.dds", 
 		callback = function() HELP_MANAGER:ToggleHelp() end, 
-		category = CSPM_CATEGORY_S_MAIN_MENU, 
+		category = C.CATEGORY_S_MAIN_MENU, 
 	}
 end
 
@@ -843,7 +765,7 @@ function CSPM_ShortcutManager_Singleton:EncodeMenuEntry(shortcutDataOrId, desire
 	}
 	data.activeIcon = GetValue(shortcutData.activeIcon) or data.icon
 	if data.disabled == true then
-		data.nameColor = CSPM_LUT_UI_COLOR.BLOCKED	-- red color-coded
+		data.nameColor = LUT.UI_Color.BLOCKED	-- red color-coded
 		data.activeIcon = data.icon					-- not using activeIcon
 	end
 	return data
@@ -876,7 +798,7 @@ function CSPM_ShortcutManager_Singleton:RegisterExternalShortcutData(shortcutId,
 			table.insert(self.externalShortcutCategoryList, categoryId)
 		end
 	else
-		self.shortcutList[shortcutId].category = CSPM_CATEGORY_NOTHING
+		self.shortcutList[shortcutId].category = C.CATEGORY_NOTHING
 	end
 	CSPM.LDL:Debug("ExternalShortcutRegistered : %s (%s)", shortcutId, self.shortcutList[shortcutId].category)
 	CALLBACK_MANAGER:FireCallbacks("CSPM-ShortcutRegistered", shortcutId, self.shortcutList[shortcutId].category)
@@ -1053,11 +975,9 @@ CSPM.util.GetPieMenuData = function(presetId) return CSPM_PieMenuDataManager:Get
 CSPM.util.GetPieMenuInfo = function(pieMenuDataOrPresetId) return CSPM_PieMenuDataManager:GetPieMenuInfo(pieMenuDataOrPresetId) end
 
 
-
 -- ---------------------------------------------------------------------------------------
 -- CShortcutPieMenu
 -- ---------------------------------------------------------------------------------------
-
 function CSPM:Initialize()
 	self:ConfigDebug()
 	self.lang = GetCVar("Language.2")
@@ -1129,7 +1049,7 @@ function CSPM:ValidateConfigDataDB()
 	for k, v in pairs(self.db.preset) do
 		if v.id == nil								then v.id = k 														end
 		if v.name == nil							then v.name = ""													end
-		if v.menuItemsCount == nil					then v.menuItemsCount = CSPM_MENU_ITEMS_COUNT_DEFAULT				end
+		if v.menuItemsCount == nil					then v.menuItemsCount = C.MENU_ITEMS_COUNT_DEFAULT					end
 		if v.visual == nil							then v.visual = {}													end
 		if v.visual.showIconFrame == nil			then v.visual.showIconFrame			= CSPM_DB_DEFAULT.preset[1].visual.showIconFrame			end
 		if v.visual.showSlotLabel == nil			then v.visual.showSlotLabel			= CSPM_DB_DEFAULT.preset[1].visual.showSlotLabel			end
@@ -1201,8 +1121,8 @@ function CSPM:AddMenuEntryWithShortcut(pieMenu, shortcutId, visualData)
 				data.showSlotLabel = CSPM_DB_DEFAULT.preset[1].visual.showIconFrame
 			end
 		end
-		data.slotData.type = data.slotData.type or CSPM_ACTION_TYPE_SHORTCUT
-		data.slotData.category = data.slotData.category or CSPM_CATEGORY_NOTHING
+		data.slotData.type = data.slotData.type or C.ACTION_TYPE_SHORTCUT
+		data.slotData.category = data.slotData.category or C.CATEGORY_NOTHING
 		data.slotData.value = data.slotData.value or shortcutId
 
 		local entryName = (data.nameColor and type(data.nameColor) == "table") and { data.name, { r = data.nameColor[1], g = data.nameColor[2], b = data.nameColor[3], }, } or data.name
@@ -1222,7 +1142,7 @@ function CSPM:PopulateMenuCallback(rootMenu)
 		local cspmCategoryId = GetValue(presetData.slot[i].category)
 		local actionValue = GetValue(presetData.slot[i].value) or 0
 		local data, isValid
-		if actionType == CSPM_ACTION_TYPE_SHORTCUT then
+		if actionType == C.ACTION_TYPE_SHORTCUT then
 			data = self.shortcutManager:EncodeMenuEntry(actionValue, i)
 		else
 			data = {
@@ -1243,31 +1163,31 @@ function CSPM:PopulateMenuCallback(rootMenu)
 		end
 		isValid = data.name ~= ""
 
-		if actionType == CSPM_ACTION_TYPE_COLLECTIBLE then
+		if actionType == C.ACTION_TYPE_COLLECTIBLE then
 			if IsCollectibleActive(actionValue, GAMEPLAY_ACTOR_CATEGORY_PLAYER) then
-				data.statusIcon = CSPM_LUT_UI_ICON.CHECK
+				data.statusIcon = LUT.UI_Icon.CHECK
 			elseif GetCollectibleUnlockStateById(actionValue) == COLLECTIBLE_UNLOCK_STATE_LOCKED or IsCollectibleBlocked(actionValue) then
-				data.statusIcon = CSPM_LUT_UI_ICON.BLOCKED
+				data.statusIcon = LUT.UI_Icon.BLOCKED
 				data.iconAttributes = { iconDesaturation = 1, }
 			end
 			data.cooldownRemaining, data.cooldownDuration  = GetCollectibleCooldownAndDuration(actionValue)
 		end
-		if actionType == CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE and actionValue == CSPM_ACTION_VALUE_PRIMARY_HOUSE_ID then
+		if actionType == C.ACTION_TYPE_TRAVEL_TO_HOUSE and actionValue == C.ACTION_VALUE_PRIMARY_HOUSE_ID then
 			-- override the display name and icon according to the current primary house setting.
 			local primaryHouseId = GetHousingPrimaryHouse()
 			if primaryHouseId ~= 0 then
 				local primaryHouseName = zo_strformat(L(SI_HOUSING_BOOK_PRIMARY_RESIDENCE_FORMATTER), GetCollectibleName(GetCollectibleIdForHouse(primaryHouseId)))		-- "Primary Residence: |cffffff<<1>>|r"
-				if cspmCategoryId == CSPM_CATEGORY_H_UNLOCKED_HOUSE_INSIDE then
+				if cspmCategoryId == C.CATEGORY_H_UNLOCKED_HOUSE_INSIDE then
 					data.name = zo_strformat(L(SI_GAMEPAD_WORLD_MAP_TRAVEL_TO_HOUSE_INSIDE), primaryHouseName)		-- "<<1>> (inside)"
-				elseif cspmCategoryId == CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE then
+				elseif cspmCategoryId == C.CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE then
 					data.name = zo_strformat(L(SI_GAMEPAD_WORLD_MAP_TRAVEL_TO_HOUSE_OUTSIDE), primaryHouseName)	-- "<<1>> (outside)"
 				end
 				data.icon = GetCollectibleIcon(GetCollectibleIdForHouse(primaryHouseId))
 				data.activeIcon = data.icon
 			end
 		end
-		if actionType == CSPM_ACTION_TYPE_PIE_MENU then
-			local selectionButton = IsInGamepadPreferredMode() and CSPM_LUT_UI_ICON.GAMEPAD_1 or CSPM_LUT_UI_ICON.MOUSE_LMB
+		if actionType == C.ACTION_TYPE_PIE_MENU then
+			local selectionButton = IsInGamepadPreferredMode() and LUT.UI_Icon.GAMEPAD_1 or LUT.UI_Icon.MOUSE_LMB
 			data.activeStatusIcon = { selectionButton, selectionButton, }	-- for blinking icon
 			-- override the display name of user pie menu according to its user defined preset name.
 			local pieMenuName = self.util.GetPieMenuInfo(actionValue)
@@ -1306,16 +1226,16 @@ end
 
 do
 	local ExecuteSlotAction = {		-- you cannot use 'self' within this block.
-		[CSPM_ACTION_TYPE_NOTHING] = function(actionTypeId, categoryId, actionValue, data)
+		[C.ACTION_TYPE_NOTHING] = function(actionTypeId, categoryId, actionValue, data)
 			return
 		end, 
-		[CSPM_ACTION_TYPE_COLLECTIBLE] = function(_, _, actionValue, _)
+		[C.ACTION_TYPE_COLLECTIBLE] = function(_, _, actionValue, _)
 			-- actionValue : collectibleId
 			if actionValue > 0 then
 				UseCollectible(actionValue, GAMEPLAY_ACTOR_CATEGORY_PLAYER)
 			end
 		end, 
-		[CSPM_ACTION_TYPE_EMOTE] = function(_, _, actionValue, _)
+		[C.ACTION_TYPE_EMOTE] = function(_, _, actionValue, _)
 			-- actionValue : emoteId
 			if actionValue > 0 then
 				local emoteIndex = GetEmoteIndex(actionValue)
@@ -1324,7 +1244,7 @@ do
 				end
 			end
 		end, 
-		[CSPM_ACTION_TYPE_CHAT_COMMAND] = function(_, _, actionValue, _)
+		[C.ACTION_TYPE_CHAT_COMMAND] = function(_, _, actionValue, _)
 			-- actionValue : chatCommandString
 			local command, args = string.match(actionValue, "^(%S+)% *(.*)")
 			CSPM.LDL:Debug("chat command : %s, argments : %s", tostring(command), tostring(args))
@@ -1334,19 +1254,19 @@ do
 				df("[CSPM] error : slash command '%s' not found", tostring(command))
 			end
 		end, 
-		[CSPM_ACTION_TYPE_TRAVEL_TO_HOUSE] = function(_, categoryId, actionValue, _)
+		[C.ACTION_TYPE_TRAVEL_TO_HOUSE] = function(_, categoryId, actionValue, _)
 			-- actionValue : houseId
 			local houseId = actionValue
 			local jumpOutside = false
-			if actionValue == CSPM_ACTION_VALUE_PRIMARY_HOUSE_ID then
+			if actionValue == C.ACTION_VALUE_PRIMARY_HOUSE_ID then
 				houseId = GetHousingPrimaryHouse()
 			end
-			if categoryId == CSPM_CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE then
+			if categoryId == C.CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE then
 				jumpOutside = true
 			end
 			RequestJumpToHouse(houseId, jumpOutside)
 		end, 
-		[CSPM_ACTION_TYPE_PIE_MENU] = function(_, _, actionValue, _)
+		[C.ACTION_TYPE_PIE_MENU] = function(_, _, actionValue, _)
 			-- actionValue : presetId
 			if CSPM.util.DoesPieMenuDataExist(actionValue) then
 				if CSPM.holdDownInteractionKey then
@@ -1357,7 +1277,7 @@ do
 				end
 			end
 		end, 
-		[CSPM_ACTION_TYPE_SHORTCUT] = function(_, _, actionValue, data)
+		[C.ACTION_TYPE_SHORTCUT] = function(_, _, actionValue, data)
 			-- actionValue : shortcutId
 			local shortcutData = CSPM.util.GetShortcutData(actionValue)
 			if shortcutData and type(shortcutData.callback) == "function" then
@@ -1365,7 +1285,7 @@ do
 			end
 		end, 
 	}
-	setmetatable(ExecuteSlotAction, { __index = function(self, key) return rawget(self, CSPM_ACTION_TYPE_NOTHING) end, })
+	setmetatable(ExecuteSlotAction, { __index = function(self, key) return rawget(self, C.ACTION_TYPE_NOTHING) end, })
 
 	function CSPM:OnSelectionExecutionCallback(data)
 		local slotData = data.slotData or {}
