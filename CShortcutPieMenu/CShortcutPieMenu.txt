@@ -1,11 +1,11 @@
 ## Title: Calamath's Shortcut Pie Menu
 ## Description: Shortcut Pie Menu
-## Version: 0.10.1
-## AddOnVersion: 1001
+## Version: 0.10.2
+## AddOnVersion: 1002
 ## Author: Calamath
 ## License: Artistic License 2.0
 ## APIVersion: 101033
-## DependsOn: LibAddonMenu-2.0>=33
+## DependsOn: LibAddonMenu-2.0>=33 LibCInteraction>=800
 ## OptionalDependsOn: LibDebugLogger>=220
 ## SavedVariables: CShortcutPieMenuDB CShortcutPieMenuSV
 
@@ -17,10 +17,10 @@
 
 lang/strings.lua
 lang/$(language).lua
+CShortcutPieMenu.lua
 PieMenuController.xml
 PieMenuController.lua
-CShortcutPieMenu.xml
-CShortcutPieMenu.lua
 uiPieMenuSettings.lua
 uiPieMenuManager.lua
+CShortcutPieMenu.xml
 Bindings.xml

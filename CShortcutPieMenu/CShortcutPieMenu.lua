@@ -17,14 +17,15 @@ if CShortcutPieMenu then return end
 -- ---------------------------------------------------------------------------------------
 local LAM = LibAddonMenu2
 if not LAM then d("[CSPM] Error : 'LibAddonMenu-2.0' not found.") return end
-
+local LibCInteraction = LibCInteraction
+if not LibCInteraction then d("[CSPM] Error : 'LibCInteraction' not found.") return end
 
 -- ---------------------------------------------------------------------------------------
 -- Name Space
 -- ---------------------------------------------------------------------------------------
 local CSPM = {
 	name = "CShortcutPieMenu", 
-	version = "0.10.1", 
+	version = "0.10.2", 
 	author = "Calamath", 
 	savedVarsPieMenuEditor = "CShortcutPieMenuDB", 
 	savedVarsPieMenuManager = "CShortcutPieMenuSV", 
@@ -188,6 +189,32 @@ CSPM.lut = {
 		["GAMEPAD_1"]			= GetGamepadIconPathForKeyCode(KEY_GAMEPAD_BUTTON_1), 
 		["GAMEPAD_2"]			= GetGamepadIconPathForKeyCode(KEY_GAMEPAD_BUTTON_2), 
 	}, 
+	ActionNames = {
+		"CSPM_PIE_MENU_INTERACTION", 
+		"CSPM_PIE_MENU_SECONDARY", 
+		"CSPM_PIE_MENU_TERTIARY", 
+		"CSPM_PIE_MENU_QUATERNARY", 
+		"CSPM_PIE_MENU_QUINARY", 
+	}, 
+	ActionNameAlias = {
+		["CSPM_UIMODE_PIE_MENU_INTERACTION"]	= "CSPM_PIE_MENU_INTERACTION", 
+		["CSPM_UIMODE_PIE_MENU_SECONDARY"]		= "CSPM_PIE_MENU_SECONDARY", 
+		["CSPM_UIMODE_PIE_MENU_TERTIARY"]		= "CSPM_PIE_MENU_TERTIARY", 
+		["CSPM_UIMODE_PIE_MENU_QUATERNARY"]		= "CSPM_PIE_MENU_QUATERNARY", 
+		["CSPM_UIMODE_PIE_MENU_QUINARY"]		= "CSPM_PIE_MENU_QUINARY", 
+	}, 
+	ActionName_To_KeybindsId = {
+		["CSPM_PIE_MENU_INTERACTION"]			= 1, 
+		["CSPM_PIE_MENU_SECONDARY"]				= 2, 
+		["CSPM_PIE_MENU_TERTIARY"]				= 3, 
+		["CSPM_PIE_MENU_QUATERNARY"]			= 4, 
+		["CSPM_PIE_MENU_QUINARY"]				= 5, 
+		["CSPM_UIMODE_PIE_MENU_INTERACTION"]	= 1, 
+		["CSPM_UIMODE_PIE_MENU_SECONDARY"]		= 2, 
+		["CSPM_UIMODE_PIE_MENU_TERTIARY"]		= 3, 
+		["CSPM_UIMODE_PIE_MENU_QUATERNARY"]		= 4, 
+		["CSPM_UIMODE_PIE_MENU_QUINARY"]		= 5, 
+	}, 
 }
 local LUT = CSPM.lut
 
@@ -212,8 +239,8 @@ local CSPM_DB_DEFAULT = {
 				showIconFrame = true, 
 				showSlotLabel = true, 
 				showPresetName = false, 
-				showTrackQuickslot = false, 
-				showTrackGamepad = true, 
+				style = "gamepad", 
+				size = 350, 
 			}, 
 			slot = {
 				[1] = ZO_ShallowTableCopy(CSPM_SLOT_DATA_DEFAULT), 
@@ -226,11 +253,13 @@ local CSPM_DB_DEFAULT = {
 -- CShortcutPieMenu PieMenuManager Config
 local CSPM_SV_DEFAULT = {
 	accountWide = true, 
-	allowActivateInUIMode = true, 
-	allowClickable = true, 
-	centeringAtMouseCursor = false, 
-	timeToHoldKey = 250, 
-	mouseDeltaScaleFactorInUIMode = 1, 
+	menuAttributes = {
+		allowActivateInUIMode = true, 
+		allowClickable = true, 
+		centeringAtMouseCursor = false, 
+		timeToHoldKey = 250, 
+		mouseDeltaScaleFactorInUIMode = 1, 
+	}, 
 	keybinds = {
 		[1] = 1, 	-- Primary Action
 		[2] = 0, 	-- Secondary Action
@@ -844,8 +873,8 @@ function CSPM_PieMenuDataManager_Singleton:RegisterInternalPieMenus()
 			showIconFrame = true, 
 			showSlotLabel = true, 
 			showPresetName = true, 
-			showTrackQuickslot = false, 
-			showTrackGamepad = true, 
+			style = "gamepad", 
+			size = 500, 
 		}, 
 		slot = {
 			{
@@ -982,9 +1011,6 @@ function CSPM:Initialize()
 	self:ConfigDebug()
 	self.lang = GetCVar("Language.2")
 	self.isGamepad = IsInGamepadPreferredMode()
-	self.activePresetId = 1
-	self.activeKeybindsId = 0
-	self.holdDownInteractionKey = false
 
 	-- PieMenuEditor Config (AccountWide / User-customizable PieMenu Preset)
 	self.db = ZO_SavedVars:NewAccountWide(self.savedVarsPieMenuEditor, 1, nil, CSPM_DB_DEFAULT)
@@ -1008,20 +1034,25 @@ function CSPM:Initialize()
 	self.pieMenuDataManager:RegisterUserPieMenuPresets(self.db.preset)
 
 	-- UI Section
-	self.rootMenu = CSPM_PieMenuController:New(CSPM_UI_Root_Pie, "CSPM_SelectableItemRadialMenuEntryTemplate", "DefaultRadialMenuAnimation", "SelectableItemRadialMenuEntryAnimation")
+	self.activePresetId = 0
+	self.topmostPieMenu = nil
+	self.rootMenu = CSPM.class.PieMenuController:New(CSPM_UI_Root_Pie, "CSPM_SelectableItemRadialMenuEntryTemplate", "CSPM_RadialMenuAnimation", "SelectableItemRadialMenuEntryAnimation", self.svCurrent.menuAttributes)
 	self.rootMenu:SetOnSelectionChangedCallback(function(...) self:OnSelectionChangedCallback(...) end)
 	self.rootMenu:SetPopulateMenuCallback(function(...) self:PopulateMenuCallback(...) end)
+	self:RegisterInteraction(self.rootMenu)
 
 	self.menuEditorPanel = CSPM.class.PieMenuEditorPanel:New(self.shared, self.db, self.db, CSPM_DB_DEFAULT)
 	self.menuManagerPanel = CSPM.class.PieMenuManagerPanel:New(self.shared, self.svCurrent, self.svAccount, CSPM_SV_DEFAULT)
+
+	-- Events
 	self:RegisterEvents()
 
 	-- Bindings
-	self.rootMenu:RegisterBindings(KEY_GAMEPAD_BUTTON_1, function() self:StopInteraction() end)
-	self.rootMenu:RegisterBindings(KEY_GAMEPAD_BUTTON_2, function() self:CancelInteraction() end)
-	self.rootMenu:RegisterBindings(KEY_ESCAPE, function() self:CancelInteraction() end)
-	self.rootMenu:RegisterBindings(KEY_MOUSE_LEFT, function() self:StopInteraction() end)
-	self.rootMenu:RegisterBindings(KEY_MOUSE_RIGHT, function() self:CancelInteraction() end)
+	self:InitializeKeybinds()
+
+	-- Interaction
+	self.holdDownInteractionKey = false
+	self.requestedPresetId = 0
 
 	self.LDL:Debug("Initialized")
 end
@@ -1054,22 +1085,28 @@ function CSPM:ValidateConfigDataDB()
 		if v.visual.showIconFrame == nil			then v.visual.showIconFrame			= CSPM_DB_DEFAULT.preset[1].visual.showIconFrame			end
 		if v.visual.showSlotLabel == nil			then v.visual.showSlotLabel			= CSPM_DB_DEFAULT.preset[1].visual.showSlotLabel			end
 		if v.visual.showPresetName == nil			then v.visual.showPresetName		= CSPM_DB_DEFAULT.preset[1].visual.showPresetName			end
-		if v.visual.showTrackQuickslot == nil		then v.visual.showTrackQuickslot	= CSPM_DB_DEFAULT.preset[1].visual.showTrackQuickslot		end
-		if v.visual.showTrackGamepad == nil			then v.visual.showTrackGamepad		= CSPM_DB_DEFAULT.preset[1].visual.showTrackGamepad			end
+		if v.visual.style == nil					then v.visual.style					= CSPM_DB_DEFAULT.preset[1].visual.style					end
+		if v.visual.size == nil						then v.visual.size					= CSPM_DB_DEFAULT.preset[1].visual.size						end
 		if v.slot == nil							then v.slot = ZO_ShallowTableCopy(CSPM_DB_DEFAULT.prest[1].slot)	end
+
+		-- migrate to the new format	(Ver.0.10.2)
+		if v.visual.showTrackGamepad ~= nil			then v.visual.style 				= (v.visual.showTrackGamepad == true) and "gamepad" or "quickslot"		v.visual.showTrackGamepad = nil		v.visual.showTrackQuickslot = nil		end
 	end
 end
 
 function CSPM:ValidateConfigDataSV(sv)
 	if sv.accountWide == nil						then sv.accountWide						= CSPM_SV_DEFAULT.accountWide 								end
-	if sv.allowActivateInUIMode == nil				then sv.allowActivateInUIMode			= CSPM_SV_DEFAULT.allowActivateInUIMode 					end
-	if sv.allowClickable == nil						then sv.allowClickable					= CSPM_SV_DEFAULT.allowClickable 							end
-	if sv.centeringAtMouseCursor == nil				then sv.centeringAtMouseCursor			= CSPM_SV_DEFAULT.centeringAtMouseCursor 					end
-	if sv.timeToHoldKey == nil						then sv.timeToHoldKey					= CSPM_SV_DEFAULT.timeToHoldKey 							end
-	if sv.mouseDeltaScaleFactorInUIMode == nil		then sv.mouseDeltaScaleFactorInUIMode	= CSPM_SV_DEFAULT.mouseDeltaScaleFactorInUIMode				end
+	if sv.menuAttributes == nil						then sv.menuAttributes					= ZO_ShallowTableCopy(CSPM_SV_DEFAULT.menuAttributes)		end
 	for i = 1, #CSPM_SV_DEFAULT.keybinds do
 		if sv.keybinds[i] == nil					then sv.keybinds[i]						= CSPM_SV_DEFAULT.keybinds[i]								end
 	end
+
+	-- migrate to the new format	(Ver.0.10.2)
+	if sv.allowActivateInUIMode ~= nil				then sv.menuAttributes.allowActivateInUIMode			= sv.allowActivateInUIMode				sv.allowActivateInUIMode = nil			 end
+	if sv.allowClickable ~= nil						then sv.menuAttributes.allowClickable 					= sv.allowClickable						sv.allowClickable = nil					 end
+	if sv.centeringAtMouseCursor ~= nil				then sv.menuAttributes.centeringAtMouseCursor		 	= sv.centeringAtMouseCursor				sv.centeringAtMouseCursor = nil			 end
+	if sv.timeToHoldKey ~= nil						then sv.menuAttributes.timeToHoldKey 					= sv.timeToHoldKey						sv.timeToHoldKey = nil					 end
+	if sv.mouseDeltaScaleFactorInUIMode ~= nil		then sv.menuAttributes.mouseDeltaScaleFactorInUIMode	= sv.mouseDeltaScaleFactorInUIMode		sv.mouseDeltaScaleFactorInUIMode = nil	 end
 end
 
 function CSPM:RegisterEvents()
@@ -1082,9 +1119,114 @@ function CSPM:RegisterEvents()
 	end)
 end
 
+function CSPM:CopyKeybinds(sourceActionName, destActionName)
+	local layer, category, action = GetActionIndicesFromName(destActionName)
+	if layer and category and action then
+		if IsProtectedFunction("UnbindAllKeysFromAction") then
+			CallSecureProtected("UnbindAllKeysFromAction", layer, category, action)
+		else
+			UnbindAllKeysFromAction(layer, category, action)
+		end
+	else
+		return
+	end
+	layer, category, action = GetActionIndicesFromName(sourceActionName)
+	if layer and category and action then
+		for i = 1, GetMaxBindingsPerAction() do
+			local key, mod1, mod2, mod3, mod4 = GetActionBindingInfo(layer, category, action, i)
+			CreateDefaultActionBind(destActionName, key, mod1, mod2, mod3, mod4)
+		end
+	else
+		return
+	end
+	if self.keybinds then
+		self.keybinds[sourceActionName] = destActionName
+	end
+	return true
+end
+
+function CSPM:InitializeKeybinds()
+	self.keybinds = self.keybinds or {}
+	for destActionName, sourceActionName in pairs(LUT.ActionNameAlias) do
+		self:CopyKeybinds(sourceActionName, destActionName)
+	end
+	EVENT_MANAGER:RegisterForEvent(self.name, EVENT_KEYBINDING_CLEARED, function(event, layerIndex, categoryIndex, actionIndex, bindingIndex)
+		local actionName = GetActionInfo(layerIndex, categoryIndex, actionIndex)
+		if self.keybinds[actionName] then
+			self:CopyKeybinds(actionName, self.keybinds[actionName])	-- Rebuild due to setting changes
+		end
+	end)
+	EVENT_MANAGER:RegisterForEvent(self.name, EVENT_KEYBINDING_SET, function(event, layerIndex, categoryIndex, actionIndex, bindingIndex)
+		local actionName = GetActionInfo(layerIndex, categoryIndex, actionIndex)
+		if self.keybinds[actionName] then
+			self:CopyKeybinds(actionName, self.keybinds[actionName])	-- Rebuild due to setting changes
+		end
+	end)
+end
+
+function CSPM:RegisterInteraction(pieMenu)
+	if not pieMenu then return end
+	local pieMenuHoldInteraction = {
+		type = "hold", 
+		enabled = function()
+			return not pieMenu:IsInteracting() and pieMenu:PrepareForInteraction()
+		end, 
+		holdTime = function() return self.svCurrent.menuAttributes.timeToHoldKey end, 
+		keyDownCallback = function(interaction, presetId)
+			self.holdDownInteractionKey = true
+			self.requestedPresetId = presetId
+		end, 
+		keyUpCallback = function(interaction, clearSelection)
+			if interaction.isPerformed then
+				pieMenu:StopInteraction(clearSelection)
+				self:ClearActivePresetId()
+				self:SetTopmostPieMenu(nil)
+			end
+			self.holdDownInteractionKey = false
+			self.requestedPresetId = 0
+		end, 
+		performedCallback = function(interaction)
+			if not pieMenu:IsInteracting() then
+				self:SetActivePresetId(self.requestedPresetId)
+				pieMenu:ShowMenu()
+				self:SetTopmostPieMenu(pieMenu)
+			end
+		end, 
+		canceledCallback = function()
+			self.holdDownInteractionKey = false
+			self.requestedPresetId = 0
+		end, 
+	}
+	pieMenu.interactions = pieMenu.interactions or {}
+	table.insert(pieMenu.interactions, LibCInteraction:RegisterInteraction(LUT.ActionNames, pieMenuHoldInteraction))
+
+	pieMenu:RegisterBindings(KEY_GAMEPAD_BUTTON_1, function(menu) menu:SelectCurrentEntry() end)
+	pieMenu:RegisterBindings(KEY_GAMEPAD_BUTTON_2, function(menu) menu:CancelInteraction() end)
+	pieMenu:RegisterBindings(KEY_ESCAPE, function(menu) menu:ForceExitInteraction() end)
+	pieMenu:RegisterBindings(KEY_MOUSE_LEFT, function(menu) menu:SelectCurrentEntry() end)
+	pieMenu:RegisterBindings(KEY_MOUSE_RIGHT, function(menu) menu:CancelInteraction() end)
+end
+
 function CSPM:GetActivePresetId()
 	return self.activePresetId
 end
+
+function CSPM:SetActivePresetId(presetId)
+	self.activePresetId = presetId
+end
+
+function CSPM:ClearActivePresetId()
+	self.activePresetId = 0
+end
+
+function CSPM:GetTopmostPieMenu()
+	return self.topmostPieMenu
+end
+
+function CSPM:SetTopmostPieMenu(pieMenu)
+	self.topmostPieMenu = pieMenu
+end
+
 
 function CSPM:OnSelectionChangedCallback(rootMenu, slotIndex, data)
 --	self.LDL:Debug("OnSelectionChangedCallback() : %s", slotIndex)
@@ -1126,7 +1268,7 @@ function CSPM:AddMenuEntryWithShortcut(pieMenu, shortcutId, visualData)
 		data.slotData.value = data.slotData.value or shortcutId
 
 		local entryName = (data.nameColor and type(data.nameColor) == "table") and { data.name, { r = data.nameColor[1], g = data.nameColor[2], b = data.nameColor[3], }, } or data.name
-		pieMenu:AddMenuEntry(entryName, data.icon, data.activeIcon, function() self:OnSelectionExecutionCallback(data) end, data)
+		pieMenu:AddMenuEntry(entryName, data.icon, data.activeIcon, function() return self:OnSelectionExecutionCallback(data) end, data)
 	end
 end
 
@@ -1135,7 +1277,8 @@ function CSPM:PopulateMenuCallback(rootMenu)
 	local presetId = self:GetActivePresetId()
 	local presetData = self.pieMenuDataManager:GetPieMenuData(presetId)
 	local visualData = presetData.visual or {}
-	rootMenu:SetupPieMenuVisual(presetData.name, visualData.showPresetName, visualData.showTrackQuickslot, visualData.showTrackGamepad)
+	rootMenu:SetupPieMenuPresetName(presetData.name, visualData.showPresetName)
+	rootMenu:SetupPieMenuVisual(visualData.style, visualData.size)
 
 	for i = 1, GetValue(presetData.menuItemsCount) do
 		local actionType = GetActionType(presetData.slot[i].type)
@@ -1213,7 +1356,7 @@ function CSPM:PopulateMenuCallback(rootMenu)
 				end
 			end
 			local entryName = (data.nameColor and type(data.nameColor) == "table") and { data.name, { r = data.nameColor[1], g = data.nameColor[2], b = data.nameColor[3], }, } or data.name
-			self:AddMenuEntry(rootMenu, entryName, data.icon, data.activeIcon, function() self:OnSelectionExecutionCallback(data) end, data)
+			self:AddMenuEntry(rootMenu, entryName, data.icon, data.activeIcon, function() return self:OnSelectionExecutionCallback(data) end, data)
 		else
 			self:AddMenuEntryWithShortcut(rootMenu, "!CSPM_invalid_slot_thus_open_piemenu_editor", visualData)
 		end
@@ -1268,13 +1411,11 @@ do
 		end, 
 		[C.ACTION_TYPE_PIE_MENU] = function(_, _, actionValue, _)
 			-- actionValue : presetId
-			if CSPM.util.DoesPieMenuDataExist(actionValue) then
-				if CSPM.holdDownInteractionKey then
-					CSPM:StopInteraction()
-					zo_callLater(function() CSPM:StartInteraction(actionValue) end, 100)
-				else
-					d("At the moment, opening the nested pie menu only works when you perform a selection with the mouse or gamepad.")
-				end
+			if CSPM.holdDownInteractionKey then
+				CSPM:ChangeTopmostPieMenu(actionValue)
+				return true	-- If the callback returns true it means that the callback requested continuous processing.
+			else
+				d("At the moment, opening the nested pie menu only works when you perform a selection with the mouse or gamepad.")
 			end
 		end, 
 		[C.ACTION_TYPE_SHORTCUT] = function(_, _, actionValue, data)
@@ -1294,65 +1435,75 @@ do
 		local actionValue = GetValue(slotData.value) or 0
 
 		if data.callback and type(data.callback) == "function" then
-			data.callback(data)
+			return data.callback(data)
 		else
-			ExecuteSlotAction[actionType](actionType, cspmCategoryId, actionValue, data)
+			return ExecuteSlotAction[actionType](actionType, cspmCategoryId, actionValue, data)
 		end
 	end
 end
 
-function CSPM:StartInteraction(presetId)
---	self.LDL:Debug("StartInteraction(%s)", tostring(presetId))
+
+function CSPM:HandleKeybindDown(actionName)
+	self.LDL:Debug("HandleKeybindDown: %s", tostring(actionName))
+	local actionName = LUT.ActionNameAlias[actionName] or actionName	-- There are multiple action layers for activating the root pie menu, but we will consolidate them here.
+	local keybindsId = LUT.ActionName_To_KeybindsId[actionName or ""]
+	local presetId = self.svCurrent.keybinds[keybindsId or 0]
+	if presetId and presetId ~= 0 and self.util.DoesPieMenuDataExist(presetId) then
+		LibCInteraction:HandleKeybindDown(actionName, presetId)
+	end
+end
+
+--[[
+function CSPM:StartRootPieMenuInteraction(presetId, actionName)
+	local actionName = 
+	self.LDL:Debug("TryStartingRootPieMenuInteraction(%s)", tostring(presetId))
 	if presetId ~= 0 and self.util.DoesPieMenuDataExist(presetId) then
-		local result
 		self.rootMenu:SetAllowActivateInUIMode(self.svCurrent.allowActivateInUIMode)
 		self.rootMenu:SetCenteringAtMouseCursor(self.svCurrent.centeringAtMouseCursor)
 		self.rootMenu:SetAllowClickable(self.svCurrent.allowClickable)
 		self.rootMenu:SetTimeToHoldKey(self.svCurrent.timeToHoldKey)
 		self.rootMenu:SetMouseDeltaScaleFactorInUIMode(self.svCurrent.mouseDeltaScaleFactorInUIMode)
-		result = self.rootMenu:StartInteraction()
---		self.LDL:Debug("StartInteraction result : ", tostring(result))
-		if result then
-			self.activePresetId = presetId
+		LibCInteraction:HandleKeybindDown(actionName, presetId)
+	end
+end
+]]
+
+
+function CSPM:HandleKeybindUp(actionName)
+	self.LDL:Debug("HandleKeybindUp: %s", tostring(actionName))
+	local actionName = LUT.ActionNameAlias[actionName] or actionName	-- There are multiple action layers for activating the root pie menu, but we will consolidate them here.
+	local keybindsId = LUT.ActionName_To_KeybindsId[actionName or ""]
+	local presetId = self.svCurrent.keybinds[keybindsId or 0]
+	if presetId and presetId ~= 0 and self.util.DoesPieMenuDataExist(presetId) then
+		LibCInteraction:HandleKeybindUp(actionName)
+	end
+end
+
+function CSPM:ChangeTopmostPieMenu(newPresetId)
+	local pieMenu = self:GetTopmostPieMenu()
+	if pieMenu then
+		if newPresetId and newPresetId ~= 0 and self.util.DoesPieMenuDataExist(newPresetId) then
+			self:SetActivePresetId(newPresetId)
+			pieMenu:RefreshMenu()
+			return true
 		end
-		return result
 	end
 end
 
-function CSPM:StartInteractionWithKeyBindings(keybindsId)
-	local presetId = self.svCurrent.keybinds[keybindsId]
-	if presetId then
-		self.holdDownInteractionKey = true
-		self.activeKeybindsId = keybindsId
-		self:StartInteraction(presetId)
+function CSPM:EndPieMenuInteraction(pieMenu, clearSelection)
+-- pieMenu : pieMenuController object
+	self.LDL:Debug("EndPieMenuInteraction(%s)", tostring(clearSelection))
+	if pieMenu then
+		pieMenu:StopInteraction(clearSelection)
+		self:ClearActivePresetId()
+		for k, interaction in pairs(pieMenu.interactions) do
+			interaction:Reset()
+		end
 	end
 end
 
-function CSPM:StopInteraction()
---	self.LDL:Debug("StopInteraction()")
-	local result
-	if self.activePresetId ~= 0 then
-		result = self.rootMenu:StopInteraction()
-		self.activePresetId = 0
-	end
---	self.LDL:Debug("StopInteraction result : ", tostring(result))
-	self.activeKeybindsId = 0
-	return result
-end
-
-function CSPM:StopInteractionWithKeyBindings(keybindsId)
-	self.holdDownInteractionKey = false
-	self:StopInteraction()
-end
-
-function CSPM:CancelInteraction()
---	self.LDL:Debug("CancelInteraction()")
-	local result
-	result = self.rootMenu:CancelInteraction()
---	self.LDL:Debug("CancelInteraction result : ", tostring(result))
-	self.activePresetId = 0
-	self.activeKeybindsId = 0
-	return result
+function CSPM:CancelPieMenuInteraction(pieMenuController)
+	self:EndPieMenuInteraction(pieMenuController, true)
 end
 
 
@@ -1380,11 +1531,11 @@ CSPM.shared = {
 -- ---------------------------------------------------------------------------------------
 -- Bindings
 -- ---------------------------------------------------------------------------------------
-CShortcutPieMenu.StartInteractionWithKeyBindings = function(self, keybindsId, ...)
-	return CSPM:StartInteractionWithKeyBindings(keybindsId, ...)
+CShortcutPieMenu.HandleKeybindDown = function(self, actionName, ...)
+	return CSPM:HandleKeybindDown(actionName, ...)
 end
-CShortcutPieMenu.StopInteractionWithKeyBindings = function(self, keybindsId, ...)
-	return CSPM:StopInteractionWithKeyBindings(keybindsId, ...)
+CShortcutPieMenu.HandleKeybindUp = function(self, actionName, ...)
+	return CSPM:HandleKeybindUp(actionName, ...)
 end
 
 

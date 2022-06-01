@@ -1,4 +1,9 @@
-V0.10.1: [V1000] by Calamath
+V0.10.2: [V1002] by Calamath
+- Redesigned the pie menu controller.
+- LibCInteraction add-on library is now used for interactions activating the pie menu.
+- LibCInteraction add-on library is now used for pie menu button interactions.
+
+V0.10.1: [V1001] by Calamath
 - Modified constants and lookup tables to reduce the number of local variables.
 
 V0.10.0: [V1000] by Calamath

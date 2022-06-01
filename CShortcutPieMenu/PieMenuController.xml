@@ -17,13 +17,8 @@
 					<Anchor point="CENTER" />
 				</Texture>
 
-				<Texture name="$(parent)TrackQuickslot" layer="BACKGROUND" level="2" textureFile="EsoUI/Art/Quickslots/quickslot_mapping_bg.dds" alpha="0" hidden="false">
+				<Texture name="$(parent)Track" layer="BACKGROUND" level="2" textureFile="EsoUI/Art/Quickslots/quickslot_mapping_bg.dds" hidden="false">
 					<Dimensions x="575" y="575" />
-					<Anchor point="CENTER" />
-				</Texture>
-
-				<Texture name="$(parent)TrackGamepad" layer="BACKGROUND" level="2" textureFile="EsoUI/Art/HUD/Gamepad/gp_radialMenu_track.dds" alpha="0" hidden="false">
-					<Dimensions x="700" y="700" />
 					<Anchor point="CENTER" />
 				</Texture>
 
@@ -59,7 +54,7 @@
 	<Animations>
 		<!-- CSPM Radial Menu Animation Template -->
 		<!-- NOTE : This template is based on DefaultRadialMenuAnimation by ZOS, with its own extensions and size adjustment to fit the UI design of the CShortcutPieMenu add-on. -->
-		<AnimationTimeline name="CSPM_RadialMenuAnimation" inherits="DefaultRadialMenuAnimation">
+		<AnimationTimeline name="CSPM_RadialMenuAnimation">
 			<Animations>
 				<AlphaAnimation duration="100" startAlpha="0.0" endAlpha="1.0"/>
 				<ScaleAnimation duration="100" startScale="0.2" endScale="1.0"/>

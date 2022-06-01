@@ -702,26 +702,24 @@ function CSPM_PieMenuEditorPanel:CreateOptionsPanel()
 	submenuPieVisual[#submenuPieVisual + 1] = {
 		type = "checkbox",
 		name = L(SI_CSPM_UI_VISUAL_QUICKSLOT_STYLE_OP_NAME), 
-		getFunc = function() return self.db.preset[self.currentPresetId].visual.showTrackQuickslot end, 
+		getFunc = function() return self.db.preset[self.currentPresetId].visual.style == "quickslot" end, 
 		setFunc = function(newValue)
-			self.db.preset[self.currentPresetId].visual.showTrackQuickslot = newValue
-			self.db.preset[self.currentPresetId].visual.showTrackGamepad = not newValue
+			self.db.preset[self.currentPresetId].visual.style = newValue and "quickslot" or "gamepad"
 		end, 
 		tooltip = L(SI_CSPM_UI_VISUAL_QUICKSLOT_STYLE_OP_TIPS), 
 		width = "full", 
-		default = self.DB_DEFAULT.preset[1].visual.showTrackQuickslot, 
+		default = self.DB_DEFAULT.preset[1].visual.style == "quickslot", 
 	}
 	submenuPieVisual[#submenuPieVisual + 1] = {
 		type = "checkbox",
 		name = L(SI_CSPM_UI_VISUAL_GAMEPAD_STYLE_OP_NAME), 
-		getFunc = function() return self.db.preset[self.currentPresetId].visual.showTrackGamepad end, 
+		getFunc = function() return self.db.preset[self.currentPresetId].visual.style == "gamepad" end, 
 		setFunc = function(newValue)
-			self.db.preset[self.currentPresetId].visual.showTrackGamepad = newValue
-			self.db.preset[self.currentPresetId].visual.showTrackQuickslot = not newValue
+			self.db.preset[self.currentPresetId].visual.style = newValue and "gamepad" or "quickslot"
 		end, 
 		tooltip = L(SI_CSPM_UI_VISUAL_GAMEPAD_STYLE_OP_TIPS), 
 		width = "full", 
-		default = self.DB_DEFAULT.preset[1].visual.showTrackGamepad, 
+		default = self.DB_DEFAULT.preset[1].visual.style == "gamepad", 
 	}
 	submenuPieVisual[#submenuPieVisual + 1] = {
 		type = "divider", 

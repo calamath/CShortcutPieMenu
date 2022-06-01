@@ -293,37 +293,37 @@ function CSPM_PieMenuManagerPanel:CreateOptionsPanel()
 		min = 0,
 		max = 300,
 		step = 1, 
-		getFunc = function() return self.svCurrent.timeToHoldKey end, 
-		setFunc = function(newValue) self.svCurrent.timeToHoldKey = newValue end, 
+		getFunc = function() return self.svCurrent.menuAttributes.timeToHoldKey end, 
+		setFunc = function(newValue) self.svCurrent.menuAttributes.timeToHoldKey = newValue end, 
 		clampInput = false, 
-		default = self.SV_DEFAULT.timeToHoldKey, 
+		default = self.SV_DEFAULT.menuAttributes.timeToHoldKey, 
 	}
 	optionsData[#optionsData + 1] = {
 		type = "checkbox",
 		name = L(SI_CSPM_UI_BEHAVIOR_ACTIVATE_IN_UI_OP_NAME), 
-		getFunc = function() return self.svCurrent.allowActivateInUIMode end, 
-		setFunc = function(newValue) self.svCurrent.allowActivateInUIMode = newValue end, 
+		getFunc = function() return self.svCurrent.menuAttributes.allowActivateInUIMode end, 
+		setFunc = function(newValue) self.svCurrent.menuAttributes.allowActivateInUIMode = newValue end, 
 		tooltip = L(SI_CSPM_UI_BEHAVIOR_ACTIVATE_IN_UI_OP_TIPS), 
 		width = "full", 
-		default = self.SV_DEFAULT.allowActivateInUIMode, 
+		default = self.SV_DEFAULT.menuAttributes.allowActivateInUIMode, 
 	}
 	optionsData[#optionsData + 1] = {
 		type = "checkbox",
 		name = L(SI_CSPM_UI_BEHAVIOR_CLICKABLE_OP_NAME), 
-		getFunc = function() return self.svCurrent.allowClickable end, 
-		setFunc = function(newValue) self.svCurrent.allowClickable = newValue end, 
+		getFunc = function() return self.svCurrent.menuAttributes.allowClickable end, 
+		setFunc = function(newValue) self.svCurrent.menuAttributes.allowClickable = newValue end, 
 		tooltip = zo_strformat(L(SI_CSPM_UI_BEHAVIOR_CLICKABLE_OP_TIPS), ZO_Keybindings_GenerateIconKeyMarkup(KEY_MOUSE_LEFT, 125), ZO_Keybindings_GenerateIconKeyMarkup(KEY_GAMEPAD_BUTTON_1, 125), "", ZO_Keybindings_GenerateIconKeyMarkup(KEY_MOUSE_RIGHT, 125), ZO_Keybindings_GenerateIconKeyMarkup(KEY_GAMEPAD_BUTTON_2, 125), ZO_Keybindings_GenerateTextKeyMarkup("ESC")), 
 		width = "full", 
-		default = self.SV_DEFAULT.allowClickable, 
+		default = self.SV_DEFAULT.menuAttributes.allowClickable, 
 	}
 	optionsData[#optionsData + 1] = {
 		type = "checkbox",
 		name = L(SI_CSPM_UI_BEHAVIOR_CENTER_AT_MOUSE_OP_NAME), 
-		getFunc = function() return self.svCurrent.centeringAtMouseCursor end, 
-		setFunc = function(newValue) self.svCurrent.centeringAtMouseCursor = newValue end, 
+		getFunc = function() return self.svCurrent.menuAttributes.centeringAtMouseCursor end, 
+		setFunc = function(newValue) self.svCurrent.menuAttributes.centeringAtMouseCursor = newValue end, 
 		tooltip = L(SI_CSPM_UI_BEHAVIOR_CENTER_AT_MOUSE_OP_TIPS), 
 		width = "full", 
-		default = self.SV_DEFAULT.centeringAtMouseCursor, 
+		default = self.SV_DEFAULT.menuAttributes.centeringAtMouseCursor, 
 	}
 	optionsData[#optionsData + 1] = {
 		type = "dropdown", 
@@ -343,11 +343,11 @@ function CSPM_PieMenuManagerPanel:CreateOptionsPanel()
 			12, 
 			20, 
 		}, 
-		getFunc = function() return self.svCurrent.mouseDeltaScaleFactorInUIMode end, 
-		setFunc = function(newValue) self.svCurrent.mouseDeltaScaleFactorInUIMode = newValue end, 
+		getFunc = function() return self.svCurrent.menuAttributes.mouseDeltaScaleFactorInUIMode end, 
+		setFunc = function(newValue) self.svCurrent.menuAttributes.mouseDeltaScaleFactorInUIMode = newValue end, 
 		width = "full", 
 		scrollable = true, 
-		default = self.SV_DEFAULT.mouseDeltaScaleFactorInUIMode, 
+		default = self.SV_DEFAULT.menuAttributes.mouseDeltaScaleFactorInUIMode, 
 	}
 
 --[[

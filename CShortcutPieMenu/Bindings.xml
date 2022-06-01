@@ -1,92 +1,140 @@
 <Bindings>
 	<Layer name="CSPM_Interceptor">
 		<Category name="CSPM_PieMenuController">
-			<Action name="CSPM_KEY_MOUSE_LEFT" hideAction="true"><Down>local dummy=nil</Down></Action>
-			<Action name="CSPM_KEY_MOUSE_LEFTRIGHT" hideAction="true"><Down>local dummy=nil</Down></Action>
-			<Action name="CSPM_KEY_MOUSE_MIDDLE" hideAction="true"><Down>local dummy=nil</Down></Action>
-			<Action name="CSPM_KEY_MOUSE_RIGHT" hideAction="true"><Down>local dummy=nil</Down></Action>
-			<Action name="CSPM_KEY_MOUSEWHEEL_DOWN" hideAction="true"><Down>local dummy=nil</Down></Action>
-			<Action name="CSPM_KEY_MOUSEWHEEL_UP" hideAction="true"><Down>local dummy=nil</Down></Action>
-			<Action name="CSPM_KEY_MOUSE_4" hideAction="true"><Down>local dummy=nil</Down></Action>
-			<Action name="CSPM_KEY_MOUSE_5" hideAction="true"><Down>local dummy=nil</Down></Action>
-			<Action name="CSPM_KEY_GAMEPAD_BUTTON_1" hideAction="true"><Down>local dummy=nil</Down></Action>
-			<Action name="CSPM_KEY_GAMEPAD_BUTTON_2" hideAction="true"><Down>local dummy=nil</Down></Action>
-			<Action name="CSPM_KEY_GAMEPAD_BUTTON_3" hideAction="true"><Down>local dummy=nil</Down></Action>
-			<Action name="CSPM_KEY_GAMEPAD_BUTTON_4" hideAction="true"><Down>local dummy=nil</Down></Action>
+			<BlockAction name="SPECIAL_MOVE_ATTACK" />
+			<BlockAction name="SPECIAL_MOVE_BLOCK" />
+			<BlockAction name="SPECIAL_MOVE_INTERRUPT" />
 		</Category>
-	</Layer>
-	<Layer name="CSPM_HUD_Interceptor">
-		<Category name="CSPM_PieMenuController">
-			<Action name="CSPM_HUD_KEY_MOUSE_LEFT" hideAction="true"><Down>CALLBACK_MANAGER:FireCallbacks("CSPM-KeyDownHUD", KEY_MOUSE_LEFT)</Down></Action>
-			<Action name="CSPM_HUD_KEY_MOUSE_LEFTRIGHT" hideAction="true"><Down>CALLBACK_MANAGER:FireCallbacks("CSPM-KeyDownHUD", KEY_MOUSE_LEFTRIGHT)</Down></Action>
-			<Action name="CSPM_HUD_KEY_MOUSE_MIDDLE" hideAction="true"><Down>CALLBACK_MANAGER:FireCallbacks("CSPM-KeyDownHUD", KEY_MOUSE_MIDDLE)</Down></Action>
-			<Action name="CSPM_HUD_KEY_MOUSE_RIGHT" hideAction="true"><Down>CALLBACK_MANAGER:FireCallbacks("CSPM-KeyDownHUD", KEY_MOUSE_RIGHT)</Down></Action>
-			<Action name="CSPM_HUD_KEY_MOUSEWHEEL_DOWN" hideAction="true"><Down>CALLBACK_MANAGER:FireCallbacks("CSPM-KeyDownHUD", KEY_MOUSEWHEEL_DOWN)</Down></Action>
-			<Action name="CSPM_HUD_KEY_MOUSEWHEEL_UP" hideAction="true"><Down>CALLBACK_MANAGER:FireCallbacks("CSPM-KeyDownHUD", KEY_MOUSEWHEEL_UP)</Down></Action>
-			<Action name="CSPM_HUD_KEY_MOUSE_4" hideAction="true"><Down>CALLBACK_MANAGER:FireCallbacks("CSPM-KeyDownHUD", KEY_MOUSE_4)</Down></Action>
-			<Action name="CSPM_HUD_KEY_MOUSE_5" hideAction="true"><Down>CALLBACK_MANAGER:FireCallbacks("CSPM-KeyDownHUD", KEY_MOUSE_5)</Down></Action>
-			<Action name="CSPM_HUD_KEY_GAMEPAD_BUTTON_1" hideAction="true"><Down>CALLBACK_MANAGER:FireCallbacks("CSPM-KeyDownHUD", KEY_GAMEPAD_BUTTON_1)</Down></Action>
-			<Action name="CSPM_HUD_KEY_GAMEPAD_BUTTON_2" hideAction="true"><Down>CALLBACK_MANAGER:FireCallbacks("CSPM-KeyDownHUD", KEY_GAMEPAD_BUTTON_2)</Down></Action>
-			<Action name="CSPM_HUD_KEY_GAMEPAD_BUTTON_3" hideAction="true"><Down>CALLBACK_MANAGER:FireCallbacks("CSPM-KeyDownHUD", KEY_GAMEPAD_BUTTON_3)</Down></Action>
-			<Action name="CSPM_HUD_KEY_GAMEPAD_BUTTON_4" hideAction="true"><Down>CALLBACK_MANAGER:FireCallbacks("CSPM-KeyDownHUD", KEY_GAMEPAD_BUTTON_4)</Down></Action>
-		</Category>
-	</Layer>
-	<Layer name="CSPM_UI_Interceptor">
-		<Category name="CSPM_PieMenuController">
-		</Category>
-		<BlockKey key="MOUSE_4" />
-		<BlockKey key="MOUSE_5" />
 		<BlockKey key="MOUSE_LEFT" />
 		<BlockKey key="MOUSE_LEFTRIGHT" />
 		<BlockKey key="MOUSE_MIDDLE" />
 		<BlockKey key="MOUSE_RIGHT" />
+		<BlockKey key="MOUSEWHEEL_DOWN" />
+		<BlockKey key="MOUSEWHEEL_UP" />
+		<BlockKey key="MOUSE_4" />
+		<BlockKey key="MOUSE_5" />
+		<BlockKey key="GAMEPAD_BUTTON_1" />
+		<BlockKey key="GAMEPAD_BUTTON_2" />
+		<BlockKey key="GAMEPAD_BUTTON_3" />
+		<BlockKey key="GAMEPAD_BUTTON_4" />
+		<BlockKey key="GAMEPAD_LEFT_SHOULDER" />
+		<BlockKey key="GAMEPAD_RIGHT_SHOULDER" />
+		<BlockKey key="GAMEPAD_LEFT_TRIGGER" />
+		<BlockKey key="GAMEPAD_RIGHT_TRIGGER" />
+	</Layer>
+	<Layer name="CSPM_HUD_Interceptor">
+		<Category name="CSPM_PieMenuController">
+			<Action name="CSPM_HUD_KEY_MOUSE_LEFT" hideAction="true">
+				<Down>LibCInteraction:HandleKeybindDown("CSPM_PIE_MENU_BUTTON", KEY_MOUSE_LEFT)</Down>
+				<Up>LibCInteraction:HandleKeybindUp("CSPM_PIE_MENU_BUTTON", KEY_MOUSE_LEFT)</Up>
+			</Action>
+			<Action name="CSPM_HUD_KEY_MOUSE_LEFTRIGHT" hideAction="true">
+				<Down>LibCInteraction:HandleKeybindDown("CSPM_PIE_MENU_BUTTON", KEY_MOUSE_LEFTRIGHT)</Down>
+				<Up>LibCInteraction:HandleKeybindUp("CSPM_PIE_MENU_BUTTON", KEY_MOUSE_LEFTRIGHT)</Up>
+			</Action>
+			<Action name="CSPM_HUD_KEY_MOUSE_MIDDLE" hideAction="true">
+				<Down>LibCInteraction:HandleKeybindDown("CSPM_PIE_MENU_BUTTON", KEY_MOUSE_MIDDLE)</Down>
+				<Up>LibCInteraction:HandleKeybindUp("CSPM_PIE_MENU_BUTTON", KEY_MOUSE_MIDDLE)</Up>
+			</Action>
+			<Action name="CSPM_HUD_KEY_MOUSE_RIGHT" hideAction="true">
+				<Down>LibCInteraction:HandleKeybindDown("CSPM_PIE_MENU_BUTTON", KEY_MOUSE_RIGHT)</Down>
+				<Up>LibCInteraction:HandleKeybindUp("CSPM_PIE_MENU_BUTTON", KEY_MOUSE_RIGHT)</Up>
+			</Action>
+			<Action name="CSPM_HUD_KEY_MOUSEWHEEL_DOWN" hideAction="true">
+				<Down>LibCInteraction:HandleKeybindDown("CSPM_PIE_MENU_BUTTON", KEY_MOUSEWHEEL_DOWN)</Down>
+				<Up>LibCInteraction:HandleKeybindUp("CSPM_PIE_MENU_BUTTON", KEY_MOUSEWHEEL_DOWN)</Up>
+			</Action>
+			<Action name="CSPM_HUD_KEY_MOUSEWHEEL_UP" hideAction="true">
+				<Down>LibCInteraction:HandleKeybindDown("CSPM_PIE_MENU_BUTTON", KEY_MOUSEWHEEL_UP)</Down>
+				<Up>LibCInteraction:HandleKeybindUp("CSPM_PIE_MENU_BUTTON", KEY_MOUSEWHEEL_UP)</Up>
+			</Action>
+			<Action name="CSPM_HUD_KEY_MOUSE_4" hideAction="true">
+				<Down>LibCInteraction:HandleKeybindDown("CSPM_PIE_MENU_BUTTON", KEY_MOUSE_4)</Down>
+				<Up>LibCInteraction:HandleKeybindUp("CSPM_PIE_MENU_BUTTON", KEY_MOUSE_4)</Up>
+			</Action>
+			<Action name="CSPM_HUD_KEY_MOUSE_5" hideAction="true">
+				<Down>LibCInteraction:HandleKeybindDown("CSPM_PIE_MENU_BUTTON", KEY_MOUSE_5)</Down>
+				<Up>LibCInteraction:HandleKeybindUp("CSPM_PIE_MENU_BUTTON", KEY_MOUSE_5)</Up>
+			</Action>
+			<Action name="CSPM_HUD_KEY_GAMEPAD_BUTTON_1" hideAction="true">
+				<Down>LibCInteraction:HandleKeybindDown("CSPM_PIE_MENU_BUTTON", KEY_GAMEPAD_BUTTON_1)</Down>
+				<Up>LibCInteraction:HandleKeybindUp("CSPM_PIE_MENU_BUTTON", KEY_GAMEPAD_BUTTON_1)</Up>
+			</Action>
+			<Action name="CSPM_HUD_KEY_GAMEPAD_BUTTON_2" hideAction="true">
+				<Down>LibCInteraction:HandleKeybindDown("CSPM_PIE_MENU_BUTTON", KEY_GAMEPAD_BUTTON_2)</Down>
+				<Up>LibCInteraction:HandleKeybindUp("CSPM_PIE_MENU_BUTTON", KEY_GAMEPAD_BUTTON_2)</Up>
+			</Action>
+			<Action name="CSPM_HUD_KEY_GAMEPAD_BUTTON_3" hideAction="true">
+				<Down>LibCInteraction:HandleKeybindDown("CSPM_PIE_MENU_BUTTON", KEY_GAMEPAD_BUTTON_3)</Down>
+				<Up>LibCInteraction:HandleKeybindUp("CSPM_PIE_MENU_BUTTON", KEY_GAMEPAD_BUTTON_3)</Up>
+			</Action>
+			<Action name="CSPM_HUD_KEY_GAMEPAD_BUTTON_4" hideAction="true">
+				<Down>LibCInteraction:HandleKeybindDown("CSPM_PIE_MENU_BUTTON", KEY_GAMEPAD_BUTTON_4)</Down>
+				<Up>LibCInteraction:HandleKeybindUp("CSPM_PIE_MENU_BUTTON", KEY_GAMEPAD_BUTTON_4)</Up>
+			</Action>
+		</Category>
+	</Layer>
+	<Layer name="CSPM_UI_Interceptor">
+		<Category name="CSPM_PieMenuController">
+			<BlockAction name="SPECIAL_MOVE_ATTACK" />
+			<BlockAction name="SPECIAL_MOVE_BLOCK" />
+			<BlockAction name="SPECIAL_MOVE_INTERRUPT" />
+		</Category>
+		<BlockKey key="MOUSE_LEFT" />
+		<BlockKey key="MOUSE_LEFTRIGHT" />
+		<BlockKey key="MOUSE_MIDDLE" />
+		<BlockKey key="MOUSE_RIGHT" />
+		<BlockKey key="MOUSEWHEEL_DOWN" />
+		<BlockKey key="MOUSEWHEEL_UP" />
+		<BlockKey key="MOUSE_4" />
+		<BlockKey key="MOUSE_5" />
 	</Layer>
 
 	<Layer name="SI_KEYBINDINGS_LAYER_GENERAL">
 		<Category name="CShortcutPieMenu">
-			<Action name="CSPM_PIE_MENU_INTERACTION">
-				<Down>CShortcutPieMenu:StartInteractionWithKeyBindings(1)</Down>
-				<Up>CShortcutPieMenu:StopInteractionWithKeyBindings(1)</Up>
+			<Action name="CSPM_PIE_MENU_INTERACTION" holdAndChordInteraction="RUN_ANYWAY">
+				<Down>CShortcutPieMenu:HandleKeybindDown(...)</Down>
+				<Up>CShortcutPieMenu:HandleKeybindUp(...)</Up>
 			</Action>
-			<Action name="CSPM_PIE_MENU_SECONDARY">
-				<Down>CShortcutPieMenu:StartInteractionWithKeyBindings(2)</Down>
-				<Up>CShortcutPieMenu:StopInteractionWithKeyBindings(2)</Up>
+			<Action name="CSPM_PIE_MENU_SECONDARY" holdAndChordInteraction="RUN_ANYWAY">
+				<Down>CShortcutPieMenu:HandleKeybindDown(...)</Down>
+				<Up>CShortcutPieMenu:HandleKeybindUp(...)</Up>
 			</Action>
-			<Action name="CSPM_PIE_MENU_TERTIARY">
-				<Down>CShortcutPieMenu:StartInteractionWithKeyBindings(3)</Down>
-				<Up>CShortcutPieMenu:StopInteractionWithKeyBindings(3)</Up>
+			<Action name="CSPM_PIE_MENU_TERTIARY" holdAndChordInteraction="RUN_ANYWAY">
+				<Down>CShortcutPieMenu:HandleKeybindDown(...)</Down>
+				<Up>CShortcutPieMenu:HandleKeybindUp(...)</Up>
 			</Action>
-			<Action name="CSPM_PIE_MENU_QUATERNARY">
-				<Down>CShortcutPieMenu:StartInteractionWithKeyBindings(4)</Down>
-				<Up>CShortcutPieMenu:StopInteractionWithKeyBindings(4)</Up>
+			<Action name="CSPM_PIE_MENU_QUATERNARY" holdAndChordInteraction="RUN_ANYWAY">
+				<Down>CShortcutPieMenu:HandleKeybindDown(...)</Down>
+				<Up>CShortcutPieMenu:HandleKeybindUp(...)</Up>
 			</Action>
-			<Action name="CSPM_PIE_MENU_QUINARY">
-				<Down>CShortcutPieMenu:StartInteractionWithKeyBindings(5)</Down>
-				<Up>CShortcutPieMenu:StopInteractionWithKeyBindings(5)</Up>
+			<Action name="CSPM_PIE_MENU_QUINARY" holdAndChordInteraction="RUN_ANYWAY">
+				<Down>CShortcutPieMenu:HandleKeybindDown(...)</Down>
+				<Up>CShortcutPieMenu:HandleKeybindUp(...)</Up>
 			</Action>
 		</Category>
 	</Layer>
 	<Layer name="SI_KEYBINDINGS_LAYER_USER_INTERFACE_SHORTCUTS">
 		<Category name="CShortcutPieMenu">
-			<Action name="CSPM_UIMODE_PIE_MENU_INTERACTION" inheritsBindFrom="CSPM_PIE_MENU_INTERACTION" hideAction="true">
-				<Down>CShortcutPieMenu:StartInteractionWithKeyBindings(1)</Down>
-				<Up>CShortcutPieMenu:StopInteractionWithKeyBindings(1)</Up>
+			<Action name="CSPM_UIMODE_PIE_MENU_INTERACTION" hideAction="true" holdAndChordInteraction="RUN_ANYWAY">
+				<Down>CShortcutPieMenu:HandleKeybindDown(...)</Down>
+				<Up>CShortcutPieMenu:HandleKeybindUp(...)</Up>
 			</Action>
-			<Action name="CSPM_UIMODE_PIE_MENU_SECONDARY" inheritsBindFrom="CSPM_PIE_MENU_SECONDARY" hideAction="true">
-				<Down>CShortcutPieMenu:StartInteractionWithKeyBindings(2)</Down>
-				<Up>CShortcutPieMenu:StopInteractionWithKeyBindings(2)</Up>
+			<Action name="CSPM_UIMODE_PIE_MENU_SECONDARY" hideAction="true" holdAndChordInteraction="RUN_ANYWAY">
+				<Down>CShortcutPieMenu:HandleKeybindDown(...)</Down>
+				<Up>CShortcutPieMenu:HandleKeybindUp(...)</Up>
 			</Action>
-			<Action name="CSPM_UIMODE_PIE_MENU_TERTIARY" inheritsBindFrom="CSPM_PIE_MENU_TERTIARY" hideAction="true">
-				<Down>CShortcutPieMenu:StartInteractionWithKeyBindings(3)</Down>
-				<Up>CShortcutPieMenu:StopInteractionWithKeyBindings(3)</Up>
+			<Action name="CSPM_UIMODE_PIE_MENU_TERTIARY" hideAction="true" holdAndChordInteraction="RUN_ANYWAY">
+				<Down>CShortcutPieMenu:HandleKeybindDown(...)</Down>
+				<Up>CShortcutPieMenu:HandleKeybindUp(...)</Up>
 			</Action>
-			<Action name="CSPM_UIMODE_PIE_MENU_QUATERNARY" inheritsBindFrom="CSPM_PIE_MENU_QUATERNARY" hideAction="true">
-				<Down>CShortcutPieMenu:StartInteractionWithKeyBindings(4)</Down>
-				<Up>CShortcutPieMenu:StopInteractionWithKeyBindings(4)</Up>
+			<Action name="CSPM_UIMODE_PIE_MENU_QUATERNARY" hideAction="true" holdAndChordInteraction="RUN_ANYWAY">
+				<Down>CShortcutPieMenu:HandleKeybindDown(...)</Down>
+				<Up>CShortcutPieMenu:HandleKeybindUp(...)</Up>
 			</Action>
-			<Action name="CSPM_UIMODE_PIE_MENU_QUINARY" inheritsBindFrom="CSPM_PIE_MENU_QUINARY" hideAction="true">
-				<Down>CShortcutPieMenu:StartInteractionWithKeyBindings(5)</Down>
-				<Up>CShortcutPieMenu:StopInteractionWithKeyBindings(5)</Up>
+			<Action name="CSPM_UIMODE_PIE_MENU_QUINARY" hideAction="true" holdAndChordInteraction="RUN_ANYWAY">
+				<Down>CShortcutPieMenu:HandleKeybindDown(...)</Down>
+				<Up>CShortcutPieMenu:HandleKeybindUp(...)</Up>
 			</Action>
 		</Category>
 	</Layer>
