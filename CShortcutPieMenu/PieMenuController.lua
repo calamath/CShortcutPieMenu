@@ -715,17 +715,9 @@ end
 function CSPM_PieMenuController:SetupEntryControl(entryControl, data)
 	if not data then return end
 --	LDL:Debug("SetupEntryControl(_, %s)", tostring(data.name))
-	local showGlow = false
-	local itemCount
-	local slotLabel
 	local iconDesaturation = data.disabled or false
-	
-	if data.itemCount then
-		itemCount = data.itemCount
-	else
-		itemCount = nil
-	end
 
+	local slotLabel
 	if data.showSlotLabel then
 		if data.nameColor and type(data.nameColor) == "table" then
 			slotLabel = { data.name, data.nameColor, }
@@ -736,7 +728,7 @@ function CSPM_PieMenuController:SetupEntryControl(entryControl, data)
 		slotLabel = ""
 	end
 
-	CSPM_SetupSelectableItemRadialMenuEntryTemplate(entryControl, showGlow, itemCount, data.showIconFrame, slotLabel, iconDesaturation, data.resizeIconToFitFile)
+	CSPM_SetupSelectableItemRadialMenuEntryTemplate(entryControl, data.showGlow, data.itemCount, data.showIconFrame, slotLabel, iconDesaturation, data.resizeIconToFitFile)
 	CSPM_SelectableItemRadialMenuEntryTemplate_UpdateIconAttributes(entryControl, data.iconAttributes)
 	CSPM_SelectableItemRadialMenuEntryTemplate_UpdateStatus(entryControl, data.statusIcon)
 

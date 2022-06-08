@@ -25,7 +25,7 @@ if not LibCInteraction then d("[CSPM] Error : 'LibCInteraction' not found.") ret
 -- ---------------------------------------------------------------------------------------
 local CSPM = {
 	name = "CShortcutPieMenu", 
-	version = "0.10.2", 
+	version = "0.10.3", 
 	author = "Calamath", 
 	savedVarsPieMenuEditor = "CShortcutPieMenuDB", 
 	savedVarsPieMenuManager = "CShortcutPieMenuSV", 
@@ -341,13 +341,8 @@ do
 			return name
 		end, 
 		[C.ACTION_TYPE_SHORTCUT] = function(_, _, actionValue)
-			local name = ""
-			local shortcutData = CSPM.util.GetShortcutData(actionValue)
-			if shortcutData then
-				name = GetValue(shortcutData.name) or ""
-				nameColor = GetValue(shortcutData.nameColor)
-			end
-			return name, nameColor
+			local name, _, _, _, nameColor = CSPM.util.GetShortcutInfo(actionValue)	-- actionValue: shortcutData or shortcutId
+			return name or "", nameColor
 		end, 
 	}
 	setmetatable(GetDefaultSlotName, { __index = function(self, key) return rawget(self, C.ACTION_TYPE_NOTHING) end, })
@@ -385,7 +380,7 @@ do
 			return "EsoUI/Art/Icons/crafting_dwemer_shiny_cog.dds"
 		end, 
 		[C.ACTION_TYPE_TRAVEL_TO_HOUSE] = function(_, _, actionValue)
-			local icon = ""
+			local icon
 			if actionValue == C.ACTION_VALUE_PRIMARY_HOUSE_ID then
 				icon = "EsoUI/Art/Worldmap/map_indexicon_housing_up.dds"
 			else
@@ -403,12 +398,7 @@ do
 			return icon
 		end, 
 		[C.ACTION_TYPE_SHORTCUT] = function(_, _, actionValue)
-			local icon = ""
-			local shortcutData = CSPM.util.GetShortcutData(actionValue)
-			if shortcutData then
-				icon = GetValue(shortcutData.icon) or "EsoUI/Art/Icons/crafting_dwemer_shiny_gear.dds"
-			end
-			return icon
+			return (select(3, CSPM.util.GetShortcutInfo(actionValue))) or "EsoUI/Art/Icons/crafting_dwemer_shiny_gear.dds"	-- actionValue: shortcutData or shortcutId
 		end, 
 	}
 	setmetatable(GetDefaultSlotIcon, { __index = function(self, key) return rawget(self, C.ACTION_TYPE_NOTHING) end, })
@@ -505,7 +495,7 @@ do
 			local houseCollectibleId, description
 			if actionValue == C.ACTION_VALUE_PRIMARY_HOUSE_ID then
 				houseCollectibleId = GetHousingPrimaryHouse()
-				_, description = GetHelpInfo(GetHelpIndicesFromHelpLink("|H1:help:278|h|h"))	-- Tutorial: Houseing - Permissions
+				_, description = GetHelpInfo(GetHelpIndicesFromHelpLink("|H1:help:278|h|h"))	-- Tutorial: Housing - Permissions
 			else
 				if actionValue == 0 then return false end
 				houseCollectibleId = GetCollectibleIdForHouse(actionValue)
@@ -532,9 +522,8 @@ do
 			return true
 		end, 
 		[C.ACTION_TYPE_SHORTCUT] = function(actionType, categoryId, actionValue)
-			local shortcutData = CSPM.util.GetShortcutData(actionValue)
-			if not shortcutData then return false end
-			local name, description, icon = CSPM.util.GetShortcutInfo(actionValue)
+			local name, description, icon = CSPM.util.GetShortcutInfo(actionValue)	-- actionValue: shortcutData or shortcutId
+			if not name or name == "" then return false end
 			LayoutBasicSlotActionTooltip(ItemTooltip, name, description, icon or CSPM.util.GetDefaultSlotIcon(actionType, categoryId, actionValue), L(SI_CSPM_COMMON_SHORTCUT))
 			ItemTooltip:AddLine(zo_strformat(L("SI_CSPM_SLOT_ACTION_TOOLTIP", actionType), name), "ZoFontWinH4", ZO_SELECTED_TEXT:UnpackRGB())
 			return true
@@ -769,18 +758,20 @@ end
 
 function CSPM_ShortcutManager_Singleton:GetShortcutInfo(shortcutDataOrId)
 	local shortcutData = type(shortcutDataOrId) == "table" and shortcutDataOrId or self:GetShortcutData(shortcutDataOrId) or {}
-	return CSPM.util.GetValue(shortcutData.name), CSPM.util.GetValue(shortcutData.tooltip), CSPM.util.GetValue(shortcutData.icon), shortcutData.callback
+	return CSPM.util.GetValue(shortcutData.name), CSPM.util.GetValue(shortcutData.tooltip), CSPM.util.GetValue(shortcutData.icon), shortcutData.callback, CSPM.util.GetValue(shortcutData.nameColor)
 end
 
 function CSPM_ShortcutManager_Singleton:EncodeMenuEntry(shortcutDataOrId, desiredIndex)
 	local shortcutData = type(shortcutDataOrId) == "table" and shortcutDataOrId or self:GetShortcutData(shortcutDataOrId) or {}
 	local data = {
-		index = desiredIndex or 1, 
-		showIconFrame = shortcutData.showIconFrame, 
-		showSlotLabel = shortcutData.showSlotLabel, 
+		index = desiredIndex or shortcutData.index or 1, 
+		showIconFrame = GetValue(shortcutData.showIconFrame), 
+		showSlotLabel = GetValue(shortcutData.showSlotLabel), 
+		showGlow = GetValue(shortcutData.showGlow), 
 		itemCount = GetValue(shortcutData.itemCount), 
 		name = GetValue(shortcutData.name) or "", 
 		nameColor = GetValue(shortcutData.nameColor), 
+		tooltip = GetValue(shortcutData.tooltip), 
 		icon = GetValue(shortcutData.icon) or "EsoUI/Art/Icons/crafting_dwemer_shiny_gear.dds", 
 		iconAttributes = GetValue(shortcutData.iconAttributes), 
 		resizeIconToFitFile = GetValue(shortcutData.resizeIconToFitFile), 
@@ -791,6 +782,7 @@ function CSPM_ShortcutManager_Singleton:EncodeMenuEntry(shortcutDataOrId, desire
 		cooldownDuration = GetValue(shortcutData.cooldownDuration), 
 		disabled = GetValue(shortcutData.disabled), 
 		slotData = {}, 
+		category = shortcutData.category, 
 	}
 	data.activeIcon = GetValue(shortcutData.activeIcon) or data.icon
 	if data.disabled == true then
@@ -1228,7 +1220,7 @@ function CSPM:SetTopmostPieMenu(pieMenu)
 end
 
 
-function CSPM:OnSelectionChangedCallback(rootMenu, slotIndex, data)
+function CSPM:OnSelectionChangedCallback(menu, slotIndex, data)
 --	self.LDL:Debug("OnSelectionChangedCallback() : %s", slotIndex)
 end
 
@@ -1272,39 +1264,51 @@ function CSPM:AddMenuEntryWithShortcut(pieMenu, shortcutId, visualData)
 	end
 end
 
-function CSPM:PopulateMenuCallback(rootMenu)
+function CSPM:PopulateMenuCallback(pieMenu)
 --	self.LDL:Debug("PopulateMenuCallback()")
 	local presetId = self:GetActivePresetId()
 	local presetData = self.pieMenuDataManager:GetPieMenuData(presetId)
+	if type(presetData) ~= "table" then return end
+
 	local visualData = presetData.visual or {}
-	rootMenu:SetupPieMenuPresetName(presetData.name, visualData.showPresetName)
-	rootMenu:SetupPieMenuVisual(visualData.style, visualData.size)
+	pieMenu:SetupPieMenuPresetName(presetData.name, visualData.showPresetName)
+	pieMenu:SetupPieMenuVisual(visualData.style, visualData.size)
 
 	for i = 1, GetValue(presetData.menuItemsCount) do
-		local actionType = GetActionType(presetData.slot[i].type)
-		local cspmCategoryId = GetValue(presetData.slot[i].category)
-		local actionValue = GetValue(presetData.slot[i].value) or 0
-		local data, isValid
-		if actionType == C.ACTION_TYPE_SHORTCUT then
-			data = self.shortcutManager:EncodeMenuEntry(actionValue, i)
-		else
-			data = {
-				index = i, 
-				itemCount = nil, 
-				statusIcon = nil, 
-				activeStatusIcon = nil, 
-			}
-			data.name, data.nameColor = self.util.GetDefaultSlotName(actionType, cspmCategoryId, actionValue)
-			data.icon = self.util.GetDefaultSlotIcon(actionType, cspmCategoryId, actionValue)
-			data.activeIcon = data.icon
+		local actionType = C.ACTION_TYPE_NOTHING
+		local cspmCategoryId = C.CATEGORY_NOTHING
+		local actionValue = 0
+		local data = {}
+		local isValid = false
+		if type(presetData.slot[i]) == "table" then
+			actionType = GetActionType(presetData.slot[i].type)
+			cspmCategoryId = GetValue(presetData.slot[i].category)
+			actionValue = GetValue(presetData.slot[i].value) or 0
+			if actionType == C.ACTION_TYPE_SHORTCUT then
+				if type(actionValue) == "string" then
+					data = self.shortcutManager:EncodeMenuEntry(actionValue, i)
+				else
+					data = self.shortcutManager:EncodeMenuEntry(presetData.slot[i], i)	-- for embedded shortcut data
+				end
+			else
+				data = {
+					index = i, 
+					itemCount = nil, 
+					statusIcon = nil, 
+					activeStatusIcon = nil, 
+				}
+				data.name, data.nameColor = self.util.GetDefaultSlotName(actionType, cspmCategoryId, actionValue)
+				data.icon = self.util.GetDefaultSlotIcon(actionType, cspmCategoryId, actionValue)
+				data.activeIcon = data.icon
+			end
+			if data.showIconFrame == nil then
+				data.showIconFrame = visualData.showIconFrame
+			end
+			if data.showSlotLabel == nil then
+				data.showSlotLabel = visualData.showSlotLabel
+			end
+			isValid = data.name ~= ""
 		end
-		if data.showIconFrame == nil then
-			data.showIconFrame = visualData.showIconFrame
-		end
-		if data.showSlotLabel == nil then
-			data.showSlotLabel = visualData.showSlotLabel
-		end
-		isValid = data.name ~= ""
 
 		if actionType == C.ACTION_TYPE_COLLECTIBLE then
 			if IsCollectibleActive(actionValue, GAMEPLAY_ACTOR_CATEGORY_PLAYER) then
@@ -1356,14 +1360,16 @@ function CSPM:PopulateMenuCallback(rootMenu)
 				end
 			end
 			local entryName = (data.nameColor and type(data.nameColor) == "table") and { data.name, { r = data.nameColor[1], g = data.nameColor[2], b = data.nameColor[3], }, } or data.name
-			self:AddMenuEntry(rootMenu, entryName, data.icon, data.activeIcon, function() return self:OnSelectionExecutionCallback(data) end, data)
+			self:AddMenuEntry(pieMenu, entryName, data.icon, data.activeIcon, function() return self:OnSelectionExecutionCallback(data) end, data)
 		else
-			self:AddMenuEntryWithShortcut(rootMenu, "!CSPM_invalid_slot_thus_open_piemenu_editor", visualData)
+			self:AddMenuEntryWithShortcut(pieMenu, "!CSPM_invalid_slot_thus_open_piemenu_editor", visualData)
 		end
 	end
 
 	-- Entry Cancel Slot
-	self:AddMenuEntryWithShortcut(rootMenu, "!CSPM_cancel_slot", visualData)
+	if not presetData.suppressCancelSlot then
+		self:AddMenuEntryWithShortcut(pieMenu, "!CSPM_cancel_slot", visualData)
+	end
 end
 -- ------------------------------------------------
 
@@ -1435,7 +1441,7 @@ do
 		local actionValue = GetValue(slotData.value) or 0
 
 		if data.callback and type(data.callback) == "function" then
-			return data.callback(data)
+			return data.callback(data)	-- for embedded shortcut data
 		else
 			return ExecuteSlotAction[actionType](actionType, cspmCategoryId, actionValue, data)
 		end
@@ -1502,8 +1508,8 @@ function CSPM:EndPieMenuInteraction(pieMenu, clearSelection)
 	end
 end
 
-function CSPM:CancelPieMenuInteraction(pieMenuController)
-	self:EndPieMenuInteraction(pieMenuController, true)
+function CSPM:CancelPieMenuInteraction(pieMenu)
+	self:EndPieMenuInteraction(pieMenu, true)
 end
 
 
@@ -1542,10 +1548,6 @@ end
 -- ---------------------------------------------------------------------------------------
 -- APIs
 -- ---------------------------------------------------------------------------------------
-CShortcutPieMenu.GetSharedWorkspace = function(self)
-	return CSPM.shared
-end
-
 CShortcutPieMenu.RegisterClassObject = function(self, className, classObject)
 	if className and classObject and not CSPM.class[className] then
 		CSPM.class[className] = classObject
@@ -1566,6 +1568,10 @@ CShortcutPieMenu.OpenPieMenuManagerPanel = function(self)
 	if CSPM.menuManagerPanel then
 		CSPM.menuManagerPanel:OpenOptionsPanel()
 	end
+end
+-- ---------------------------------------------------------------------------------------
+CShortcutPieMenu.RegisterPieMenu = function(self, presetId, pieMenuData)
+	return CSPM.pieMenuDataManager:RegisterExternalPieMenu(presetId, pieMenuData)
 end
 
 -- ---------------------------------------------------------------------------------------

@@ -1,3 +1,8 @@
+V0.10.3: [V1003] by Calamath
+- Added CShortcutPieMenu:RegisterPieMenu API.
+- Added support for external pie menu definition with the embedded shortcut data.
+- Added pie menu configuration settings for slot glow effect and the cancel button suppress option.
+
 V0.10.2: [V1002] by Calamath
 - Redesigned the pie menu controller.
 - LibCInteraction add-on library is now used for interactions activating the pie menu.
