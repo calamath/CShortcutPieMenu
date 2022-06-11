@@ -209,7 +209,7 @@ function CSPM_PieMenuManagerPanel:CreateOptionsPanel()
 	optionsData[#optionsData + 1] = {
 		type = "header", 
 		name = L(SI_CSPM_UI_BINDINGS_HEADER1_TEXT), 
-		helpUrl = L(SI_CSPM_UI_BINDINGS_HEADER1_TIPS), 
+		tooltip = L(SI_CSPM_UI_BINDINGS_HEADER1_TIPS), 
 	}
 	optionsData[#optionsData + 1] = {
 		type = "dropdown", 
@@ -284,7 +284,7 @@ function CSPM_PieMenuManagerPanel:CreateOptionsPanel()
 	optionsData[#optionsData + 1] = {
 		type = "header", 
 		name = L(SI_CSPM_UI_BEHAVIOR_HEADER1_TEXT), 
-		helpUrl = L(SI_CSPM_UI_BEHAVIOR_HEADER1_TIPS), 
+		tooltip = L(SI_CSPM_UI_BEHAVIOR_HEADER1_TIPS), 
 	}
 	optionsData[#optionsData + 1] = {
 		type = "slider", 
