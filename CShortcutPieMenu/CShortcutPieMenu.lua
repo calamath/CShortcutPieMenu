@@ -25,7 +25,7 @@ if not LibCInteraction then d("[CSPM] Error : 'LibCInteraction' not found.") ret
 -- ---------------------------------------------------------------------------------------
 local CSPM = {
 	name = "CShortcutPieMenu", 
-	version = "0.10.3", 
+	version = "0.10.4", 
 	author = "Calamath", 
 	savedVarsPieMenuEditor = "CShortcutPieMenuDB", 
 	savedVarsPieMenuManager = "CShortcutPieMenuSV", 
@@ -1163,12 +1163,13 @@ function CSPM:RegisterInteraction(pieMenu)
 		enabled = function()
 			return not pieMenu:IsInteracting() and pieMenu:PrepareForInteraction()
 		end, 
+		multipleInput = true, 
 		holdTime = function() return self.svCurrent.menuAttributes.timeToHoldKey end, 
-		keyDownCallback = function(interaction, presetId)
+		startedCallback = function(interaction, presetId)
 			self.holdDownInteractionKey = true
 			self.requestedPresetId = presetId
 		end, 
-		keyUpCallback = function(interaction, clearSelection)
+		endedCallback = function(interaction, clearSelection)
 			if interaction.isPerformed then
 				pieMenu:StopInteraction(clearSelection)
 				self:ClearActivePresetId()

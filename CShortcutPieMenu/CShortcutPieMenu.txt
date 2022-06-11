@@ -1,11 +1,11 @@
 ## Title: Calamath's Shortcut Pie Menu
 ## Description: Shortcut Pie Menu
-## Version: 0.10.3
-## AddOnVersion: 1003
+## Version: 0.10.4
+## AddOnVersion: 1004
 ## Author: Calamath
 ## License: Artistic License 2.0
-## APIVersion: 101033
-## DependsOn: LibAddonMenu-2.0>=33 LibCInteraction>=800
+## APIVersion: 101034
+## DependsOn: LibAddonMenu-2.0>=34 LibCInteraction>=900
 ## OptionalDependsOn: LibDebugLogger>=220
 ## SavedVariables: CShortcutPieMenuDB CShortcutPieMenuSV
 
