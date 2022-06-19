@@ -1,25 +1,16 @@
-V0.10.5: [V1005] by Calamath
-- Adjusted some tooltips in the Pie Menu Manager UI.
-
-V0.10.4: [V1004] by Calamath
-- Addressed compatibility breaking changes in LibCInteraction V0.9.0
+V1.0.0: [V10000] by Calamath
+- Refactoring add-on framework.
+- Redesigned the pie menu controller.
+- Modified constants and lookup tables to reduce the number of local variables.
 - Updated API version to 101034 (ESO 8.0.x : High Isle)
 
-V0.10.3: [V1003] by Calamath
-- Added CShortcutPieMenu:RegisterPieMenu API.
-- Added support for external pie menu definition with the embedded shortcut data.
-- Added pie menu configuration settings for slot glow effect and the cancel button suppress option.
-
-V0.10.2: [V1002] by Calamath
-- Redesigned the pie menu controller.
+- Bundled LibCInteraction library.
 - LibCInteraction add-on library is now used for interactions activating the pie menu.
 - LibCInteraction add-on library is now used for pie menu button interactions.
 
-V0.10.1: [V1001] by Calamath
-- Modified constants and lookup tables to reduce the number of local variables.
+- Bundled LibCPieMenu API library for registering your own pie menu from external add-ons.
+- Added LibCPieMenu:RegisterPieMenu API.
 
-V0.10.0: [V1000] by Calamath
-- Refactoring add-on framework.
 
 V0.9.12: [V912] by Calamath
 Hot Fix:

@@ -8,6 +8,7 @@
 --
 -- Note :
 -- This addon works that uses the library LibAddonMenu-2.0 by sirinsidiator, Seerah, released under the Artistic License 2.0
+-- This addon works that uses the library LibCInteraction by Calamath, released under the Artistic License 2.0
 -- You will need to obtain the above libraries separately.
 --
 
@@ -25,7 +26,7 @@ if not LibCInteraction then d("[CSPM] Error : 'LibCInteraction' not found.") ret
 -- ---------------------------------------------------------------------------------------
 local CSPM = {
 	name = "CShortcutPieMenu", 
-	version = "0.10.5", 
+	version = "1.0.0", 
 	author = "Calamath", 
 	savedVarsPieMenuEditor = "CShortcutPieMenuDB", 
 	savedVarsPieMenuManager = "CShortcutPieMenuSV", 
