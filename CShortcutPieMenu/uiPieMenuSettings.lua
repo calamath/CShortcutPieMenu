@@ -102,6 +102,7 @@ function CSPM_PieMenuEditorPanel:Initialize(parent, currentSavedVars, accountWid
 		L("SI_COLLECTIBLECATEGORYTYPE", COLLECTIBLE_CATEGORY_TYPE_ASSISTANT), 		-- "Assistant", 
 		L("SI_COLLECTIBLECATEGORYTYPE", COLLECTIBLE_CATEGORY_TYPE_COMPANION), 		-- "Companion", 
 		L("SI_COLLECTIBLECATEGORYTYPE", COLLECTIBLE_CATEGORY_TYPE_MEMENTO), 		-- "Memento", 
+		GetCollectibleCategoryNameByCategoryId(LUT.CategoryId_To_CollectibleCategoryId[C.CATEGORY_C_TOOL]), -- "Tools", 
 		L("SI_COLLECTIBLECATEGORYTYPE", COLLECTIBLE_CATEGORY_TYPE_VANITY_PET), 		-- "Non-combat-pet", 
 		L("SI_COLLECTIBLECATEGORYTYPE", COLLECTIBLE_CATEGORY_TYPE_MOUNT), 			-- "Mount", 
 		L("SI_COLLECTIBLECATEGORYTYPE", COLLECTIBLE_CATEGORY_TYPE_PERSONALITY), 	-- "Personality", 
@@ -113,6 +114,7 @@ function CSPM_PieMenuEditorPanel:Initialize(parent, currentSavedVars, accountWid
 		C.CATEGORY_C_ASSISTANT, 
 		C.CATEGORY_C_COMPANION, 
 		C.CATEGORY_C_MEMENTO, 
+		C.CATEGORY_C_TOOL, 
 		C.CATEGORY_C_VANITY_PET, 
 		C.CATEGORY_C_MOUNT, 
 		C.CATEGORY_C_PERSONALITY, 
@@ -314,8 +316,10 @@ function CSPM_PieMenuEditorPanel:OnCollectionUpdated(collectionUpdateType, colle
 		for categoryId, categoryType in pairs(LUT.CategoryId_To_CollectibleCategoryType) do
 			if isDirty[categoryType] then
 				self:RebuildCollectibleSelectionChoicesByCategoryId(categoryId, true)
-				isDirty[categoryType] = false
 			end
+		end
+		for _, categoryType in pairs(LUT.CategoryId_To_CollectibleCategoryType) do
+			isDirty[categoryType] = false
 		end
 		-- update emote choices if needed
 		if isDirty[COLLECTIBLE_CATEGORY_TYPE_EMOTE] then
@@ -444,6 +448,28 @@ function CSPM_PieMenuEditorPanel:RebuildExternalShortcutCategorySelectionChoices
 	self.externalShortcutCategoryIsDirty = false
 end
 
+function CSPM_PieMenuEditorPanel:GetCollectibleSelectionChoicesByCollectibleCategoryId(collectibleCategoryId, unlockedOnly)
+--	collectibleCategoryId : ZOS CollectibleCategoryId
+--	unlockedOnly : return only the unlocked ones or the whole set
+	local choices = {}
+	local choicesValues = {}
+	unlockedOnly = unlockedOnly or false
+	if collectibleCategoryId then
+		local categoryIndex, subcategoryIndex = GetCategoryInfoFromCollectibleCategoryId(collectibleCategoryId)
+		local categoryData = ZO_COLLECTIBLE_DATA_MANAGER:GetCategoryDataByIndicies(categoryIndex, subcategoryIndex)
+		if categoryData then
+			for index = 1, categoryData:GetNumCollectibles() do
+				local collectibleId = categoryData:GetCollectibleDataByIndex(index):GetId()
+				if not unlockedOnly or IsCollectibleUnlocked(collectibleId) then
+					table.insert(choices, zo_strformat(L(SI_CSPM_COMMON_FORMATTER), GetCollectibleName(collectibleId)))
+					table.insert(choicesValues, collectibleId)
+				end
+			end
+		end
+	end
+	-- In overridden custom tooltip functions, the choicesTooltips table uses the collectibleId value instead of a string.
+	return choices, choicesValues, choicesValues
+end
 function CSPM_PieMenuEditorPanel:GetCollectibleSelectionChoicesByCategoryType(categoryType, unlockedOnly)
 --	categoryType : ZOS CollectibleCategoryType
 --	unlockedOnly : return only the unlocked ones or the whole set
@@ -464,7 +490,11 @@ function CSPM_PieMenuEditorPanel:GetCollectibleSelectionChoicesByCategoryType(ca
 end
 function CSPM_PieMenuEditorPanel:GetCollectibleSelectionChoicesByCategoryId(categoryId, unlockedOnly)
 --	categoryId : CSPM category id
-	return self:GetCollectibleSelectionChoicesByCategoryType(LUT.CategoryId_To_CollectibleCategoryType[categoryId], unlockedOnly)
+	if categoryId == C.CATEGORY_C_TOOL then
+		return self:GetCollectibleSelectionChoicesByCollectibleCategoryId(LUT.CategoryId_To_CollectibleCategoryId[categoryId], unlockedOnly)
+	else
+		return self:GetCollectibleSelectionChoicesByCategoryType(LUT.CategoryId_To_CollectibleCategoryType[categoryId], unlockedOnly)
+	end
 end
 function CSPM_PieMenuEditorPanel:RebuildCollectibleSelectionChoicesByCategoryId(categoryId, unlockedOnly)
 	ClearTable(self.actionValueChoices[categoryId])
