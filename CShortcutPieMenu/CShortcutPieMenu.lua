@@ -26,7 +26,7 @@ if not LibCInteraction then d("[CSPM] Error : 'LibCInteraction' not found.") ret
 -- ---------------------------------------------------------------------------------------
 local CSPM = {
 	name = "CShortcutPieMenu", 
-	version = "1.0.1", 
+	version = "1.0.2", 
 	author = "Calamath", 
 	savedVarsPieMenuEditor = "CShortcutPieMenuDB", 
 	savedVarsPieMenuManager = "CShortcutPieMenuSV", 

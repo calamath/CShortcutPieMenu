@@ -23,7 +23,7 @@ if not CShortcutPieMenu then d("[LibCPieMenu] Error : 'CShortcutPieMenu' not fou
 -- ---------------------------------------------------------------------------------------
 local LCPM = {
 	name = "LibCPieMenu", 
-	version = "1.0.0", 
+	version = "1.0.2", 
 	author = "Calamath", 
 }	
 LibCPieMenu = LCPM

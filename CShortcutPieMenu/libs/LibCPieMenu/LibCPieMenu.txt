@@ -1,12 +1,12 @@
 ## Title: LibCPieMenu
 ## Description: A library to register an external pie menu. (This library is a part of the CShortcutPieMenu add-on)
-## Version: 1.0.0
-## AddOnVersion: 10000
+## Version: 1.0.2
+## AddOnVersion: 10002
 ## Author: Calamath
 ## License: Artistic License 2.0
 ## IsLibrary: true
-## APIVersion: 101034
-## DependsOn: CShortcutPieMenu
+## APIVersion: 101036
+## DependsOn: CShortcutPieMenu>=10002
 
 ; This Add-on is not created by, affiliated with or sponsored by ZeniMax 
 ; Media Inc. or its affiliates. The Elder Scrolls® and related logos are 
