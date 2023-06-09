@@ -6,22 +6,12 @@
 -- This software is released under the Artistic License 2.0
 -- https://opensource.org/licenses/Artistic-2.0
 --
--- Note :
--- This addon works that uses the library LibAddonMenu-2.0 by sirinsidiator, Seerah, released under the Artistic License 2.0
--- This addon works that uses the library LibCInteraction by Calamath, released under the Artistic License 2.0
--- You will need to obtain the above libraries separately.
---
 
-
--- CShortcutPieMenu local definitions
-local CSPM, C, LUT = {}, {}, {}
+if not CShortcutPieMenu then return end
+local CSPM = CShortcutPieMenu:SetSharedEnvironment()
+-- ---------------------------------------------------------------------------------------
 local L = GetString
-
--- ---------------------------------------------------------------------------------------
--- Library
--- ---------------------------------------------------------------------------------------
 local LAM = LibAddonMenu2
-if not LAM then d("[CSPM] Error : 'LibAddonMenu' not found.") return end
 
 -- ---------------------------------------------------------------------------------------
 -- Helper Functions
@@ -43,33 +33,27 @@ end
 -- ---------------------------------------------------------------------------------------
 -- PieMenuManager Panel Class
 -- ---------------------------------------------------------------------------------------
-local CSPM_PieMenuManagerPanel = ZO_InitializingObject:Subclass()
-function CSPM_PieMenuManagerPanel:Initialize(parent, currentSavedVars, accountWideSavedVars, defaults)
-	if CSPM then
-		CSPM = parent
-		if C then C = CSPM.const end
-		if LUT then LUT = CSPM.lut end
-	end
-	self.name = "CSPM-ManagerPanel"
+local CSPM_PieMenuManagerPanel = CT_LAMSettingPanelController:Subclass()
+function CSPM_PieMenuManagerPanel:Initialize(panelId, currentSavedVars, accountWideSavedVars, defaults)
+	CT_LAMSettingPanelController.Initialize(self, panelId)	-- Note: Inherit template class but not use as an initializing object.
+	self.pieMenuDataManager = GetPieMenuDataManager()
 	self.svCurrent = currentSavedVars or {}
 	self.svAccount = accountWideSavedVars or {}
 	self.SV_DEFAULT = defaults or {}
-	self.panelInitialized = false
-	self.panelOpened = false
 	self:RebuildPresetSelectionChoices()	-- 	presetChoices
-	CALLBACK_MANAGER:RegisterCallback("CSPM-UserPieMenuInfoUpdated", function(presetId)
+	CSPM:RegisterCallback("CSPM-UserPieMenuInfoUpdated", function(presetId)
 		self:OnUserPieMenuInfoUpdated(presetId)
 	end)
-	CALLBACK_MANAGER:RegisterCallback("CSPM-PieMenuRegistered", function(presetId)
+	CSPM:RegisterCallback("LCPM-PieMenuRegistered", function(presetId)
 		self.presetSelectionIsDirty = true
 	end)
 end
 
 function CSPM_PieMenuManagerPanel:GetPresetDisplayNameByPresetId(presetId)
 	local name
-	local pieMenuName = CSPM.util.GetPieMenuInfo(presetId)
-	if CSPM.util.IsUserPieMenu(presetId) then
-		if CSPM.util.DoesPieMenuDataExist(presetId) then
+	local pieMenuName = GetPieMenuInfo(presetId)
+	if IsUserPieMenu(presetId) then
+		if DoesPieMenuDataExist(presetId) then
 			if pieMenuName ~= "" then
 				name = zo_strformat(L(SI_CSPM_PRESET_NAME_FORMATTER), presetId, pieMenuName)
 			else
@@ -89,7 +73,7 @@ function CSPM_PieMenuManagerPanel:OnUserPieMenuInfoUpdated(presetId)
 	CSPM.LDL:Debug("OnUserPieMenuInfoUpdated : ", presetId)
 
 	-- NOTE : the preset selection choices will also be updated here.
-	if CSPM.util.IsUserPieMenu(presetId) then
+	if IsUserPieMenu(presetId) then
 		self.presetChoices[presetId] = self:GetPresetDisplayNameByPresetId(presetId)
 	else
 		local key = GetTableKeyForValue(self.presetChoicesValues, presetId)
@@ -113,12 +97,12 @@ end
 function CSPM_PieMenuManagerPanel:GetPresetSelectionChoices()
 	local choices = {}
 	local choicesValues = {}
-	for i = 1, C.MAX_USER_PRESET do
+	for i = 1, MAX_USER_PRESET do
 		choices[i] = self:GetPresetDisplayNameByPresetId(i)
 		choicesValues[i] = i
 	end
 
-	local externalPieMenuPresetIdList = CSPM.pieMenuManager:GetExternalPieMenuPresetIdList()
+	local externalPieMenuPresetIdList = self.pieMenuDataManager:GetExternalPieMenuPresetIdList()
 	for _, presetId in pairs(externalPieMenuPresetIdList) do
 		table.insert(choices, self:GetPresetDisplayNameByPresetId(presetId))
 		table.insert(choicesValues, presetId)
@@ -138,8 +122,6 @@ function CSPM_PieMenuManagerPanel:DoTestButton()
 end
 
 function CSPM_PieMenuManagerPanel:OnLAMPanelOpened(panel)
-	if (panel ~= self.panel) then return end
-	self.panelOpened = true
 --	CSPM.LDL:Debug("OnLAMPanelOpened")
 	-- update preset selection choices if needed.
 	-- NOTE : If an external pie menu is added by an external add-on after the previous construction of the choice, the pie menu preset choice should be rebuilt.
@@ -161,12 +143,10 @@ function CSPM_PieMenuManagerPanel:OnLAMPanelOpened(panel)
 end
 
 function CSPM_PieMenuManagerPanel:OnLAMPanelClosed(panel)
-	if (panel ~= self.panel) then return end
-	self.panelOpened = false
 --	CSPM.LDL:Debug("OnLAMPanelClosed")
 end
 
-function CSPM_PieMenuManagerPanel:CreateOptionsPanel()
+function CSPM_PieMenuManagerPanel:CreateSettingPanel()
 	local panelData = {
 		type = "panel", 
 		name = "Shortcut PieManager", 
@@ -181,7 +161,7 @@ function CSPM_PieMenuManagerPanel:CreateOptionsPanel()
 		registerForDefaults = true, 
 --		resetFunc = nil, 
 	}
-	self.panel = LAM:RegisterAddonPanel("CSPM_lamOptionsManager", panelData)
+	LAM:RegisterAddonPanel(self.panelId, panelData)
 
 	local optionsData = {}
 --[[
@@ -361,44 +341,23 @@ function CSPM_PieMenuManagerPanel:CreateOptionsPanel()
 --		width = "half", 
 	}
 ]]
-	LAM:RegisterOptionControls("CSPM_lamOptionsManager", optionsData)
+	LAM:RegisterOptionControls(self.panelId, optionsData)
+end
 
-	local function OnLAMPanelControlsCreated(panel)
-		if (panel ~= self.panel) then return end
-		CALLBACK_MANAGER:UnregisterCallback("LAM-PanelControlsCreated", OnLAMPanelControlsCreated)
-
-		-- override ScrollableDropdownHelper for CSPM_UI_MAN_PresetSelectMenuKeybindsX to customize dropdown choices tooltips
-		for i = 1, 5 do
-			_G["CSPM_UI_MAN_PresetSelectMenuKeybinds" .. i].scrollHelper.OnMouseEnter = function(scrollHelper, control)
-				if control.m_data.tooltip then
-					CSPM.util.LayoutSlotActionTooltip(C.ACTION_TYPE_PIE_MENU, C.CATEGORY_NOTHING, control.m_data.tooltip, C.UI_NONE)
-					CSPM.util.ShowSlotActionTooltip(control, TOPLEFT, 0, 0, BOTTOMRIGHT)
-				end
-			end
-			_G["CSPM_UI_MAN_PresetSelectMenuKeybinds" .. i].scrollHelper.OnMouseExit = function(scrollHelper, control)
-				if control.m_data.tooltip then
-					CSPM.util.HideSlotActionTooltip()
-				end
+function CSPM_PieMenuManagerPanel:OnLAMPanelControlsCreated(panel)
+	-- override ScrollableDropdownHelper for CSPM_UI_MAN_PresetSelectMenuKeybindsX to customize dropdown choices tooltips
+	for i = 1, 5 do
+		_G["CSPM_UI_MAN_PresetSelectMenuKeybinds" .. i].scrollHelper.OnMouseEnter = function(scrollHelper, control)
+			if control.m_data.tooltip then
+				LayoutSlotActionTooltip(ACTION_TYPE_PIE_MENU, CATEGORY_NOTHING, control.m_data.tooltip, UI_NONE)
+				ShowSlotActionTooltip(control, TOPLEFT, 0, 0, BOTTOMRIGHT)
 			end
 		end
-		self.panelInitialized = true
-	end
-	CALLBACK_MANAGER:RegisterCallback("LAM-PanelControlsCreated", OnLAMPanelControlsCreated)
-	CALLBACK_MANAGER:RegisterCallback("LAM-PanelOpened", function(panel)
-		self:OnLAMPanelOpened(panel)
-	end)
-	CALLBACK_MANAGER:RegisterCallback("LAM-PanelClosed", function(panel)
-		self:OnLAMPanelClosed(panel)
-	end)
-end
-
-function CSPM_PieMenuManagerPanel:GetOptionsPanel()
-	return self.panel
-end
-
-function CSPM_PieMenuManagerPanel:OpenOptionsPanel()
-	if self.panel then
-		LAM:OpenToPanel(self.panel)
+		_G["CSPM_UI_MAN_PresetSelectMenuKeybinds" .. i].scrollHelper.OnMouseExit = function(scrollHelper, control)
+			if control.m_data.tooltip then
+				HideSlotActionTooltip()
+			end
+		end
 	end
 end
 

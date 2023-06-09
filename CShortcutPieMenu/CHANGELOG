@@ -1,3 +1,15 @@
+V1.5.0: [V10500] by Calamath
+As a first step in the refactoring and overhaul, the pie menu controller and data management have been transferred to the LibCPieMenu add-on.
+CShortcutPieMenu add-on has a new dependency on LibCPieMenu and primarily handles user-customizable shortcut pie menus.
+The LibCPieMenu add-on comes bundled, so you do not need to look for LibCPieMenu separately.
+
+- Refactored the add-on framework based on our common template classes, to reduce future maintenance costs.
+- Revamped the code base to subdivide the file structure.
+- Bundled LibCPieMenu version 1.5.0 (AddOnVersion: 10500).
+- Updated bundled LibCInteraction version to 1.0.0 (AddOnVersion: 10000).
+- Updated API version to 101038 (ESO 9.0.x : Necrom)
+
+
 V1.0.2: [V10002] by Calamath
 - Updated bundled LibCInteraction version to 0.9.2 (AddOnVersion: 902).
 - Updated API version to 101036 (ESO 8.2.x : Firesong)

@@ -1,12 +1,12 @@
 ## Title: Calamath's Shortcut Pie Menu
 ## Description: Shortcut Pie Menu
-## Version: 1.0.2
-## AddOnVersion: 10002
+## Version: 1.5.0
+## AddOnVersion: 10500
 ## Author: Calamath
 ## License: Artistic License 2.0
-## APIVersion: 101036
-## DependsOn: LibAddonMenu-2.0>=34 LibCInteraction>=902
-## OptionalDependsOn: LibDebugLogger>=220
+## APIVersion: 101038
+## DependsOn: LibAddonMenu-2.0>=34 LibCInteraction>=10000 LibCPieMenu>=10500
+## OptionalDependsOn: LibDebugLogger>=262
 ## SavedVariables: CShortcutPieMenuDB CShortcutPieMenuSV
 
 ; This Add-on is not created by, affiliated with or sponsored by ZeniMax 
@@ -18,8 +18,11 @@
 lang/strings.lua
 lang/$(language).lua
 CShortcutPieMenu.lua
-PieMenuController.xml
-PieMenuController.lua
+CTemplates.lua
+;PieMenuDataManager.lua
+;ShortcutDataManager.lua
+ShortcutAssets.lua
+PieMenuAssets.lua
 uiPieMenuSettings.lua
 uiPieMenuManager.lua
 CShortcutPieMenu.xml

@@ -1,28 +1,19 @@
 --
--- Calamath's Shortcut Pie Menu [CSPM]
+-- CPieMenuManager [LCPM] : (LibCPieMenu)
 --
--- Copyright (c) 2021 Calamath
+-- Copyright (c) 2022 Calamath
 --
 -- This software is released under the Artistic License 2.0
 -- https://opensource.org/licenses/Artistic-2.0
 --
--- Note :
--- This addon works that uses the library LibAddonMenu-2.0 by sirinsidiator, Seerah, released under the Artistic License 2.0
--- This addon works that uses the library LibCInteraction by Calamath, released under the Artistic License 2.0
--- You will need to obtain the above libraries separately.
---
 
-local LDL
---local debugMode = true
-if debugMode and LibDebugLogger then
-	LDL = LibDebugLogger("CSPM-class")
-else
-	LDL = { Verbose = function() end, Debug = function() end, Info = function() end, Warn = function() end, Error = function() end, }
-end
+if not LibCPieMenu then return end
+local LCPM = LibCPieMenu:SetSharedEnvironment()
+-- ---------------------------------------------------------------------------------------
 
 -- Template
--- NOTE : This template is based on ZO_SelectableItemRadialMenuEntryTemplate by ZOS, with its own extensions and size adjustment to fit the UI design of the CShortcutPieMenu add-on.
-function CSPM_SelectableItemRadialMenuEntryTemplate_OnInitialized(self)
+-- NOTE : This template is based on ZO_SelectableItemRadialMenuEntryTemplate by ZOS, with its own extensions and size adjustment to fit the UI design of the LibCPieMenu add-on.
+function LCPM_SelectableItemRadialMenuEntryTemplate_OnInitialized(self)
 	self.glow = self:GetNamedChild("Glow")
 	self.icon = self:GetNamedChild("Icon")
 	self.count = self:GetNamedChild("CountText")
@@ -39,8 +30,9 @@ function CSPM_SelectableItemRadialMenuEntryTemplate_OnInitialized(self)
 	end
 	self.status = self:GetNamedChild("Status")
 end
+_G["LCPM_SelectableItemRadialMenuEntryTemplate_OnInitialized"] = LCPM_SelectableItemRadialMenuEntryTemplate_OnInitialized	-- XML Handlers
 
-function CSPM_SelectableItemRadialMenuEntryTemplate_UpdateStatus(template, statusIcon)
+function LCPM_SelectableItemRadialMenuEntryTemplate_UpdateStatus(template, statusIcon)
 	if template.status then
 		template.status:ClearIcons()
 		if statusIcon then
@@ -56,7 +48,7 @@ function CSPM_SelectableItemRadialMenuEntryTemplate_UpdateStatus(template, statu
 	end
 end
 
-function CSPM_SelectableItemRadialMenuEntryTemplate_UpdateIconAttributes(template, attributes)
+function LCPM_SelectableItemRadialMenuEntryTemplate_UpdateIconAttributes(template, attributes)
 -- NOTE: The argument attributes is also compatible with the argument for ZO_SetIconAttributes().
 	if type(attributes) ~= "table" then return end
 	if attributes.iconColor then
@@ -76,7 +68,7 @@ function CSPM_SelectableItemRadialMenuEntryTemplate_UpdateIconAttributes(templat
 	end
 end
 
-function CSPM_SelectableItemRadialMenuEntryTemplate_UpdateSlotLabel(template, slotLabel)
+function LCPM_SelectableItemRadialMenuEntryTemplate_UpdateSlotLabel(template, slotLabel)
 	slotLabel = slotLabel or ""
 	if type(slotLabel) == "table" then
 		template.label:SetText(slotLabel[1])
@@ -87,7 +79,7 @@ function CSPM_SelectableItemRadialMenuEntryTemplate_UpdateSlotLabel(template, sl
 	end
 end
 
-function CSPM_SelectableItemRadialMenuEntryTemplate_UpdateCooldown(template, remaining, duration, displayType, timeType, drawLeadingEdge)
+function LCPM_SelectableItemRadialMenuEntryTemplate_UpdateCooldown(template, remaining, duration, displayType, timeType, drawLeadingEdge)
 	template.inCooldown = remaining > 0 and duration > 0
 	if template.inCooldown then
 		displayType = displayType or CD_TYPE_RADIAL
@@ -113,7 +105,7 @@ do
 		[TOPRIGHT]		= BOTTOMLEFT, 
 		[CENTER]		= CENTER, 
 	}
-	function CSPM_SetupSelectableItemRadialMenuEntryTemplate(template, showGlow, itemCount, showIconFrame, slotLabel, iconDesaturation, resizeIconToFitFile)
+	function LCPM_SetupSelectableItemRadialMenuEntryTemplate(template, showGlow, itemCount, showIconFrame, slotLabel, iconDesaturation, resizeIconToFitFile)
 		if template.frame then
 			if showIconFrame then
 				template.frame:SetHidden(false)
@@ -149,7 +141,7 @@ do
 					template.label:SetAnchor(point, template.padding, POINT_TO_RELATIVE_POINT[point])
 				end
 			end
-			CSPM_SelectableItemRadialMenuEntryTemplate_UpdateSlotLabel(template, slotLabel)
+			LCPM_SelectableItemRadialMenuEntryTemplate_UpdateSlotLabel(template, slotLabel)
 		end
 
 		if template.count then
@@ -183,8 +175,8 @@ end
 -- NOTE : Since this add-on emphasizes interface consistency with the QuickSlot system with Utility Wheel, the pie menu class inherits from the ZO_RadialMenu class. 
 --        There are some overridden methods for functional extensions and differences, so some of them may contain some of the original code of ZO_RadialMenu by ZOS.
 --
-local CSPM_PieMenu = ZO_RadialMenu:Subclass()
-function CSPM_PieMenu:Initialize(control, entryTemplate, animationTemplate, entryAnimationTemplate, actionLayerName, directionInputs, enableMouse, selectIfCentered)
+local CT_PieMenu = ZO_RadialMenu:Subclass()
+function CT_PieMenu:Initialize(control, entryTemplate, animationTemplate, entryAnimationTemplate, actionLayerName, directionInputs, enableMouse, selectIfCentered)
 	ZO_RadialMenu.Initialize(self, control, entryTemplate, animationTemplate, entryAnimationTemplate, actionLayerName, directionInputs, enableMouse, selectIfCentered)
 	self.presetLabel = control:GetNamedChild("PresetName")
 	self.track = control:GetNamedChild("Track")
@@ -224,19 +216,19 @@ function CSPM_PieMenu:Initialize(control, entryTemplate, animationTemplate, entr
 	self.mouseDeltaScaleFactor = 1
 end
 
-function CSPM_PieMenu:SetOnKeyDownCallback(callback)
+function CT_PieMenu:SetOnKeyDownCallback(callback)
     self.onKeyDownCallback = callback
 end
 
-function CSPM_PieMenu:SetOnKeyUpCallback(callback)
+function CT_PieMenu:SetOnKeyUpCallback(callback)
     self.onKeyUpCallback = callback
 end
 
-function CSPM_PieMenu:SetMouseDeltaScaleFactor(scaleFactor)
+function CT_PieMenu:SetMouseDeltaScaleFactor(scaleFactor)
 	self.mouseDeltaScaleFactor = scaleFactor
 end
 
-function CSPM_PieMenu:SetVirtualMousePosition(virtualMouseX, virtualMouseY)
+function CT_PieMenu:SetVirtualMousePosition(virtualMouseX, virtualMouseY)
 	if self.enableMouse then
 		if virtualMouseX then
 			self.virtualMouseX = virtualMouseX
@@ -248,12 +240,12 @@ function CSPM_PieMenu:SetVirtualMousePosition(virtualMouseX, virtualMouseY)
 	end
 end
 
-function CSPM_PieMenu:SelectCurrentEntryAndFinalize(...)
+function CT_PieMenu:SelectCurrentEntryAndFinalize(...)
 -- The original SelectCurrentEntry method always terminates the radial menu interaction after the entry callback execution.
 	self:SelectCurrentEntry(...)
 end
 
-function CSPM_PieMenu:SelectCurrentEntryAndContinueIfNeeded()
+function CT_PieMenu:SelectCurrentEntryAndContinueIfNeeded()
 -- The new SelectCurrentEntry method terminates only the radial menu interaction if the entry callback return true after the execution.
 -- NOTE: The radial menu interaction continuation should only be performed when there is still a way to end the interaction.
 --       It is also recommended to implement a failsafe in case the radial menu interaction cannot be terminated.
@@ -271,13 +263,13 @@ function CSPM_PieMenu:SelectCurrentEntryAndContinueIfNeeded()
 end
 
 -- Overridden some methods of the original ZO_RadialMenu class.
-function CSPM_PieMenu:OnUpdate()
+function CT_PieMenu:OnUpdate()
 	if self:UpdateVirtualMousePosition() then
 		self:UpdateSelectedEntryFromVirtualMousePosition()
 	end
 end
 
-function CSPM_PieMenu:UpdateVirtualMousePosition()
+function CT_PieMenu:UpdateVirtualMousePosition()
 	if self.enableMouse then
 		local deltaX, deltaY = GetUIMouseDeltas()
 		if deltaX ~= 0 or deltaY ~= 0 then
@@ -289,7 +281,7 @@ function CSPM_PieMenu:UpdateVirtualMousePosition()
 	return false
 end
 
-function CSPM_PieMenu:Refresh(suppressSound)
+function CT_PieMenu:Refresh(suppressSound)
 	self:ClearSelection()
 	if self.actionLabel then
 		self.actionLabel:SetHidden(true)
@@ -336,10 +328,9 @@ local PIE_MENU_STYLE = {
 		}, 
 	}, 
 }
-local CSPM_PieMenuController = ZO_InitializingObject:Subclass()
-function CSPM_PieMenuController:Initialize(control, entryTemplate, animationTemplate, entryAnimationTemplate, attrib)
-	self.name = "CSPM_PieMenuController"
-	self.attrib = {
+local CT_PieMenuController = CT_AdjustableInitializingObject:Subclass()
+function CT_PieMenuController:Initialize(control, entryTemplate, animationTemplate, entryAnimationTemplate, overriddenAttrib)
+	self._attrib = {
 		actionLayerNames = "RadialMenu", 
 		directionInputs = { ZO_DI_LEFT_STICK, ZO_DI_RIGHT_STICK, }, 
 		enableMouse = true, 
@@ -352,9 +343,9 @@ function CSPM_PieMenuController:Initialize(control, entryTemplate, animationTemp
 		centeringAtMouseCursor = false, 
 		timeToHoldKey = 250, 
 	}
-	self.overriddenAttrib = attrib or {}
+	CT_AdjustableInitializingObject.Initialize(self, overriddenAttrib)
 	self.menuControl = control:GetNamedChild("Menu")
-	self.menu = CSPM_PieMenu:New(self.menuControl, entryTemplate, animationTemplate, entryAnimationTemplate, self:GetAttribute("actionLayerNames"), self:GetAttribute("directionInputs"), self:GetAttribute("enableMouse"), self:GetAttribute("selectIfCentered"))
+	self.menu = CT_PieMenu:New(self.menuControl, entryTemplate, animationTemplate, entryAnimationTemplate, self:GetAttribute("actionLayerNames"), self:GetAttribute("directionInputs"), self:GetAttribute("enableMouse"), self:GetAttribute("selectIfCentered"))
 	self.menu:SetCustomControlSetUpFunction(function(entryControl, data)
 		self:SetupEntryControl(entryControl, data)
 	end)
@@ -368,7 +359,7 @@ function CSPM_PieMenuController:Initialize(control, entryTemplate, animationTemp
 	self.menu:SetOnClearCallback(function(...)
 		self:OnClear(...)
 	end)
-	self.interaction = LibCInteraction:RegisterInteraction("CSPM_PIE_MENU_BUTTON", {
+	self.interaction = LibCInteraction:RegisterInteraction("LCPM_PIE_MENU_BUTTON", {
 		type = "press", 
 		enabled = true, 
 		keyDownCallback = function(interaction, ...)
@@ -376,10 +367,10 @@ function CSPM_PieMenuController:Initialize(control, entryTemplate, animationTemp
 		end, 
 	})
 	self.menu:SetOnKeyDownCallback(function(...)
-		LibCInteraction:HandleKeybindDown("CSPM_PIE_MENU_BUTTON", ...)
+		LibCInteraction:HandleKeybindDown("LCPM_PIE_MENU_BUTTON", ...)
 	end)
 	self.menu:SetOnKeyUpCallback(function(...)
-		LibCInteraction:HandleKeybindUp("CSPM_PIE_MENU_BUTTON", ...)
+		LibCInteraction:HandleKeybindUp("LCPM_PIE_MENU_BUTTON", ...)
 	end)
 	self.menuControl:RegisterForEvent(EVENT_LUA_ERROR, function()
 		self:ForceExitInteraction()
@@ -390,137 +381,121 @@ function CSPM_PieMenuController:Initialize(control, entryTemplate, animationTemp
 	self.previousSelectedEntry = nil
 end
 
-function CSPM_PieMenuController:GetAttribute(key)
-	if self.overriddenAttrib[key] ~= nil then
-		return self.overriddenAttrib[key]
-	else
-		return self.attrib[key]
-	end
-end
-
-function CSPM_PieMenuController:SetAttribute(key, value)
-	if self.overriddenAttrib[key] ~= nil then
-		self.overriddenAttrib[key] = value
-	else
-		self.attrib[key] = value
-	end
-end
-
-function CSPM_PieMenuController:SetOnSelectionChangedCallback(callback)
+function CT_PieMenuController:SetOnSelectionChangedCallback(callback)
 	self.onSelectionChangedCallback = callback
 end
 
-function CSPM_PieMenuController:SetOnUpdateRotationFunction(callback)
+function CT_PieMenuController:SetOnUpdateRotationFunction(callback)
 	self.onUpdateRotationFunc = callback
 end
 
-function CSPM_PieMenuController:SetOnClearCallback(callback)
+function CT_PieMenuController:SetOnClearCallback(callback)
 	self.onClearCallback = callback
 end
 
-function CSPM_PieMenuController:SetPopulateMenuCallback(callback)
+function CT_PieMenuController:SetPopulateMenuCallback(callback)
 	self.populateMenuCallback = callback
 end
 
-function CSPM_PieMenuController:OnGlobalKeyDown(key, ctrl, alt, shift, command)
+function CT_PieMenuController:OnGlobalKeyDown(key, ctrl, alt, shift, command)
 	if self.bindings[key] then
 		self.bindings[key](self, key, ctrl, alt, shift, command)
 	end
 end
 
-function CSPM_PieMenuController:SetActionLayer(actionLayerName)
+function CT_PieMenuController:SetActionLayer(actionLayerName)
 	self.menu.actionLayerName = actionLayerName
 end
 
-function CSPM_PieMenuController:SetSelectIfCentered(selectIfCentered)
+function CT_PieMenuController:SetSelectIfCentered(selectIfCentered)
 	self.menu.selectIfCentered = selectIfCentered
 end
 
-function CSPM_PieMenuController:IsTopmost()
+function CT_PieMenuController:IsTopmost()
 	return self.isTopmost
 end
 
-function CSPM_PieMenuController:SetTopmost(isTopmost)
+function CT_PieMenuController:SetTopmost(isTopmost)
 	self.isTopmost = isTopmost
 	self.menuControl:GetParent():SetTopmost(isTopmost)
 end
 
-function CSPM_PieMenuController:ShowUnderlay()
+function CT_PieMenuController:ShowUnderlay()
 	if self.menu.underlay then
 		self.menu.underlay:SetHidden(false)
 	end
 end
 
-function CSPM_PieMenuController:HideUnderlay()
+function CT_PieMenuController:HideUnderlay()
 	if self.menu.underlay then
 		self.menu.underlay:SetHidden(true)
 	end
 end
 
-function CSPM_PieMenuController:ShowOverlay()
+function CT_PieMenuController:ShowOverlay()
 	if self.menu.overlay then
 		self.menu.overlay:SetHidden(false)
 	end
 end
 
-function CSPM_PieMenuController:HideOverlay()
+function CT_PieMenuController:HideOverlay()
 	if self.menu.overlay then
 		self.menu.overlay:SetHidden(true)
 	end
 end
 
-function CSPM_PieMenuController:SetMouseDeltaScaleFactorInUIMode(scaleFactor)
+function CT_PieMenuController:SetMouseDeltaScaleFactorInUIMode(scaleFactor)
 	self:SetAttribute("mouseDeltaScaleFactorInUIMode", scaleFactor)
 end
 
-function CSPM_PieMenuController:SetAllowActivateInUIMode(allowActivateInUIMode)
+function CT_PieMenuController:SetAllowActivateInUIMode(allowActivateInUIMode)
 	self:SetAttribute("allowActivateInUIMode", allowActivateInUIMode)
 end
 
-function CSPM_PieMenuController:SetAllowClickable(allowClickable)
+function CT_PieMenuController:SetAllowClickable(allowClickable)
 	self:SetAttribute("allowClickable", allowClickable)
 end
 
-function CSPM_PieMenuController:SetCenteringAtMouseCursor(centeringAtMouseCursor)
+function CT_PieMenuController:SetCenteringAtMouseCursor(centeringAtMouseCursor)
 	self:SetAttribute("centeringAtMouseCursor", centeringAtMouseCursor)
 end
 
-function CSPM_PieMenuController:SetVirtualMousePositionToMousePosition()
+function CT_PieMenuController:SetVirtualMousePositionToMousePosition()
 	local centerX, centerY = GuiRoot:GetCenter()
 	local x, y = GetUIMousePosition()
 	self.menu:SetVirtualMousePosition(x - centerX, y - centerY)
 end
 
-function CSPM_PieMenuController:SetAnchorOffset(offsetX, offsetY)
+function CT_PieMenuController:SetAnchorOffset(offsetX, offsetY)
 	self.menuControl:ClearAnchors()
 	self.menuControl:SetAnchor(CENTER, guiRoot, CENTER, offsetX, offsetY)
 end
 
-function CSPM_PieMenuController:SetAnchorToMousePosition()
+function CT_PieMenuController:SetAnchorToMousePosition()
 	local centerX, centerY = GuiRoot:GetCenter()
 	local x, y = GetUIMousePosition()
 	self:SetAnchorOffset(x - centerX, y - centerY)
 end
 
-function CSPM_PieMenuController:SetAnchorToCenterPosition()
+function CT_PieMenuController:SetAnchorToCenterPosition()
 	self:SetAnchorOffset(0, 0)
 end
 
-function CSPM_PieMenuController:RegisterBindings(key, callback)
+function CT_PieMenuController:RegisterBindings(key, callback)
 	if type(callback) == "function" then
 		self.bindings[key] = callback
 	end
 end
 
-function CSPM_PieMenuController:UnregisterBindings(key)
+function CT_PieMenuController:UnregisterBindings(key)
 	self.bindings[key] = nil
 end
 
-function CSPM_PieMenuController:GetCurrentRotation()
+function CT_PieMenuController:GetCurrentRotation()
 	return self.rotationRaw and (self.rotationRaw - ROTATION_OFFSET) or 0.0
 end
 
-function CSPM_PieMenuController:SetupPieMenuVisual(styleName, pieSize)
+function CT_PieMenuController:SetupPieMenuVisual(styleName, pieSize)
 	local styleName = styleName or "quickslot"
 	local pieStyle = PIE_MENU_STYLE[styleName] or PIE_MENU_STYLE["quickslot"]
 	local pieSize = pieSize or 350
@@ -541,7 +516,7 @@ function CSPM_PieMenuController:SetupPieMenuVisual(styleName, pieSize)
 	end
 end
 
-function CSPM_PieMenuController:SetupPieMenuPresetName(presetName, showPresetName)
+function CT_PieMenuController:SetupPieMenuPresetName(presetName, showPresetName)
 	local presetName = presetName or ""
 	self.menu.presetLabel:SetText(presetName)
 	if showPresetName then
@@ -551,35 +526,35 @@ function CSPM_PieMenuController:SetupPieMenuPresetName(presetName, showPresetNam
 	end
 end
 
-function CSPM_PieMenuController:ClearSelection(...)
+function CT_PieMenuController:ClearSelection(...)
 	self.menu:ClearSelection(...)
 end
 
-function CSPM_PieMenuController:GetNumMenuEntries()
+function CT_PieMenuController:GetNumMenuEntries()
 	return #self.menu.entries
 end
 
-function CSPM_PieMenuController:GetSelectedEntryControl()
+function CT_PieMenuController:GetSelectedEntryControl()
 	if self.selectedEntry then
 		return self.selectedEntry.control
 	end
 end
 
-function CSPM_PieMenuController:GetPreviousSelectedEntryControl()
+function CT_PieMenuController:GetPreviousSelectedEntryControl()
 	if self.previousSelectedEntry then
 		return self.previousSelectedEntry.control
 	end
 end
 
-function CSPM_PieMenuController:AddMenuEntry(...)
+function CT_PieMenuController:AddMenuEntry(...)
 	self.menu:AddEntry(...)
 end
 
-function CSPM_PieMenuController:IsInteracting()
+function CT_PieMenuController:IsInteracting()
 	return self.isInteracting
 end
 
-function CSPM_PieMenuController:StartInteraction()
+function CT_PieMenuController:StartInteraction()
 	if not self.isInteracting then
 		if self:PrepareForInteraction() then
 			self:ShowMenu()
@@ -588,8 +563,8 @@ function CSPM_PieMenuController:StartInteraction()
 	end
 end
 
-function CSPM_PieMenuController:PrepareForInteraction()
---	LDL:Debug("PrepareForInteraction()")
+function CT_PieMenuController:PrepareForInteraction()
+--	LCPM:LDL:Debug("PrepareForInteraction()")
 	local currentScene = SCENE_MANAGER:GetCurrentScene()
 	if not currentScene or currentScene:IsRemoteScene() then
 		return false
@@ -600,7 +575,7 @@ function CSPM_PieMenuController:PrepareForInteraction()
 	return true
 end
 
-function CSPM_PieMenuController:ShowMenu(suppressSound)
+function CT_PieMenuController:ShowMenu(suppressSound)
 	if self.menu:IsShown() then
 		self.menu:Clear()
 	end
@@ -612,19 +587,19 @@ function CSPM_PieMenuController:ShowMenu(suppressSound)
 	local isUIMode = IsGameCameraActive() and IsGameCameraUIModeActive() or IsInteracting()
 	if isUIMode then
 		if self:GetAttribute("allowClickable") then
-			self:SetActionLayer("CSPM_UI_Interceptor")
+			self:SetActionLayer("LCPM_UI_Interceptor")
 			self:ShowOverlay()
 		else
-			self:SetActionLayer("CSPM_Interceptor")
+			self:SetActionLayer("LCPM_Interceptor")
 			self:HideOverlay()
 		end
 		self:ShowUnderlay()
 	else
 		if self:GetAttribute("allowClickable") then
-			self:SetActionLayer("CSPM_HUD_Interceptor")
+			self:SetActionLayer("LCPM_HUD_Interceptor")
 			self:ShowOverlay()
 		else
-			self:SetActionLayer("CSPM_Interceptor")
+			self:SetActionLayer("LCPM_Interceptor")
 			self:HideOverlay()
 		end
 	end
@@ -651,7 +626,7 @@ function CSPM_PieMenuController:ShowMenu(suppressSound)
 	RETICLE:RequestHidden(true)
 end
 
-function CSPM_PieMenuController:RefreshMenu(suppressSound)
+function CT_PieMenuController:RefreshMenu(suppressSound)
 	if not self.isInteracting then return end
 
 	self.menu:ResetData()
@@ -672,15 +647,15 @@ function CSPM_PieMenuController:RefreshMenu(suppressSound)
 	end
 end
 
-function CSPM_PieMenuController:PopulateMenu()
---	LDL:Debug("PopulateMenu()")
+function CT_PieMenuController:PopulateMenu()
+--	LCPM:LDL:Debug("PopulateMenu()")
 	if self.populateMenuCallback then
 		self.populateMenuCallback(self)
 	end
 end
 
-function CSPM_PieMenuController:StopInteraction(clearSelection)
-	LDL:Debug("StopInteraction:")
+function CT_PieMenuController:StopInteraction(clearSelection)
+--	LCPM:LDL:Debug("StopInteraction:")
 	local wasShowing = self.isInteracting
 	if self.isInteracting then
 		self:HideUnderlay()
@@ -698,11 +673,11 @@ function CSPM_PieMenuController:StopInteraction(clearSelection)
 	return wasShowing
 end
 
-function CSPM_PieMenuController:CancelInteraction()
+function CT_PieMenuController:CancelInteraction()
 	return self:StopInteraction(true)	-- true: clearSelection
 end
 
-function CSPM_PieMenuController:SelectCurrentEntry()
+function CT_PieMenuController:SelectCurrentEntry()
 	local result = false
 	if self.isInteracting then
 		result = self.menu:SelectCurrentEntryAndContinueIfNeeded()
@@ -713,9 +688,9 @@ function CSPM_PieMenuController:SelectCurrentEntry()
 end
 
 
-function CSPM_PieMenuController:SetupEntryControl(entryControl, data)
+function CT_PieMenuController:SetupEntryControl(entryControl, data)
 	if not data then return end
---	LDL:Debug("SetupEntryControl(_, %s)", tostring(data.name))
+--	LCPM:LDL:Debug("SetupEntryControl(_, %s)", tostring(data.name))
 	local iconDesaturation = data.disabled or false
 
 	local slotLabel
@@ -729,27 +704,27 @@ function CSPM_PieMenuController:SetupEntryControl(entryControl, data)
 		slotLabel = ""
 	end
 
-	CSPM_SetupSelectableItemRadialMenuEntryTemplate(entryControl, data.showGlow, data.itemCount, data.showIconFrame, slotLabel, iconDesaturation, data.resizeIconToFitFile)
-	CSPM_SelectableItemRadialMenuEntryTemplate_UpdateIconAttributes(entryControl, data.iconAttributes)
-	CSPM_SelectableItemRadialMenuEntryTemplate_UpdateStatus(entryControl, data.statusIcon)
+	LCPM_SetupSelectableItemRadialMenuEntryTemplate(entryControl, data.showGlow, data.itemCount, data.showIconFrame, slotLabel, iconDesaturation, data.resizeIconToFitFile)
+	LCPM_SelectableItemRadialMenuEntryTemplate_UpdateIconAttributes(entryControl, data.iconAttributes)
+	LCPM_SelectableItemRadialMenuEntryTemplate_UpdateStatus(entryControl, data.statusIcon)
 
 	if data.cooldownRemaining and data.cooldownDuration then
-		CSPM_SelectableItemRadialMenuEntryTemplate_UpdateCooldown(entryControl, data.cooldownRemaining, data.cooldownDuration)
+		LCPM_SelectableItemRadialMenuEntryTemplate_UpdateCooldown(entryControl, data.cooldownRemaining, data.cooldownDuration)
 	end
 end
 
-function CSPM_PieMenuController:OnSelectionChangedCallback(selectedEntry)
---	LDL:Debug("OnSelectionChangedCallback() : %s -> %s", self.previousSelectedEntry and self.previousSelectedEntry.data.index or "nil", selectedEntry and selectedEntry.data.index or "nil")
+function CT_PieMenuController:OnSelectionChangedCallback(selectedEntry)
+--	LCPM:LDL:Debug("OnSelectionChangedCallback() : %s -> %s", self.previousSelectedEntry and self.previousSelectedEntry.data.index or "nil", selectedEntry and selectedEntry.data.index or "nil")
 	self.selectedEntry = selectedEntry
 	if selectedEntry then
 		local previousSelectedEntryControl = self:GetPreviousSelectedEntryControl()
 		if previousSelectedEntryControl then
 			if previousSelectedEntryControl.entry.data.activeStatusIcon then
-				CSPM_SelectableItemRadialMenuEntryTemplate_UpdateStatus(previousSelectedEntryControl, previousSelectedEntryControl.entry.data.statusIcon)
+				LCPM_SelectableItemRadialMenuEntryTemplate_UpdateStatus(previousSelectedEntryControl, previousSelectedEntryControl.entry.data.statusIcon)
 			end
 		end
 		if selectedEntry.data.activeStatusIcon then
-			CSPM_SelectableItemRadialMenuEntryTemplate_UpdateStatus(selectedEntry.control, selectedEntry.data.activeStatusIcon)
+			LCPM_SelectableItemRadialMenuEntryTemplate_UpdateStatus(selectedEntry.control, selectedEntry.data.activeStatusIcon)
 		end
 
 		if self.onSelectionChangedCallback then
@@ -759,23 +734,23 @@ function CSPM_PieMenuController:OnSelectionChangedCallback(selectedEntry)
 	self.previousSelectedEntry = selectedEntry
 end
 
-function CSPM_PieMenuController:OnUpdateRotationCallback(rotationRaw)
---	LDL:Debug("OnUpdateRotationCallback() : rotationRaw = %s", tostring(rotationRaw))
+function CT_PieMenuController:OnUpdateRotationCallback(rotationRaw)
+--	LCPM:LDL:Debug("OnUpdateRotationCallback() : rotationRaw = %s", tostring(rotationRaw))
 	self.rotationRaw = rotationRaw
 	if self.onUpdateRotationFunc then
 		self.onUpdateRotationFunc(self, rotationRaw)
 	end
 end
 
-function CSPM_PieMenuController:OnClear()
---	LDL:Debug("OnClear() : ")
+function CT_PieMenuController:OnClear()
+--	LCPM:LDL:Debug("OnClear() : ")
 	if self.onClearCallback then
 		self.onClearCallback(self)
 	end
 end
 
 --Helper functions added to do a fail safe.
-function CSPM_PieMenuController:ForceExitInteraction()
+function CT_PieMenuController:ForceExitInteraction()
 	if self.menu:IsShown() then
 		self.menu:Clear()
 	end
@@ -786,7 +761,7 @@ function CSPM_PieMenuController:ForceExitInteraction()
 	LockCameraRotation(false)
 	RETICLE:RequestHidden(false)
 
-	local actionLayers = { "CSPM_Interceptor", "CSPM_HUD_Interceptor", "CSPM_UI_Interceptor", }
+	local actionLayers = { "LCPM_Interceptor", "LCPM_HUD_Interceptor", "LCPM_UI_Interceptor", }
 	for _, actionLayer in pairs(actionLayers) do
 		if IsActionLayerActiveByName(actionLayer) then
 			RemoveActionLayerByName(actionLayer)
@@ -794,66 +769,6 @@ function CSPM_PieMenuController:ForceExitInteraction()
 	end
 end
 
+LibCPieMenu:RegisterClassObject("PieMenu", CT_PieMenu)
+LibCPieMenu:RegisterClassObject("PieMenuController", CT_PieMenuController)
 
--- ---------------------------------------------------------------------------------------
--- Pie Menu Action Layer Keybindings
--- ---------------------------------------------------------------------------------------
-local ObsoleteActionNames = {
-	"CSPM_KEY_MOUSE_LEFT", 
-	"CSPM_KEY_MOUSE_LEFTRIGHT", 
-	"CSPM_KEY_MOUSE_MIDDLE", 
-	"CSPM_KEY_MOUSE_RIGHT", 
-	"CSPM_KEY_MOUSEWHEEL_DOWN", 
-	"CSPM_KEY_MOUSEWHEEL_UP", 
-	"CSPM_KEY_MOUSE_4", 
-	"CSPM_KEY_MOUSE_5", 
-	"CSPM_KEY_GAMEPAD_BUTTON_1", 
-	"CSPM_KEY_GAMEPAD_BUTTON_2", 
-	"CSPM_KEY_GAMEPAD_BUTTON_3", 
-	"CSPM_KEY_GAMEPAD_BUTTON_4", 
-}
-local CSPM_HUD_Interceptor_ActionNames = {
-	["CSPM_HUD_KEY_MOUSE_LEFT"] = { KEY_MOUSE_LEFT, }, 
-	["CSPM_HUD_KEY_MOUSE_LEFTRIGHT"] = { KEY_MOUSE_LEFTRIGHT, }, 
-	["CSPM_HUD_KEY_MOUSE_MIDDLE"] = { KEY_MOUSE_MIDDLE, }, 
-	["CSPM_HUD_KEY_MOUSE_RIGHT"] = { KEY_MOUSE_RIGHT, }, 
-	["CSPM_HUD_KEY_MOUSEWHEEL_DOWN"] = { KEY_MOUSEWHEEL_DOWN, }, 
-	["CSPM_HUD_KEY_MOUSEWHEEL_UP"] = { KEY_MOUSEWHEEL_UP, }, 
-	["CSPM_HUD_KEY_MOUSE_4"] = { KEY_MOUSE_4, }, 
-	["CSPM_HUD_KEY_MOUSE_5"] = { KEY_MOUSE_5, }, 
-	["CSPM_HUD_KEY_GAMEPAD_BUTTON_1"] = { KEY_GAMEPAD_BUTTON_1, }, 
-	["CSPM_HUD_KEY_GAMEPAD_BUTTON_2"] = { KEY_GAMEPAD_BUTTON_2, }, 
-	["CSPM_HUD_KEY_GAMEPAD_BUTTON_3"] = { KEY_GAMEPAD_BUTTON_3, }, 
-	["CSPM_HUD_KEY_GAMEPAD_BUTTON_4"] = { KEY_GAMEPAD_BUTTON_4, }, 
-}
-EVENT_MANAGER:RegisterForEvent("CSPM_PieMenuController", EVENT_ADD_ON_LOADED, function(_, addonName)
-	if addonName ~= "CShortcutPieMenu" then return end
-	EVENT_MANAGER:UnregisterForEvent("CSPM_PieMenuController", EVENT_ADD_ON_LOADED)
-
---  In previous versions, we had set key bindings for these actions, so we try to unbind to restore custom keybinds slots.
-	for _, actionName in pairs(ObsoleteActionNames) do
-		local layer, category, action = GetActionIndicesFromName(actionName)
-		if layer and category and action then
-			if IsProtectedFunction("UnbindAllKeysFromAction") then
-				CallSecureProtected("UnbindAllKeysFromAction", layer, category, action)
-			else
-				UnbindAllKeysFromAction(layer, category, action)
-			end
-		end
-	end
-
-	for actionName, v in pairs(CSPM_HUD_Interceptor_ActionNames) do
-		local layer, category, action = GetActionIndicesFromName(actionName)
-		if layer and category and action then
-			if IsProtectedFunction("UnbindAllKeysFromAction") then
-				CallSecureProtected("UnbindAllKeysFromAction", layer, category, action)
-			else
-				UnbindAllKeysFromAction(layer, category, action)
-			end
-			CreateDefaultActionBind(actionName, v[1], v[2], v[3], v[4], v[5])
-		end
-	end
-end)
-
-CShortcutPieMenu:RegisterClassObject("PieMenu", CSPM_PieMenu)
-CShortcutPieMenu:RegisterClassObject("PieMenuController", CSPM_PieMenuController)

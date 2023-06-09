@@ -1,8 +1,8 @@
 <GuiXml>
 	<Controls>
-		<!-- CSPM Radical Menu Base Template -->
-		<!-- NOTE : This template is based on ZO_RadialMenuBaseTemplate by ZOS, with its own size adjustments for the UI design of the CShortcutPieMenu add-on. -->
-		<Control name="CSPM_RadialMenuBaseTemplate" hidden="true" virtual="true">
+		<!-- LCPM Radical Menu Base Template -->
+		<!-- NOTE : This template is based on ZO_RadialMenuBaseTemplate by ZOS, with its own size adjustments for the UI design of the LibCPieMenu add-on. -->
+		<Control name="LCPM_RadialMenuBaseTemplate" hidden="true" virtual="true">
 			<Dimensions x="350" y="350" />
 			<Anchor point="CENTER" relativeTo="GuiRoot"/>
 
@@ -34,9 +34,9 @@
 			</Controls>
 		</Control>
 
-		<!-- CSPM Radical Menu Template -->
-		<!-- NOTE : This template is based on ZO_RadialMenuTemplate by ZOS, with its own extensions and size adjustment to fit the UI design of the CShortcutPieMenu add-on. -->
-		<Control name="CSPM_RadialMenuTemplate" inherits="CSPM_RadialMenuBaseTemplate" hidden="true" virtual="true">
+		<!-- LCPM Radical Menu Template -->
+		<!-- NOTE : This template is based on ZO_RadialMenuTemplate by ZOS, with its own extensions and size adjustment to fit the UI design of the LibCPieMenu add-on. -->
+		<Control name="LCPM_RadialMenuTemplate" inherits="LCPM_RadialMenuBaseTemplate" hidden="true" virtual="true">
 			<Controls>
 				<Label name="$(parent)Action" font="ZoFontHeader3" horizontalAlignment="CENTER" verticalAlignment="CENTER" inheritScale="false">
 					<Dimensions x="250" y="250" />
@@ -52,9 +52,9 @@
 	</Controls>
 
 	<Animations>
-		<!-- CSPM Radial Menu Animation Template -->
-		<!-- NOTE : This template is based on DefaultRadialMenuAnimation by ZOS, with its own extensions and size adjustment to fit the UI design of the CShortcutPieMenu add-on. -->
-		<AnimationTimeline name="CSPM_RadialMenuAnimation">
+		<!-- LCPM Radial Menu Animation Template -->
+		<!-- NOTE : This template is based on DefaultRadialMenuAnimation by ZOS, with its own extensions and size adjustment to fit the UI design of the LibCPieMenu add-on. -->
+		<AnimationTimeline name="LCPM_RadialMenuAnimation">
 			<Animations>
 				<AlphaAnimation duration="100" startAlpha="0.0" endAlpha="1.0"/>
 				<ScaleAnimation duration="100" startScale="0.2" endScale="1.0"/>
@@ -63,12 +63,12 @@
 	</Animations>
 
 	<Controls>
-		<!-- CSPM Radical Menu Entry Template -->
-		<!-- NOTE : This template is based on ZO_SelectableItemRadialMenuEntryTemplate by ZOS, with its own extensions and size adjustment to fit the UI design of the CShortcutPieMenu add-on. -->
-		<Control name="CSPM_SelectableItemRadialMenuEntryTemplate" scale="0.75" virtual="true" mouseEnabled="true">
+		<!-- LCPM Radical Menu Entry Template -->
+		<!-- NOTE : This template is based on ZO_SelectableItemRadialMenuEntryTemplate by ZOS, with its own extensions and size adjustment to fit the UI design of the LibCPieMenu add-on. -->
+		<Control name="LCPM_SelectableItemRadialMenuEntryTemplate" scale="0.75" virtual="true" mouseEnabled="true">
 			<Dimensions x="64" y="64"/>
 			<OnInitialized>
-				CSPM_SelectableItemRadialMenuEntryTemplate_OnInitialized(self)
+				LCPM_SelectableItemRadialMenuEntryTemplate_OnInitialized(self)
 			</OnInitialized>
 			<Controls>
 				<Backdrop name="$(parent)Frame" tier="MEDIUM" level="0" inherits="ZO_GamepadAbilityIconFrame" alpha="0.7">

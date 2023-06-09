@@ -6,22 +6,12 @@
 -- This software is released under the Artistic License 2.0
 -- https://opensource.org/licenses/Artistic-2.0
 --
--- Note :
--- This addon works that uses the library LibAddonMenu-2.0 by sirinsidiator, Seerah, released under the Artistic License 2.0
--- This addon works that uses the library LibCInteraction by Calamath, released under the Artistic License 2.0
--- You will need to obtain the above libraries separately.
---
 
-
--- CShortcutPieMenu local definitions
-local CSPM, C, LUT = {}, {}, {}
+if not CShortcutPieMenu then return end
+local CSPM = CShortcutPieMenu:SetSharedEnvironment()
+-- ---------------------------------------------------------------------------------------
 local L = GetString
-
--- ---------------------------------------------------------------------------------------
--- Library
--- ---------------------------------------------------------------------------------------
 local LAM = LibAddonMenu2
-if not LAM then d("[CSPM] Error : 'LibAddonMenu' not found.") return end
 
 -- ---------------------------------------------------------------------------------------
 -- Helper Functions
@@ -34,18 +24,13 @@ end
 -- ---------------------------------------------------------------------------------------
 -- PieMenuEditor Panel Class
 -- ---------------------------------------------------------------------------------------
-local CSPM_PieMenuEditorPanel = ZO_InitializingObject:Subclass()
-function CSPM_PieMenuEditorPanel:Initialize(parent, currentSavedVars, accountWideSavedVars, defaults)
-	if CSPM then
-		CSPM = parent
-		if C then C = CSPM.const end
-		if LUT then LUT = CSPM.lut end
-	end
-	self.name = "CSPM-MenuEditorPanel"
+local CSPM_PieMenuEditorPanel = CT_LAMSettingPanelController:Subclass()
+function CSPM_PieMenuEditorPanel:Initialize(panelId, currentSavedVars, accountWideSavedVars, defaults)
+	CT_LAMSettingPanelController.Initialize(self, panelId)	-- Note: Inherit template class but not use as an initializing object.
+	self.pieMenuDataManager = GetPieMenuDataManager()
+	self.shortcutDataManager = GetShortcutDataManager()
 	self.db = accountWideSavedVars or currentSavedVars or {}
 	self.DB_DEFAULT = defaults or {}
-	self.panelInitialized = false
-	self.panelOpened = false
 
 	self.currentPresetId = 1
 	self.currentSlotId = 1
@@ -56,10 +41,10 @@ function CSPM_PieMenuEditorPanel:Initialize(parent, currentSavedVars, accountWid
 	self.actionValueChoicesValues = {}
 	self.actionValueChoicesTooltips = {}
 
-	self:RebuildUserPieMenuPresetSelectionChoices()	-- presetChoices, actionValueChoices[C.CATEGORY_P_OPEN_USER_PIE_MENU]
+	self:RebuildUserPieMenuPresetSelectionChoices()	-- presetChoices, actionValueChoices[CATEGORY_P_OPEN_USER_PIE_MENU]
 
 	self.slotDisplayNameCache = {}
-	self:RebuildSlotSelectionChoices(C.MENU_ITEMS_COUNT_DEFAULT)	-- slotChoices
+	self:RebuildSlotSelectionChoices(MENU_ITEMS_COUNT_DEFAULT)	-- slotChoices
 
 	self.actionTypeChoices = {
 		L(SI_CSPM_COMMON_UNSELECTED), 
@@ -73,15 +58,15 @@ function CSPM_PieMenuEditorPanel:Initialize(parent, currentSavedVars, accountWid
 		L(SI_CSPM_COMMON_ADDON), 
 	} 
 	self.actionTypeChoicesValues = {
-		C.ACTION_TYPE_NOTHING, 
-		C.ACTION_TYPE_COLLECTIBLE, 
-		C.ACTION_TYPE_COLLECTIBLE_APPEARANCE, 
-		C.ACTION_TYPE_EMOTE, 
-		C.ACTION_TYPE_CHAT_COMMAND, 
-		C.ACTION_TYPE_TRAVEL_TO_HOUSE, 
-		C.ACTION_TYPE_PIE_MENU, 
-		C.ACTION_TYPE_SHORTCUT, 
-		C.ACTION_TYPE_SHORTCUT_ADDON, 
+		ACTION_TYPE_NOTHING, 
+		ACTION_TYPE_COLLECTIBLE, 
+		ACTION_TYPE_COLLECTIBLE_APPEARANCE, 
+		ACTION_TYPE_EMOTE, 
+		ACTION_TYPE_CHAT_COMMAND, 
+		ACTION_TYPE_TRAVEL_TO_HOUSE, 
+		ACTION_TYPE_PIE_MENU, 
+		ACTION_TYPE_SHORTCUT, 
+		ACTION_TYPE_SHORTCUT_ADDON, 
 	}
 	self.actionTypeChoicesTooltips = {
 		L(SI_CSPM_UI_ACTION_TYPE_NOTHING_TIPS), 
@@ -95,32 +80,32 @@ function CSPM_PieMenuEditorPanel:Initialize(parent, currentSavedVars, accountWid
 		L(SI_CSPM_UI_ACTION_TYPE_SHORTCUT_ADDON_TIPS), 
 	}
 
-	self.categoryChoices[C.ACTION_TYPE_NOTHING], self.categoryChoicesValues[C.ACTION_TYPE_NOTHING] = {}, {}
-	self.categoryChoices[C.ACTION_TYPE_COLLECTIBLE] = {
+	self.categoryChoices[ACTION_TYPE_NOTHING], self.categoryChoicesValues[ACTION_TYPE_NOTHING] = {}, {}
+	self.categoryChoices[ACTION_TYPE_COLLECTIBLE] = {
 		L(SI_CSPM_COMMON_UNSELECTED), 
 		L(SI_CSPM_COMMON_IMMEDIATE_VALUE), 
 		L("SI_COLLECTIBLECATEGORYTYPE", COLLECTIBLE_CATEGORY_TYPE_ASSISTANT), 		-- "Assistant", 
 		L("SI_COLLECTIBLECATEGORYTYPE", COLLECTIBLE_CATEGORY_TYPE_COMPANION), 		-- "Companion", 
 		L("SI_COLLECTIBLECATEGORYTYPE", COLLECTIBLE_CATEGORY_TYPE_MEMENTO), 		-- "Memento", 
-		GetCollectibleCategoryNameByCategoryId(LUT.CategoryId_To_CollectibleCategoryId[C.CATEGORY_C_TOOL]), -- "Tools", 
+		GetCollectibleCategoryNameByCategoryId(CategoryId_To_CollectibleCategoryId[CATEGORY_C_TOOL]), -- "Tools", 
 		L("SI_COLLECTIBLECATEGORYTYPE", COLLECTIBLE_CATEGORY_TYPE_VANITY_PET), 		-- "Non-combat-pet", 
 		L("SI_COLLECTIBLECATEGORYTYPE", COLLECTIBLE_CATEGORY_TYPE_MOUNT), 			-- "Mount", 
 		L("SI_COLLECTIBLECATEGORYTYPE", COLLECTIBLE_CATEGORY_TYPE_PERSONALITY), 	-- "Personality", 
 		L("SI_COLLECTIBLECATEGORYTYPE", COLLECTIBLE_CATEGORY_TYPE_ABILITY_SKIN), 	-- "Ability Skin", 
 	}
-	self.categoryChoicesValues[C.ACTION_TYPE_COLLECTIBLE] = {
-		C.CATEGORY_NOTHING, 
-		C.CATEGORY_IMMEDIATE_VALUE, 
-		C.CATEGORY_C_ASSISTANT, 
-		C.CATEGORY_C_COMPANION, 
-		C.CATEGORY_C_MEMENTO, 
-		C.CATEGORY_C_TOOL, 
-		C.CATEGORY_C_VANITY_PET, 
-		C.CATEGORY_C_MOUNT, 
-		C.CATEGORY_C_PERSONALITY, 
-		C.CATEGORY_C_ABILITY_SKIN, 
+	self.categoryChoicesValues[ACTION_TYPE_COLLECTIBLE] = {
+		CATEGORY_NOTHING, 
+		CATEGORY_IMMEDIATE_VALUE, 
+		CATEGORY_C_ASSISTANT, 
+		CATEGORY_C_COMPANION, 
+		CATEGORY_C_MEMENTO, 
+		CATEGORY_C_TOOL, 
+		CATEGORY_C_VANITY_PET, 
+		CATEGORY_C_MOUNT, 
+		CATEGORY_C_PERSONALITY, 
+		CATEGORY_C_ABILITY_SKIN, 
 	}
-	self.categoryChoices[C.ACTION_TYPE_COLLECTIBLE_APPEARANCE] = {
+	self.categoryChoices[ACTION_TYPE_COLLECTIBLE_APPEARANCE] = {
 		L(SI_CSPM_COMMON_UNSELECTED), 
 		L(SI_CSPM_COMMON_IMMEDIATE_VALUE), 
 		L("SI_COLLECTIBLECATEGORYTYPE", COLLECTIBLE_CATEGORY_TYPE_HAT), 				-- "Hat" 
@@ -134,21 +119,21 @@ function CSPM_PieMenuEditorPanel:Initialize(parent, currentSavedVars, accountWid
 		L("SI_COLLECTIBLECATEGORYTYPE", COLLECTIBLE_CATEGORY_TYPE_SKIN), 				-- "Skin"
 		L("SI_COLLECTIBLECATEGORYTYPE", COLLECTIBLE_CATEGORY_TYPE_POLYMORPH), 			-- "Polymorph"
 	}
-	self.categoryChoicesValues[C.ACTION_TYPE_COLLECTIBLE_APPEARANCE] = {
-		C.CATEGORY_NOTHING, 
-		C.CATEGORY_IMMEDIATE_VALUE, 
-		C.CATEGORY_C_HAT, 
-		C.CATEGORY_C_HAIR, 
-		C.CATEGORY_C_HEAD_MARKING, 
-		C.CATEGORY_C_FACIAL_HAIR_HORNS, 
-		C.CATEGORY_C_FACIAL_ACCESSORY, 
-		C.CATEGORY_C_PIERCING_JEWELRY, 
-		C.CATEGORY_C_COSTUME, 
-		C.CATEGORY_C_BODY_MARKING, 
-		C.CATEGORY_C_SKIN, 
-		C.CATEGORY_C_POLYMORPH, 
+	self.categoryChoicesValues[ACTION_TYPE_COLLECTIBLE_APPEARANCE] = {
+		CATEGORY_NOTHING, 
+		CATEGORY_IMMEDIATE_VALUE, 
+		CATEGORY_C_HAT, 
+		CATEGORY_C_HAIR, 
+		CATEGORY_C_HEAD_MARKING, 
+		CATEGORY_C_FACIAL_HAIR_HORNS, 
+		CATEGORY_C_FACIAL_ACCESSORY, 
+		CATEGORY_C_PIERCING_JEWELRY, 
+		CATEGORY_C_COSTUME, 
+		CATEGORY_C_BODY_MARKING, 
+		CATEGORY_C_SKIN, 
+		CATEGORY_C_POLYMORPH, 
 	}
-	self.categoryChoices[C.ACTION_TYPE_EMOTE] = {
+	self.categoryChoices[ACTION_TYPE_EMOTE] = {
 		L(SI_CSPM_COMMON_UNSELECTED), 
 		L(SI_CSPM_COMMON_IMMEDIATE_VALUE), 
 		L("SI_EMOTECATEGORY", EMOTE_CATEGORY_CEREMONIAL), 			-- "Ceremonial"
@@ -163,96 +148,96 @@ function CSPM_PieMenuEditorPanel:Initialize(parent, currentSavedVars, accountWid
 		L("SI_EMOTECATEGORY", EMOTE_CATEGORY_SOCIAL), 				-- "Social"
 		L("SI_EMOTECATEGORY", EMOTE_CATEGORY_COLLECTED), 			-- "Collected"
 	}
-	self.categoryChoicesValues[C.ACTION_TYPE_EMOTE] = {
-		C.CATEGORY_NOTHING, 
-		C.CATEGORY_IMMEDIATE_VALUE, 
-		C.CATEGORY_E_CEREMONIAL, 
-		C.CATEGORY_E_CHEERS_AND_JEERS, 
-		C.CATEGORY_E_EMOTION, 
-		C.CATEGORY_E_ENTERTAINMENT, 
-		C.CATEGORY_E_FOOD_AND_DRINK, 
-		C.CATEGORY_E_GIVE_DIRECTIONS, 
-		C.CATEGORY_E_PHYSICAL, 
-		C.CATEGORY_E_POSES_AND_FIDGETS, 
-		C.CATEGORY_E_PROP, 
-		C.CATEGORY_E_SOCIAL, 
-		C.CATEGORY_E_COLLECTED, 
+	self.categoryChoicesValues[ACTION_TYPE_EMOTE] = {
+		CATEGORY_NOTHING, 
+		CATEGORY_IMMEDIATE_VALUE, 
+		CATEGORY_E_CEREMONIAL, 
+		CATEGORY_E_CHEERS_AND_JEERS, 
+		CATEGORY_E_EMOTION, 
+		CATEGORY_E_ENTERTAINMENT, 
+		CATEGORY_E_FOOD_AND_DRINK, 
+		CATEGORY_E_GIVE_DIRECTIONS, 
+		CATEGORY_E_PHYSICAL, 
+		CATEGORY_E_POSES_AND_FIDGETS, 
+		CATEGORY_E_PROP, 
+		CATEGORY_E_SOCIAL, 
+		CATEGORY_E_COLLECTED, 
 	}
-	self.categoryChoices[C.ACTION_TYPE_CHAT_COMMAND] = {
+	self.categoryChoices[ACTION_TYPE_CHAT_COMMAND] = {
 		L(SI_CSPM_COMMON_UNSELECTED), 
 		L(SI_CSPM_COMMON_IMMEDIATE_VALUE), 
 	}
-	self.categoryChoicesValues[C.ACTION_TYPE_CHAT_COMMAND] = {
-		C.CATEGORY_NOTHING, 
-		C.CATEGORY_IMMEDIATE_VALUE, 
+	self.categoryChoicesValues[ACTION_TYPE_CHAT_COMMAND] = {
+		CATEGORY_NOTHING, 
+		CATEGORY_IMMEDIATE_VALUE, 
 	}
-	self.categoryChoices[C.ACTION_TYPE_TRAVEL_TO_HOUSE] = {
+	self.categoryChoices[ACTION_TYPE_TRAVEL_TO_HOUSE] = {
 		L(SI_CSPM_COMMON_UNSELECTED), 
 		L(SI_CSPM_COMMON_MY_HOUSE_INSIDE), 
 		L(SI_CSPM_COMMON_MY_HOUSE_OUTSIDE), 
 	}
-	self.categoryChoicesValues[C.ACTION_TYPE_TRAVEL_TO_HOUSE] = {
-		C.CATEGORY_NOTHING, 
-		C.CATEGORY_H_UNLOCKED_HOUSE_INSIDE, 
-		C.CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE, 
+	self.categoryChoicesValues[ACTION_TYPE_TRAVEL_TO_HOUSE] = {
+		CATEGORY_NOTHING, 
+		CATEGORY_H_UNLOCKED_HOUSE_INSIDE, 
+		CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE, 
 	}
-	self.categoryChoices[C.ACTION_TYPE_PIE_MENU] = {
+	self.categoryChoices[ACTION_TYPE_PIE_MENU] = {
 		L(SI_CSPM_COMMON_UNSELECTED), 
-		zo_strformat(L("SI_CSPM_COMMON_UI_ACTION", C.UI_OPEN), L(SI_CSPM_COMMON_USER_PIE_MENU)), 
-		zo_strformat(L("SI_CSPM_COMMON_UI_ACTION", C.UI_OPEN), L(SI_CSPM_COMMON_EXTERNAL_PIE_MENU)), 
+		zo_strformat(L("SI_CSPM_COMMON_UI_ACTION", UI_OPEN), L(SI_CSPM_COMMON_USER_PIE_MENU)), 
+		zo_strformat(L("SI_CSPM_COMMON_UI_ACTION", UI_OPEN), L(SI_CSPM_COMMON_EXTERNAL_PIE_MENU)), 
 	}
-	self.categoryChoicesValues[C.ACTION_TYPE_PIE_MENU] = {
-		C.CATEGORY_NOTHING, 
-		C.CATEGORY_P_OPEN_USER_PIE_MENU, 
-		C.CATEGORY_P_OPEN_EXTERNAL_PIE_MENU, 
+	self.categoryChoicesValues[ACTION_TYPE_PIE_MENU] = {
+		CATEGORY_NOTHING, 
+		CATEGORY_P_OPEN_USER_PIE_MENU, 
+		CATEGORY_P_OPEN_EXTERNAL_PIE_MENU, 
 	}
-	self.categoryChoices[C.ACTION_TYPE_SHORTCUT] = {
+	self.categoryChoices[ACTION_TYPE_SHORTCUT] = {
 		L(SI_CSPM_COMMON_UNSELECTED), 
 		CSPM.name, 
 		L(SI_CSPM_COMMON_MAIN_MENU), 
 		L(SI_CSPM_COMMON_SYSTEM_MENU), 
 		L(SI_CSPM_UI_CATEGORY_S_USEFUL_SHORTCUT_NAME), 
 	}
-	self.categoryChoicesValues[C.ACTION_TYPE_SHORTCUT] = {
-		C.CATEGORY_NOTHING, 
-		C.CATEGORY_S_PIE_MENU_ADDON, 
-		C.CATEGORY_S_MAIN_MENU, 
-		C.CATEGORY_S_SYSTEM_MENU, 
-		C.CATEGORY_S_USEFUL_SHORTCUT, 
+	self.categoryChoicesValues[ACTION_TYPE_SHORTCUT] = {
+		CATEGORY_NOTHING, 
+		CATEGORY_S_PIE_MENU_ADDON, 
+		CATEGORY_S_MAIN_MENU, 
+		CATEGORY_S_SYSTEM_MENU, 
+		CATEGORY_S_USEFUL_SHORTCUT, 
 	}
-	self:RebuildExternalShortcutCategorySelectionChoices()	-- categoryChoices[C.ACTION_TYPE_SHORTCUT_ADDON]
+	self:RebuildExternalShortcutCategorySelectionChoices()	-- categoryChoices[ACTION_TYPE_SHORTCUT_ADDON]
 
-	self.actionValueChoices[C.CATEGORY_NOTHING], self.actionValueChoicesValues[C.CATEGORY_NOTHING], self.actionValueChoicesTooltips[C.CATEGORY_NOTHING] = {}, {}, {}
-	self.actionValueChoices[C.CATEGORY_IMMEDIATE_VALUE], self.actionValueChoicesValues[C.CATEGORY_IMMEDIATE_VALUE], self.actionValueChoicesTooltips[C.CATEGORY_IMMEDIATE_VALUE] = {}, {}, {}
-	self:InitializeCollectibleSelectionChoices()	-- actionValueChoices[C.CATEGORY_C_xxx]
-	self:InitializeEmoteSelectionChoices()	-- actionValueChoices[C.CATEGORY_E_xxx]
-	self:RebuildHouseSelectionChoices(true, true)	-- actionValueChoices[C.CATEGORY_H_UNLOCKED_HOUSE_INSIDE], actionValueChoices[C.CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE]
---	(self:RebuildUserPieMenuPresetSelectionChoices())	-- actionValueChoices[C.CATEGORY_P_OPEN_USER_PIE_MENU]
-	self:RebuildExternalPieMenuPresetSelectionChoices()	-- actionValueChoices[C.CATEGORY_P_OPEN_EXTERNAL_PIE_MENU]
-	self:RebuildShortcutSelectionChoicesByCategoryId(C.CATEGORY_S_PIE_MENU_ADDON)	-- actionValueChoices[C.CATEGORY_S_PIE_MENU_ADDON]
-	self:RebuildShortcutSelectionChoicesByCategoryId(C.CATEGORY_S_MAIN_MENU)	-- actionValueChoices[C.CATEGORY_S_MAIN_MENU]
-	self:RebuildShortcutSelectionChoicesByCategoryId(C.CATEGORY_S_SYSTEM_MENU)	-- actionValueChoices[C.CATEGORY_S_SYSTEM_MENU]
-	self:RebuildShortcutSelectionChoicesByCategoryId(C.CATEGORY_S_USEFUL_SHORTCUT)	-- actionValueChoices[C.CATEGORY_S_USEFUL_SHORTCUT]
+	self.actionValueChoices[CATEGORY_NOTHING], self.actionValueChoicesValues[CATEGORY_NOTHING], self.actionValueChoicesTooltips[CATEGORY_NOTHING] = {}, {}, {}
+	self.actionValueChoices[CATEGORY_IMMEDIATE_VALUE], self.actionValueChoicesValues[CATEGORY_IMMEDIATE_VALUE], self.actionValueChoicesTooltips[CATEGORY_IMMEDIATE_VALUE] = {}, {}, {}
+	self:InitializeCollectibleSelectionChoices()	-- actionValueChoices[CATEGORY_C_xxx]
+	self:InitializeEmoteSelectionChoices()	-- actionValueChoices[CATEGORY_E_xxx]
+	self:RebuildHouseSelectionChoices(true, true)	-- actionValueChoices[CATEGORY_H_UNLOCKED_HOUSE_INSIDE], actionValueChoices[CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE]
+--	(self:RebuildUserPieMenuPresetSelectionChoices())	-- actionValueChoices[CATEGORY_P_OPEN_USER_PIE_MENU]
+	self:RebuildExternalPieMenuPresetSelectionChoices()	-- actionValueChoices[CATEGORY_P_OPEN_EXTERNAL_PIE_MENU]
+	self:RebuildShortcutSelectionChoicesByCategoryId(CATEGORY_S_PIE_MENU_ADDON)	-- actionValueChoices[CATEGORY_S_PIE_MENU_ADDON]
+	self:RebuildShortcutSelectionChoicesByCategoryId(CATEGORY_S_MAIN_MENU)	-- actionValueChoices[CATEGORY_S_MAIN_MENU]
+	self:RebuildShortcutSelectionChoicesByCategoryId(CATEGORY_S_SYSTEM_MENU)	-- actionValueChoices[CATEGORY_S_SYSTEM_MENU]
+	self:RebuildShortcutSelectionChoicesByCategoryId(CATEGORY_S_USEFUL_SHORTCUT)	-- actionValueChoices[CATEGORY_S_USEFUL_SHORTCUT]
 	self.externalShortcutIsDirty = {}
-	for _, categoryId in pairs(CSPM.shortcutManager:GetShortcutCategoryList()) do
+	for _, categoryId in pairs(self.shortcutDataManager:GetShortcutCategoryList()) do
 		self:RebuildShortcutSelectionChoicesByCategoryId(categoryId)
 	end
 
-	CALLBACK_MANAGER:RegisterCallback("CSPM-UserPieMenuInfoUpdated", function(presetId)
+	CSPM:RegisterCallback("CSPM-UserPieMenuInfoUpdated", function(presetId)
 		self:OnUserPieMenuInfoUpdated(presetId)
 	end)
 	ZO_COLLECTIBLE_DATA_MANAGER:RegisterCallback("OnCollectionUpdated", function(collectionUpdateType, collectiblesByNewUnlockState)
 		self:OnCollectionUpdated(collectionUpdateType, collectiblesByNewUnlockState)
 	end)
-	CALLBACK_MANAGER:RegisterCallback("CSPM-ShortcutRegistered", function(shortcutId, categoryId)
-		if categoryId == C.CATEGORY_NOTHING then return end
+	CSPM:RegisterCallback("LCPM-ShortcutRegistered", function(shortcutId, categoryId)
+		if categoryId == CATEGORY_NOTHING then return end
 		if self.externalShortcutIsDirty[categoryId] == nil then
 			self.externalShortcutCategoryIsDirty = true
 		end
 		self.externalShortcutIsDirty[categoryId] = true
 	end)
 
-	CALLBACK_MANAGER:RegisterCallback("CSPM-PieMenuRegistered", function(presetId)
+	CSPM:RegisterCallback("LCPM-PieMenuRegistered", function(presetId)
 		self.externalPieMenuIsDirty = true
 	end)
 end
@@ -270,9 +255,9 @@ end
 
 function CSPM_PieMenuEditorPanel:GetPresetDisplayNameByPresetId(presetId)
 	local name
-	local pieMenuName = CSPM.util.GetPieMenuInfo(presetId)
-	if CSPM.util.IsUserPieMenu(presetId) then
-		if CSPM.util.DoesPieMenuDataExist(presetId) then
+	local pieMenuName = GetPieMenuInfo(presetId)
+	if IsUserPieMenu(presetId) then
+		if DoesPieMenuDataExist(presetId) then
 			if pieMenuName ~= "" then
 				name = zo_strformat(L(SI_CSPM_PRESET_NAME_FORMATTER), presetId, pieMenuName)
 			else
@@ -294,7 +279,7 @@ function CSPM_PieMenuEditorPanel:GetSlotDisplayNameBySlotId(slotId)
 		if type(savedSlotData.name) == "string" and savedSlotData.name ~= "" then
 			slotName = savedSlotData.name
 		else
-			slotName = CSPM.util.GetDefaultSlotName(savedSlotData.type, savedSlotData.category, savedSlotData.value)
+			slotName = GetDefaultSlotName(savedSlotData.type, savedSlotData.category, savedSlotData.value)
 		end
 	end
 	if slotName == "" then
@@ -313,26 +298,26 @@ function CSPM_PieMenuEditorPanel:OnCollectionUpdated(collectionUpdateType, colle
 			isDirty[collectibleData:GetCategoryType()] = true
 		end
 		-- update collectible choices if needed
-		for categoryId, categoryType in pairs(LUT.CategoryId_To_CollectibleCategoryType) do
+		for categoryId, categoryType in pairs(CategoryId_To_CollectibleCategoryType) do
 			if isDirty[categoryType] then
 				self:RebuildCollectibleSelectionChoicesByCategoryId(categoryId, true)
 			end
 		end
-		for _, categoryType in pairs(LUT.CategoryId_To_CollectibleCategoryType) do
+		for _, categoryType in pairs(CategoryId_To_CollectibleCategoryType) do
 			isDirty[categoryType] = false
 		end
 		-- update emote choices if needed
 		if isDirty[COLLECTIBLE_CATEGORY_TYPE_EMOTE] then
-			self:RebuildEmoteSelectionChoicesByCategoryId(C.CATEGORY_E_COLLECTED)
+			self:RebuildEmoteSelectionChoicesByCategoryId(CATEGORY_E_COLLECTED)
 			isDirty[COLLECTIBLE_CATEGORY_TYPE_EMOTE] = false
 		end
 		-- update player house choices if needed
 		if isDirty[COLLECTIBLE_CATEGORY_TYPE_HOUSE] then
-			self:RebuildHouseSelectionChoices(true, true)	-- actionValueChoices[C.CATEGORY_H_UNLOCKED_HOUSE_INSIDE], actionValueChoices[C.CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE]
+			self:RebuildHouseSelectionChoices(true, true)	-- actionValueChoices[CATEGORY_H_UNLOCKED_HOUSE_INSIDE], actionValueChoices[CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE]
 			isDirty[COLLECTIBLE_CATEGORY_TYPE_HOUSE] = false
 		end
 		-- update MenuEditorUI panel
-		if self.panelInitialized then
+		if self:IsPanelInitialized() then
 			self:ChangePanelSlotState(self.currentSlotId)
 		end
 	end
@@ -340,23 +325,23 @@ end
 
 function CSPM_PieMenuEditorPanel:OnUserPieMenuInfoUpdated(presetId)
 -- This function assumes that the preset attribute information in the user pie menu has just changed.
-	if not CSPM.util.IsUserPieMenu(presetId) then return end
+	if not IsUserPieMenu(presetId) then return end
 	CSPM.LDL:Debug("OnUserPieMenuInfoUpdated : ", presetId)
 
 	-- NOTE : the user preset selection choices and the preset name submenu header for the user pie menu will also be updated here.
 	self.presetChoices[presetId] = self:GetPresetDisplayNameByPresetId(presetId)
-	self.actionValueChoices[C.CATEGORY_P_OPEN_USER_PIE_MENU][presetId] = self.presetChoices[presetId]
-	if self.panelInitialized then
+	self.actionValueChoices[CATEGORY_P_OPEN_USER_PIE_MENU][presetId] = self.presetChoices[presetId]
+	if self:IsPanelInitialized() then
 		CSPM_UI_PresetSelectMenu:UpdateChoices(self.presetChoices, self.presetChoicesValues, self.presetChoicesTooltips)
 		CSPM_UI_PresetSelectMenu:UpdateValue()		-- Note : When called with no arguments, getFunc will be called, and setFunc will NOT be called.
 
 		CSPM_UI_PresetSubmenu.data.name = self.presetChoices[self.currentPresetId]
 		CSPM_UI_PresetSubmenu:UpdateValue()		-- Note : When called with no arguments, getFunc will be called, and setFunc will NOT be called.
 
-		if self.db.preset[self.currentPresetId].slot[self.currentSlotId].type == C.ACTION_TYPE_PIE_MENU then
+		if self.db.preset[self.currentPresetId].slot[self.currentSlotId].type == ACTION_TYPE_PIE_MENU then
 			local categoryId = self.db.preset[self.currentPresetId].slot[self.currentSlotId].category
-			if categoryId == C.CATEGORY_P_OPEN_USER_PIE_MENU then
-				CSPM_UI_ActionValueMenu:UpdateChoices(self.actionValueChoices[C.CATEGORY_P_OPEN_USER_PIE_MENU], self.actionValueChoicesValues[C.CATEGORY_P_OPEN_USER_PIE_MENU], self.actionValueChoicesTooltips[C.CATEGORY_P_OPEN_USER_PIE_MENU])
+			if categoryId == CATEGORY_P_OPEN_USER_PIE_MENU then
+				CSPM_UI_ActionValueMenu:UpdateChoices(self.actionValueChoices[CATEGORY_P_OPEN_USER_PIE_MENU], self.actionValueChoicesValues[CATEGORY_P_OPEN_USER_PIE_MENU], self.actionValueChoicesTooltips[CATEGORY_P_OPEN_USER_PIE_MENU])
 				CSPM_UI_ActionValueMenu:UpdateValue()		-- Note : When called with no arguments, getFunc will be called, and setFunc will NOT be called.
 			end
 		end
@@ -366,7 +351,7 @@ end
 function CSPM_PieMenuEditorPanel:GetUserPieMenuPresetSelectionChoices()
 	local choices = {}
 	local choicesValues = {}
-	for i = 1, C.MAX_USER_PRESET do
+	for i = 1, MAX_USER_PRESET do
 		choices[i] = self:GetPresetDisplayNameByPresetId(i)
 		choicesValues[i] = i
 	end
@@ -378,17 +363,17 @@ function CSPM_PieMenuEditorPanel:RebuildUserPieMenuPresetSelectionChoices()
 	ClearTable(self.presetChoices)
 	ClearTable(self.presetChoicesValues)
 	ClearTable(self.presetChoicesTooltips)
-	ClearTable(self.actionValueChoices[C.CATEGORY_P_OPEN_USER_PIE_MENU])
-	ClearTable(self.actionValueChoicesValues[C.CATEGORY_P_OPEN_USER_PIE_MENU])
-	ClearTable(self.actionValueChoicesTooltips[C.CATEGORY_P_OPEN_USER_PIE_MENU])
+	ClearTable(self.actionValueChoices[CATEGORY_P_OPEN_USER_PIE_MENU])
+	ClearTable(self.actionValueChoicesValues[CATEGORY_P_OPEN_USER_PIE_MENU])
+	ClearTable(self.actionValueChoicesTooltips[CATEGORY_P_OPEN_USER_PIE_MENU])
 	self.presetChoices, self.presetChoicesValues, self.presetChoicesTooltips = choices, choicesValues, choicesTooltips
-	self.actionValueChoices[C.CATEGORY_P_OPEN_USER_PIE_MENU], self.actionValueChoicesValues[C.CATEGORY_P_OPEN_USER_PIE_MENU], self.actionValueChoicesTooltips[C.CATEGORY_P_OPEN_USER_PIE_MENU] = choices, choicesValues, choicesTooltips
+	self.actionValueChoices[CATEGORY_P_OPEN_USER_PIE_MENU], self.actionValueChoicesValues[CATEGORY_P_OPEN_USER_PIE_MENU], self.actionValueChoicesTooltips[CATEGORY_P_OPEN_USER_PIE_MENU] = choices, choicesValues, choicesTooltips
 end
 
 function CSPM_PieMenuEditorPanel:GetExternalPieMenuPresetSelectionChoices()
 	local choices = {}
 	local choicesValues = {}
-	local externalPieMenuPresetIdList = CSPM.pieMenuManager:GetExternalPieMenuPresetIdList()
+	local externalPieMenuPresetIdList = self.pieMenuDataManager:GetExternalPieMenuPresetIdList()
 	for _, presetId in pairs(externalPieMenuPresetIdList) do
 		table.insert(choices, self:GetPresetDisplayNameByPresetId(presetId))
 		table.insert(choicesValues, presetId)
@@ -397,10 +382,10 @@ function CSPM_PieMenuEditorPanel:GetExternalPieMenuPresetSelectionChoices()
 	return choices, choicesValues, choicesValues
 end
 function CSPM_PieMenuEditorPanel:RebuildExternalPieMenuPresetSelectionChoices()
-	ClearTable(self.actionValueChoices[C.CATEGORY_P_OPEN_EXTERNAL_PIE_MENU])
-	ClearTable(self.actionValueChoicesValues[C.CATEGORY_P_OPEN_EXTERNAL_PIE_MENU])
-	ClearTable(self.actionValueChoicesTooltips[C.CATEGORY_P_OPEN_EXTERNAL_PIE_MENU])
-	self.actionValueChoices[C.CATEGORY_P_OPEN_EXTERNAL_PIE_MENU], self.actionValueChoicesValues[C.CATEGORY_P_OPEN_EXTERNAL_PIE_MENU], self.actionValueChoicesTooltips[C.CATEGORY_P_OPEN_EXTERNAL_PIE_MENU] = self:GetExternalPieMenuPresetSelectionChoices()
+	ClearTable(self.actionValueChoices[CATEGORY_P_OPEN_EXTERNAL_PIE_MENU])
+	ClearTable(self.actionValueChoicesValues[CATEGORY_P_OPEN_EXTERNAL_PIE_MENU])
+	ClearTable(self.actionValueChoicesTooltips[CATEGORY_P_OPEN_EXTERNAL_PIE_MENU])
+	self.actionValueChoices[CATEGORY_P_OPEN_EXTERNAL_PIE_MENU], self.actionValueChoicesValues[CATEGORY_P_OPEN_EXTERNAL_PIE_MENU], self.actionValueChoicesTooltips[CATEGORY_P_OPEN_EXTERNAL_PIE_MENU] = self:GetExternalPieMenuPresetSelectionChoices()
 	self.externalPieMenuIsDirty = false
 end
 
@@ -433,18 +418,18 @@ function CSPM_PieMenuEditorPanel:GetExternalShortcutCategorySelectionChoices()
 		L(SI_CSPM_COMMON_UNSELECTED), 
 	}
 	local choicesValues = {
-		C.CATEGORY_NOTHING, 
+		CATEGORY_NOTHING, 
 	}
-	for _, categoryId in pairs(CSPM.shortcutManager:GetShortcutCategoryList()) do
+	for _, categoryId in pairs(self.shortcutDataManager:GetShortcutCategoryList()) do
 		table.insert(choices, categoryId)
 		table.insert(choicesValues, categoryId)
 	end
 	return choices, choicesValues
 end
 function CSPM_PieMenuEditorPanel:RebuildExternalShortcutCategorySelectionChoices()
-	ClearTable(self.categoryChoices[C.ACTION_TYPE_SHORTCUT_ADDON])
-	ClearTable(self.categoryChoicesValues[C.ACTION_TYPE_SHORTCUT_ADDON])
-	self.categoryChoices[C.ACTION_TYPE_SHORTCUT_ADDON], self.categoryChoicesValues[C.ACTION_TYPE_SHORTCUT_ADDON] = self:GetExternalShortcutCategorySelectionChoices()
+	ClearTable(self.categoryChoices[ACTION_TYPE_SHORTCUT_ADDON])
+	ClearTable(self.categoryChoicesValues[ACTION_TYPE_SHORTCUT_ADDON])
+	self.categoryChoices[ACTION_TYPE_SHORTCUT_ADDON], self.categoryChoicesValues[ACTION_TYPE_SHORTCUT_ADDON] = self:GetExternalShortcutCategorySelectionChoices()
 	self.externalShortcutCategoryIsDirty = false
 end
 
@@ -490,10 +475,10 @@ function CSPM_PieMenuEditorPanel:GetCollectibleSelectionChoicesByCategoryType(ca
 end
 function CSPM_PieMenuEditorPanel:GetCollectibleSelectionChoicesByCategoryId(categoryId, unlockedOnly)
 --	categoryId : CSPM category id
-	if categoryId == C.CATEGORY_C_TOOL then
-		return self:GetCollectibleSelectionChoicesByCollectibleCategoryId(LUT.CategoryId_To_CollectibleCategoryId[categoryId], unlockedOnly)
+	if categoryId == CATEGORY_C_TOOL then
+		return self:GetCollectibleSelectionChoicesByCollectibleCategoryId(CategoryId_To_CollectibleCategoryId[categoryId], unlockedOnly)
 	else
-		return self:GetCollectibleSelectionChoicesByCategoryType(LUT.CategoryId_To_CollectibleCategoryType[categoryId], unlockedOnly)
+		return self:GetCollectibleSelectionChoicesByCategoryType(CategoryId_To_CollectibleCategoryType[categoryId], unlockedOnly)
 	end
 end
 function CSPM_PieMenuEditorPanel:RebuildCollectibleSelectionChoicesByCategoryId(categoryId, unlockedOnly)
@@ -503,7 +488,7 @@ function CSPM_PieMenuEditorPanel:RebuildCollectibleSelectionChoicesByCategoryId(
 	self.actionValueChoices[categoryId], self.actionValueChoicesValues[categoryId], self.actionValueChoicesTooltips[categoryId] = self:GetCollectibleSelectionChoicesByCategoryId(categoryId, unlockedOnly)
 end
 function CSPM_PieMenuEditorPanel:InitializeCollectibleSelectionChoices()
-	for categoryId, _ in pairs(LUT.CategoryId_To_CollectibleCategoryType) do
+	for categoryId, _ in pairs(CategoryId_To_CollectibleCategoryType) do
 		self:RebuildCollectibleSelectionChoicesByCategoryId(categoryId, true)
 	end
 end
@@ -519,7 +504,7 @@ function CSPM_PieMenuEditorPanel:GetEmoteSelectionChoicesByEmoteCategory(emoteCa
 end
 function CSPM_PieMenuEditorPanel:GetEmoteSelectionChoicesByCategoryId(categoryId)
 --	categoryId : CSPM category id
-	return self:GetEmoteSelectionChoicesByEmoteCategory(LUT.CategoryId_To_EmoteCategory[categoryId])
+	return self:GetEmoteSelectionChoicesByEmoteCategory(CategoryId_To_EmoteCategory[categoryId])
 end
 function CSPM_PieMenuEditorPanel:RebuildEmoteSelectionChoicesByCategoryId(categoryId)
 	ClearTable(self.actionValueChoices[categoryId])
@@ -529,7 +514,7 @@ function CSPM_PieMenuEditorPanel:RebuildEmoteSelectionChoicesByCategoryId(catego
 	self.actionValueChoices[categoryId], self.actionValueChoicesValues[categoryId], self.actionValueChoicesTooltips[categoryId] = self:GetEmoteSelectionChoicesByCategoryId(categoryId) 
 end
 function CSPM_PieMenuEditorPanel:InitializeEmoteSelectionChoices()
-	for categoryId, _ in pairs(LUT.CategoryId_To_EmoteCategory) do
+	for categoryId, _ in pairs(CategoryId_To_EmoteCategory) do
 		self:RebuildEmoteSelectionChoicesByCategoryId(categoryId) 
 	end
 end
@@ -544,7 +529,7 @@ function CSPM_PieMenuEditorPanel:GetHouseSelectionChoices(unlockedOnly, includeP
 
 	if includePrimaryHouse then
 		table.insert(choices, zo_strformat(L(SI_CSPM_PARENTHESES_FORMATTER), L(SI_HOUSING_FURNITURE_SETTINGS_GENERAL_PRIMARY_RESIDENCE_TEXT)))	-- Primary Residence
-		table.insert(choicesValues, C.ACTION_VALUE_PRIMARY_HOUSE_ID)
+		table.insert(choicesValues, ACTION_VALUE_PRIMARY_HOUSE_ID)
 	end
 	for index = 1, GetTotalCollectiblesByCategoryType(COLLECTIBLE_CATEGORY_TYPE_HOUSE) do
 		local collectibleId = GetCollectibleIdFromType(COLLECTIBLE_CATEGORY_TYPE_HOUSE, index)
@@ -564,21 +549,21 @@ function CSPM_PieMenuEditorPanel:RebuildHouseSelectionChoicesByCategoryId(catego
 end
 function CSPM_PieMenuEditorPanel:RebuildHouseSelectionChoices(unlockedOnly, includePrimaryHouse)
 	local choices, choicesValues, choicesTooltips = self:GetHouseSelectionChoices(unlockedOnly, includePrimaryHouse)
-	ClearTable(self.actionValueChoices[C.CATEGORY_H_UNLOCKED_HOUSE_INSIDE])
-	ClearTable(self.actionValueChoicesValues[C.CATEGORY_H_UNLOCKED_HOUSE_INSIDE])
-	ClearTable(self.actionValueChoicesTooltips[C.CATEGORY_H_UNLOCKED_HOUSE_INSIDE])
-	ClearTable(self.actionValueChoices[C.CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE])
-	ClearTable(self.actionValueChoicesValues[C.CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE])
-	ClearTable(self.actionValueChoicesTooltips[C.CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE])
-	self.actionValueChoices[C.CATEGORY_H_UNLOCKED_HOUSE_INSIDE], self.actionValueChoicesValues[C.CATEGORY_H_UNLOCKED_HOUSE_INSIDE], self.actionValueChoicesTooltips[C.CATEGORY_H_UNLOCKED_HOUSE_INSIDE] = choices, choicesValues, choicesTooltips
-	self.actionValueChoices[C.CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE], self.actionValueChoicesValues[C.CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE], self.actionValueChoicesTooltips[C.CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE] = choices, choicesValues, choicesTooltips
+	ClearTable(self.actionValueChoices[CATEGORY_H_UNLOCKED_HOUSE_INSIDE])
+	ClearTable(self.actionValueChoicesValues[CATEGORY_H_UNLOCKED_HOUSE_INSIDE])
+	ClearTable(self.actionValueChoicesTooltips[CATEGORY_H_UNLOCKED_HOUSE_INSIDE])
+	ClearTable(self.actionValueChoices[CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE])
+	ClearTable(self.actionValueChoicesValues[CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE])
+	ClearTable(self.actionValueChoicesTooltips[CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE])
+	self.actionValueChoices[CATEGORY_H_UNLOCKED_HOUSE_INSIDE], self.actionValueChoicesValues[CATEGORY_H_UNLOCKED_HOUSE_INSIDE], self.actionValueChoicesTooltips[CATEGORY_H_UNLOCKED_HOUSE_INSIDE] = choices, choicesValues, choicesTooltips
+	self.actionValueChoices[CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE], self.actionValueChoicesValues[CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE], self.actionValueChoicesTooltips[CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE] = choices, choicesValues, choicesTooltips
 end
 
 function CSPM_PieMenuEditorPanel:GetShortcutSelectionChoicesByCategoryId(categoryId)
 	local choices = {}
-	local choicesValues = CSPM.shortcutManager:GetShortcutListByCategory(categoryId) or {}
+	local choicesValues = self.shortcutDataManager:GetShortcutListByCategory(categoryId) or {}
 	for k, v in ipairs(choicesValues) do
-		local name = CSPM.util.GetShortcutInfo(v)
+		local name = GetShortcutInfo(v)
 		choices[k] = name or ""
 	end
 	-- In overridden custom tooltip functions, the choicesTooltips table uses the shortcutId value instead of a string.
@@ -589,7 +574,7 @@ function CSPM_PieMenuEditorPanel:RebuildShortcutSelectionChoicesByCategoryId(cat
 	ClearTable(self.actionValueChoicesValues[categoryId])
 	ClearTable(self.actionValueChoicesTooltips[categoryId])
 	self.actionValueChoices[categoryId], self.actionValueChoicesValues[categoryId], self.actionValueChoicesTooltips[categoryId] = self:GetShortcutSelectionChoicesByCategoryId(categoryId)
-	if CSPM.shortcutManager:IsExternalShortcutCategory(categoryId) then
+	if self.shortcutDataManager:IsExternalShortcutCategory(categoryId) then
 		self.externalShortcutIsDirty[categoryId] = false
 	end
 end
@@ -631,16 +616,14 @@ function CSPM_PieMenuEditorPanel:UpdateSlotDisplayNameCacheForSpecificSlot(slotI
 end
 
 function CSPM_PieMenuEditorPanel:OnLAMPanelOpened(panel)
-	if (panel ~= self.panel) then return end
-	self.panelOpened = true
 --	CSPM.LDL:Debug("OnLAMPanelOpened: PieMenu Editor")
 
 	-- update external shortcut category selection choices if needed.
 	if self.externalShortcutCategoryIsDirty then
 		CSPM.LDL:Debug("uiExternalShortcutCategoryChoices Updated:")
-		self:RebuildExternalShortcutCategorySelectionChoices()	-- categoryChoices[C.ACTION_TYPE_SHORTCUT_ADDON]
-		if self.db.preset[self.currentPresetId].slot[self.currentSlotId].type == C.ACTION_TYPE_SHORTCUT_ADDON then
-			CSPM_UI_CategoryMenu:UpdateChoices(self.categoryChoices[C.ACTION_TYPE_SHORTCUT_ADDON], self.categoryChoicesValues[C.ACTION_TYPE_SHORTCUT_ADDON])
+		self:RebuildExternalShortcutCategorySelectionChoices()	-- categoryChoices[ACTION_TYPE_SHORTCUT_ADDON]
+		if self.db.preset[self.currentPresetId].slot[self.currentSlotId].type == ACTION_TYPE_SHORTCUT_ADDON then
+			CSPM_UI_CategoryMenu:UpdateChoices(self.categoryChoices[ACTION_TYPE_SHORTCUT_ADDON], self.categoryChoicesValues[ACTION_TYPE_SHORTCUT_ADDON])
 			CSPM_UI_CategoryMenu:UpdateValue()
 		end
 	end
@@ -660,10 +643,10 @@ function CSPM_PieMenuEditorPanel:OnLAMPanelOpened(panel)
 	-- NOTE : If an external pie menu is added by an external add-on after the previous construction of the choice, the external pie menu choice should be rebuilt.
 	if self.externalPieMenuIsDirty then
 		CSPM.LDL:Debug("uiExternalPieMenuChoices Updated:")
-		self:RebuildExternalPieMenuPresetSelectionChoices()	-- actionValueChoices[C.CATEGORY_P_OPEN_EXTERNAL_PIE_MENU]
-		if self.db.preset[self.currentPresetId].slot[self.currentSlotId].type == C.ACTION_TYPE_PIE_MENU then
-			if self.db.preset[self.currentPresetId].slot[self.currentSlotId].category == C.CATEGORY_P_OPEN_EXTERNAL_PIE_MENU then
-				CSPM_UI_ActionValueMenu:UpdateChoices(self.actionValueChoices[C.CATEGORY_P_OPEN_EXTERNAL_PIE_MENU], self.actionValueChoicesValues[C.CATEGORY_P_OPEN_EXTERNAL_PIE_MENU], self.actionValueChoicesTooltips[C.CATEGORY_P_OPEN_EXTERNAL_PIE_MENU])
+		self:RebuildExternalPieMenuPresetSelectionChoices()	-- actionValueChoices[CATEGORY_P_OPEN_EXTERNAL_PIE_MENU]
+		if self.db.preset[self.currentPresetId].slot[self.currentSlotId].type == ACTION_TYPE_PIE_MENU then
+			if self.db.preset[self.currentPresetId].slot[self.currentSlotId].category == CATEGORY_P_OPEN_EXTERNAL_PIE_MENU then
+				CSPM_UI_ActionValueMenu:UpdateChoices(self.actionValueChoices[CATEGORY_P_OPEN_EXTERNAL_PIE_MENU], self.actionValueChoicesValues[CATEGORY_P_OPEN_EXTERNAL_PIE_MENU], self.actionValueChoicesTooltips[CATEGORY_P_OPEN_EXTERNAL_PIE_MENU])
 				CSPM_UI_ActionValueMenu:UpdateValue()		-- Note : When called with no arguments, getFunc will be called, and setFunc will NOT be called.
 			end
 		end
@@ -671,12 +654,10 @@ function CSPM_PieMenuEditorPanel:OnLAMPanelOpened(panel)
 end
 
 function CSPM_PieMenuEditorPanel:OnLAMPanelClosed(panel)
-	if (panel ~= self.panel) then return end
-	self.panelOpened = false
 --	CSPM.LDL:Debug("OnLAMPanelClosed: PieMenu Editor")
 end
 
-function CSPM_PieMenuEditorPanel:CreateOptionsPanel()
+function CSPM_PieMenuEditorPanel:CreateSettingPanel()
 	local panelData = {
 		type = "panel", 
 		name = "Shortcut PieMenu", 
@@ -691,7 +672,7 @@ function CSPM_PieMenuEditorPanel:CreateOptionsPanel()
 --		registerForDefaults = true, 
 --		resetFunc = function() self:ResetCurrentPresetDataToDefault() end, 
 	}
-	self.panel = LAM:RegisterAddonPanel("CSPM_lamOptionsMenuEditor", panelData)
+	LAM:RegisterAddonPanel(self.panelId, panelData)
 
 	local submenuPieVisual = {}
 	submenuPieVisual[#submenuPieVisual + 1] = {
@@ -701,7 +682,7 @@ function CSPM_PieMenuEditorPanel:CreateOptionsPanel()
 		getFunc = function() return self.db.preset[self.currentPresetId].name end, 
 		setFunc = function(newPresetName)
 			self.db.preset[self.currentPresetId].name = newPresetName
-			CALLBACK_MANAGER:FireCallbacks("CSPM-UserPieMenuInfoUpdated", self.currentPresetId)
+			CSPM:FireCallbacks("CSPM-UserPieMenuInfoUpdated", self.currentPresetId)
 		end, 
 		isMultiline = false, 
 		isExtraWide = false, 
@@ -717,7 +698,7 @@ function CSPM_PieMenuEditorPanel:CreateOptionsPanel()
 		getFunc = function() return self.db.preset[self.currentPresetId].tooltip or "" end, 
 		setFunc = function(newPresetNote)
 			self.db.preset[self.currentPresetId].tooltip = newPresetNote
-			CALLBACK_MANAGER:FireCallbacks("CSPM-UserPieMenuInfoUpdated", self.currentPresetId)
+			CSPM:FireCallbacks("CSPM-UserPieMenuInfoUpdated", self.currentPresetId)
 		end, 
 		isMultiline = false, 
 		isExtraWide = false, 
@@ -862,8 +843,8 @@ function CSPM_PieMenuEditorPanel:CreateOptionsPanel()
 			-- update slot tab
 			self.currentSlotId = newSlotId
 			-- Since the only purpose here is to reflect the saved data to the panel(slot tab), we will make sure NOT to call setFunc for each widget.
-			local uiActionTypeId = savedSlotData.type or C.ACTION_TYPE_NOTHING
-			local uiCategoryId = savedSlotData.category or C.CATEGORY_NOTHING
+			local uiActionTypeId = savedSlotData.type or ACTION_TYPE_NOTHING
+			local uiCategoryId = savedSlotData.category or CATEGORY_NOTHING
 --			local uiActionValue = savedSlotData.value or 0
 
 			CSPM_UI_TabHeader.data.name = self.slotChoices[self.currentSlotId]
@@ -916,7 +897,7 @@ function CSPM_PieMenuEditorPanel:CreateOptionsPanel()
 			-- According to the design policy, the slot name override setting is also initialized.
 			CSPM_UI_SlotNameEditbox:UpdateValue(true)
 			-- According to the design policy, the slot icon override setting is only initialized when the action type is set to 'unselected'.
-			if newActionTypeId == C.ACTION_TYPE_NOTHING then
+			if newActionTypeId == ACTION_TYPE_NOTHING then
 				CSPM_UI_SlotIconEditbox:UpdateValue(true)
 			end
 		end, 
@@ -982,7 +963,7 @@ function CSPM_PieMenuEditorPanel:CreateOptionsPanel()
 			CSPM.LDL:Debug("OnActionValueEditboxChanged : %s", newActionValueString)
 			local uiActionTypeId = self.db.preset[self.currentPresetId].slot[self.currentSlotId].type
 			-- NOTE : the meaning of ActionValue is different for each ActionType, and they are not mutually compatible.
-			if uiActionTypeId == C.ACTION_TYPE_CHAT_COMMAND then 
+			if uiActionTypeId == ACTION_TYPE_CHAT_COMMAND then 
 				self.db.preset[self.currentPresetId].slot[self.currentSlotId].value = newActionValueString
 			else
 				self.db.preset[self.currentPresetId].slot[self.currentSlotId].value = tonumber(newActionValueString)
@@ -998,7 +979,7 @@ function CSPM_PieMenuEditorPanel:CreateOptionsPanel()
 		width = "full", 
 		disabled = function()
 			local uiCategoryId = self.db.preset[self.currentPresetId].slot[self.currentSlotId].category
-			return uiCategoryId ~= C.CATEGORY_IMMEDIATE_VALUE
+			return uiCategoryId ~= CATEGORY_IMMEDIATE_VALUE
 		end, 
 		default = self.DB_DEFAULT.preset[1].slot[1].value, 
 		reference = "CSPM_UI_ActionValueEditbox", 
@@ -1040,13 +1021,13 @@ function CSPM_PieMenuEditorPanel:CreateOptionsPanel()
 			local actionTypeId = self.db.preset[self.currentPresetId].slot[self.currentSlotId].type
 			local categoryId = self.db.preset[self.currentPresetId].slot[self.currentSlotId].category
 			local actionValue = self.db.preset[self.currentPresetId].slot[self.currentSlotId].value
-			local newSlotName = CSPM.util.GetDefaultSlotName(actionTypeId, categoryId, actionValue) 
+			local newSlotName = GetDefaultSlotName(actionTypeId, categoryId, actionValue) 
 			CSPM_UI_SlotNameEditbox:UpdateValue(false, newSlotName)
 		end, 
 		width = "full", 
 		disabled = function()
 			local uiActionTypeId = self.db.preset[self.currentPresetId].slot[self.currentSlotId].type
-			if uiActionTypeId == C.ACTION_TYPE_COLLECTIBLE or uiActionTypeId == C.ACTION_TYPE_COLLECTIBLE_APPEARANCE or uiActionTypeId == C.ACTION_TYPE_EMOTE or uiActionTypeId == C.ACTION_TYPE_TRAVEL_TO_HOUSE or uiActionTypeId == C.ACTION_TYPE_PIE_MENU then
+			if uiActionTypeId == ACTION_TYPE_COLLECTIBLE or uiActionTypeId == ACTION_TYPE_COLLECTIBLE_APPEARANCE or uiActionTypeId == ACTION_TYPE_EMOTE or uiActionTypeId == ACTION_TYPE_TRAVEL_TO_HOUSE or uiActionTypeId == ACTION_TYPE_PIE_MENU then
 				return false
 			else
 				return true
@@ -1085,101 +1066,86 @@ function CSPM_PieMenuEditorPanel:CreateOptionsPanel()
 --		width = "half", 
 	}
 ]]
-	LAM:RegisterOptionControls("CSPM_lamOptionsMenuEditor", optionsData)
+	LAM:RegisterOptionControls(self.panelId, optionsData)
+end
 
-	local function OnLAMPanelControlsCreated(panel)
-		if (panel ~= self.panel) then return end
-		CALLBACK_MANAGER:UnregisterCallback("LAM-PanelControlsCreated", OnLAMPanelControlsCreated)
-
-		-- override ScrollableDropdownHelper for CSPM_UI_ActionValueMenu to customize dropdown choices tooltips
-		CSPM_UI_ActionValueMenu.scrollHelper.OnMouseEnter = function(scrollHelper, control)
-			if control.m_data.tooltip then
-				local uiActionTypeId = self.db.preset[self.currentPresetId].slot[self.currentSlotId].type or C.ACTION_TYPE_NOTHING
-				CSPM.util.LayoutSlotActionTooltip(uiActionTypeId, self.db.preset[self.currentPresetId].slot[self.currentSlotId].category or C.CATEGORY_NOTHING, control.m_data.tooltip)
-				CSPM.util.ShowSlotActionTooltip(control, TOPLEFT, 0, 0, BOTTOMRIGHT)
-			end
+function CSPM_PieMenuEditorPanel:OnLAMPanelControlsCreated(panel)
+	-- override ScrollableDropdownHelper for CSPM_UI_ActionValueMenu to customize dropdown choices tooltips
+	CSPM_UI_ActionValueMenu.scrollHelper.OnMouseEnter = function(scrollHelper, control)
+		if control.m_data.tooltip then
+			local uiActionTypeId = self.db.preset[self.currentPresetId].slot[self.currentSlotId].type or ACTION_TYPE_NOTHING
+			LayoutSlotActionTooltip(uiActionTypeId, self.db.preset[self.currentPresetId].slot[self.currentSlotId].category or CATEGORY_NOTHING, control.m_data.tooltip)
+			ShowSlotActionTooltip(control, TOPLEFT, 0, 0, BOTTOMRIGHT)
 		end
-		CSPM_UI_ActionValueMenu.scrollHelper.OnMouseExit = function(scrollHelper, control)
-			if control.m_data.tooltip then
-				CSPM.util.HideSlotActionTooltip()
-			end
-		end
-
-		-- Create a widget for the Preset Selection dropdown menu
-		local dropdownPresetSelectMenu = {
-			type = "dropdown", 
-			name = "", 
---			name = L(SI_CSPM_UI_PRESET_SELECT_MENU_NAME), 
-			tooltip = L(SI_CSPM_UI_PRESET_SELECT_MENU_TIPS), 
-			choices = self.presetChoices, 	-- If choicesValue is defined, choices table is only used for UI display!
-			choicesValues = self.presetChoicesValues, 
-			choicesTooltips = self.presetChoicesTooltips, 
-			getFunc = function() return self.currentPresetId end, 
-			setFunc = function(newPresetId)
-				CSPM.LDL:Debug("OnPresetIdSelectionChanged : %s", newPresetId)
-				if not self.db.preset[newPresetId] then
-					CSPM.LDL:Debug("Error : preset data not found, so extend !")
-					self.db.preset[newPresetId] = ZO_DeepTableCopy(self:GetDefaultPresetData())
-					self.db.preset[newPresetId].id = newPresetId
-					CALLBACK_MANAGER:FireCallbacks("CSPM-UserPieMenuInfoUpdated", newPresetId)
-				end
-
-				-- update preset tab
-				self.currentPresetId = newPresetId
-
-				if CSPM_UI_PresetSubmenu.open then
-					CSPM_UI_PresetSubmenu.open = false
-					CSPM_UI_PresetSubmenu.animation:PlayFromStart()
-				end
-				CSPM_UI_PresetSubmenu.data.name = self.presetChoices[self.currentPresetId]
-				CSPM_UI_PresetSubmenu:UpdateValue()		-- Note : When called with no arguments, getFunc will be called, and setFunc will NOT be called.
-
-				self:RebuildSlotDisplayNameCache(self.currentPresetId)	-- slotDisplayNameCache
-				CSPM_UI_MenuItemsCountSlider:UpdateValue(false, self.db.preset[self.currentPresetId].menuItemsCount)
-				self:ChangePanelSlotState(1)
-			end, 
-			width = "full", 
-			scrollable = true, 
-			default = 1, 
-		}
-		CSPM_UI_PresetSelectMenu = LAMCreateControl.dropdown(self.panel, dropdownPresetSelectMenu)
-		CSPM_UI_PresetSelectMenu.combobox:SetWidth(300)	-- default : panelWidth(585) / 3
-		CSPM_UI_PresetSelectMenu:SetAnchor(BOTTOMLEFT, CSPM_UI_PresetSubmenu, TOPLEFT)
-		CSPM_UI_PresetSelectMenu:SetAnchor(BOTTOMRIGHT, CSPM_UI_PresetSubmenu, TOPRIGHT, -112, -4)
-		-- override ScrollableDropdownHelper for CSPM_UI_PresetSelectMenu to customize dropdown choices tooltips
-		CSPM_UI_PresetSelectMenu.scrollHelper.OnMouseEnter = function(scrollHelper, control)
-			if control.m_data.tooltip then
-				CSPM.util.LayoutSlotActionTooltip(C.ACTION_TYPE_PIE_MENU, C.CATEGORY_NOTHING, control.m_data.tooltip, C.UI_NONE)
-				CSPM.util.ShowSlotActionTooltip(control, TOPLEFT, 0, 0, BOTTOMRIGHT)
-			end
-		end
-		CSPM_UI_PresetSelectMenu.scrollHelper.OnMouseExit = function(scrollHelper, control)
-			if control.m_data.tooltip then
-				CSPM.util.HideSlotActionTooltip()
-			end
-		end
-
-		self:ChangePanelPresetState(1)
-		self.panelInitialized = true
 	end
-	CALLBACK_MANAGER:RegisterCallback("LAM-PanelControlsCreated", OnLAMPanelControlsCreated)
-	CALLBACK_MANAGER:RegisterCallback("LAM-PanelOpened", function(panel)
-		self:OnLAMPanelOpened(panel)
-	end)
-	CALLBACK_MANAGER:RegisterCallback("LAM-PanelClosed", function(panel)
-		self:OnLAMPanelClosed(panel)
-	end)
+	CSPM_UI_ActionValueMenu.scrollHelper.OnMouseExit = function(scrollHelper, control)
+		if control.m_data.tooltip then
+			HideSlotActionTooltip()
+		end
+	end
+
+	-- Create a widget for the Preset Selection dropdown menu
+	local dropdownPresetSelectMenu = {
+		type = "dropdown", 
+		name = "", 
+--		name = L(SI_CSPM_UI_PRESET_SELECT_MENU_NAME), 
+		tooltip = L(SI_CSPM_UI_PRESET_SELECT_MENU_TIPS), 
+		choices = self.presetChoices, 	-- If choicesValue is defined, choices table is only used for UI display!
+		choicesValues = self.presetChoicesValues, 
+		choicesTooltips = self.presetChoicesTooltips, 
+		getFunc = function() return self.currentPresetId end, 
+		setFunc = function(newPresetId)
+			CSPM.LDL:Debug("OnPresetIdSelectionChanged : %s", newPresetId)
+			if not self.db.preset[newPresetId] then
+				CSPM.LDL:Debug("Error : preset data not found, so extend !")
+				self.db.preset[newPresetId] = ZO_DeepTableCopy(self:GetDefaultPresetData())
+				self.db.preset[newPresetId].id = newPresetId
+				CSPM:FireCallbacks("CSPM-UserPieMenuInfoUpdated", newPresetId)
+			end
+
+			-- update preset tab
+			self.currentPresetId = newPresetId
+
+			if CSPM_UI_PresetSubmenu.open then
+				CSPM_UI_PresetSubmenu.open = false
+				CSPM_UI_PresetSubmenu.animation:PlayFromStart()
+			end
+			CSPM_UI_PresetSubmenu.data.name = self.presetChoices[self.currentPresetId]
+			CSPM_UI_PresetSubmenu:UpdateValue()		-- Note : When called with no arguments, getFunc will be called, and setFunc will NOT be called.
+
+			self:RebuildSlotDisplayNameCache(self.currentPresetId)	-- slotDisplayNameCache
+			CSPM_UI_MenuItemsCountSlider:UpdateValue(false, self.db.preset[self.currentPresetId].menuItemsCount)
+			self:ChangePanelSlotState(1)
+		end, 
+		width = "full", 
+		scrollable = true, 
+		default = 1, 
+	}
+	CSPM_UI_PresetSelectMenu = LAMCreateControl.dropdown(self.panel, dropdownPresetSelectMenu)
+	CSPM_UI_PresetSelectMenu.combobox:SetWidth(300)	-- default : panelWidth(585) / 3
+	CSPM_UI_PresetSelectMenu:SetAnchor(BOTTOMLEFT, CSPM_UI_PresetSubmenu, TOPLEFT)
+	CSPM_UI_PresetSelectMenu:SetAnchor(BOTTOMRIGHT, CSPM_UI_PresetSubmenu, TOPRIGHT, -112, -4)
+	-- override ScrollableDropdownHelper for CSPM_UI_PresetSelectMenu to customize dropdown choices tooltips
+	CSPM_UI_PresetSelectMenu.scrollHelper.OnMouseEnter = function(scrollHelper, control)
+		if control.m_data.tooltip then
+			LayoutSlotActionTooltip(ACTION_TYPE_PIE_MENU, CATEGORY_NOTHING, control.m_data.tooltip, UI_NONE)
+			ShowSlotActionTooltip(control, TOPLEFT, 0, 0, BOTTOMRIGHT)
+		end
+	end
+	CSPM_UI_PresetSelectMenu.scrollHelper.OnMouseExit = function(scrollHelper, control)
+		if control.m_data.tooltip then
+			HideSlotActionTooltip()
+		end
+	end
+
+	self:ChangePanelPresetState(1)
 end
 
-function CSPM_PieMenuEditorPanel:GetOptionsPanel()
-	return self.panel
-end
-
-function CSPM_PieMenuEditorPanel:OpenOptionsPanel(presetId, slotId)
+function CSPM_PieMenuEditorPanel:OpenSettingPanel(presetId, slotId)
+	CT_LAMSettingPanelController.OpenSettingPanel(self)
 	if self.panel then
-		LAM:OpenToPanel(self.panel)
-		if presetId and CSPM.util.IsUserPieMenu(presetId) then
-			if self.panelInitialized then
+		if presetId and IsUserPieMenu(presetId) then
+			if self:IsPanelInitialized() then
 				self:ChangePanelPresetState(presetId)
 				if slotId then
 					self:ChangePanelSlotState(slotId)
