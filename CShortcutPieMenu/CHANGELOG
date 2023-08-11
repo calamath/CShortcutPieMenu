@@ -1,3 +1,6 @@
+V1.5.1: [V10501] by Calamath
+- Fixed an issue since the Necrom update where unlocking a new collection did not immediately reflect in the pie menu settings menu.
+
 V1.5.0: [V10500] by Calamath
 As a first step in the refactoring and overhaul, the pie menu controller and data management have been transferred to the LibCPieMenu add-on.
 CShortcutPieMenu add-on has a new dependency on LibCPieMenu and primarily handles user-customizable shortcut pie menus.
