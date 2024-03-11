@@ -39,7 +39,6 @@ function CSPM_PieMenuEditorPanel:Initialize(panelId, currentSavedVars, accountWi
 	self.categoryChoicesValues = {}
 	self.actionValueChoices = {}
 	self.actionValueChoicesValues = {}
-	self.actionValueChoicesTooltips = {}
 
 	self:RebuildUserPieMenuPresetSelectionChoices()	-- presetChoices, actionValueChoices[CATEGORY_P_OPEN_USER_PIE_MENU]
 
@@ -207,8 +206,8 @@ function CSPM_PieMenuEditorPanel:Initialize(panelId, currentSavedVars, accountWi
 	}
 	self:RebuildExternalShortcutCategorySelectionChoices()	-- categoryChoices[ACTION_TYPE_SHORTCUT_ADDON]
 
-	self.actionValueChoices[CATEGORY_NOTHING], self.actionValueChoicesValues[CATEGORY_NOTHING], self.actionValueChoicesTooltips[CATEGORY_NOTHING] = {}, {}, {}
-	self.actionValueChoices[CATEGORY_IMMEDIATE_VALUE], self.actionValueChoicesValues[CATEGORY_IMMEDIATE_VALUE], self.actionValueChoicesTooltips[CATEGORY_IMMEDIATE_VALUE] = {}, {}, {}
+	self.actionValueChoices[CATEGORY_NOTHING], self.actionValueChoicesValues[CATEGORY_NOTHING] = {}, {}
+	self.actionValueChoices[CATEGORY_IMMEDIATE_VALUE], self.actionValueChoicesValues[CATEGORY_IMMEDIATE_VALUE] = {}, {}
 	self:InitializeCollectibleSelectionChoices()	-- actionValueChoices[CATEGORY_C_xxx]
 	self:InitializeEmoteSelectionChoices()	-- actionValueChoices[CATEGORY_E_xxx]
 	self:RebuildHouseSelectionChoices(true, true)	-- actionValueChoices[CATEGORY_H_UNLOCKED_HOUSE_INSIDE], actionValueChoices[CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE]
@@ -332,7 +331,7 @@ function CSPM_PieMenuEditorPanel:OnUserPieMenuInfoUpdated(presetId)
 	self.presetChoices[presetId] = self:GetPresetDisplayNameByPresetId(presetId)
 	self.actionValueChoices[CATEGORY_P_OPEN_USER_PIE_MENU][presetId] = self.presetChoices[presetId]
 	if self:IsPanelInitialized() then
-		CSPM_UI_PresetSelectMenu:UpdateChoices(self.presetChoices, self.presetChoicesValues, self.presetChoicesTooltips)
+		CSPM_UI_PresetSelectMenu:UpdateChoices(self.presetChoices, self.presetChoicesValues)
 		CSPM_UI_PresetSelectMenu:UpdateValue()		-- Note : When called with no arguments, getFunc will be called, and setFunc will NOT be called.
 
 		CSPM_UI_PresetSubmenu.data.name = self.presetChoices[self.currentPresetId]
@@ -341,7 +340,7 @@ function CSPM_PieMenuEditorPanel:OnUserPieMenuInfoUpdated(presetId)
 		if self.db.preset[self.currentPresetId].slot[self.currentSlotId].type == ACTION_TYPE_PIE_MENU then
 			local categoryId = self.db.preset[self.currentPresetId].slot[self.currentSlotId].category
 			if categoryId == CATEGORY_P_OPEN_USER_PIE_MENU then
-				CSPM_UI_ActionValueMenu:UpdateChoices(self.actionValueChoices[CATEGORY_P_OPEN_USER_PIE_MENU], self.actionValueChoicesValues[CATEGORY_P_OPEN_USER_PIE_MENU], self.actionValueChoicesTooltips[CATEGORY_P_OPEN_USER_PIE_MENU])
+				CSPM_UI_ActionValueMenu:UpdateChoices(self.actionValueChoices[CATEGORY_P_OPEN_USER_PIE_MENU], self.actionValueChoicesValues[CATEGORY_P_OPEN_USER_PIE_MENU])
 				CSPM_UI_ActionValueMenu:UpdateValue()		-- Note : When called with no arguments, getFunc will be called, and setFunc will NOT be called.
 			end
 		end
@@ -355,19 +354,16 @@ function CSPM_PieMenuEditorPanel:GetUserPieMenuPresetSelectionChoices()
 		choices[i] = self:GetPresetDisplayNameByPresetId(i)
 		choicesValues[i] = i
 	end
-	-- In overridden custom tooltip functions, the choicesTooltips table uses the presetId value instead of a string.
-	return choices, choicesValues, choicesValues
+	return choices, choicesValues
 end
 function CSPM_PieMenuEditorPanel:RebuildUserPieMenuPresetSelectionChoices()
-	local choices, choicesValues, choicesTooltips = self:GetUserPieMenuPresetSelectionChoices()
+	local choices, choicesValues = self:GetUserPieMenuPresetSelectionChoices()
 	ClearTable(self.presetChoices)
 	ClearTable(self.presetChoicesValues)
-	ClearTable(self.presetChoicesTooltips)
 	ClearTable(self.actionValueChoices[CATEGORY_P_OPEN_USER_PIE_MENU])
 	ClearTable(self.actionValueChoicesValues[CATEGORY_P_OPEN_USER_PIE_MENU])
-	ClearTable(self.actionValueChoicesTooltips[CATEGORY_P_OPEN_USER_PIE_MENU])
-	self.presetChoices, self.presetChoicesValues, self.presetChoicesTooltips = choices, choicesValues, choicesTooltips
-	self.actionValueChoices[CATEGORY_P_OPEN_USER_PIE_MENU], self.actionValueChoicesValues[CATEGORY_P_OPEN_USER_PIE_MENU], self.actionValueChoicesTooltips[CATEGORY_P_OPEN_USER_PIE_MENU] = choices, choicesValues, choicesTooltips
+	self.presetChoices, self.presetChoicesValues = choices, choicesValues
+	self.actionValueChoices[CATEGORY_P_OPEN_USER_PIE_MENU], self.actionValueChoicesValues[CATEGORY_P_OPEN_USER_PIE_MENU] = choices, choicesValues
 end
 
 function CSPM_PieMenuEditorPanel:GetExternalPieMenuPresetSelectionChoices()
@@ -378,14 +374,12 @@ function CSPM_PieMenuEditorPanel:GetExternalPieMenuPresetSelectionChoices()
 		table.insert(choices, self:GetPresetDisplayNameByPresetId(presetId))
 		table.insert(choicesValues, presetId)
 	end
-	-- In overridden custom tooltip functions, the choicesTooltips table uses the presetId value instead of a string.
-	return choices, choicesValues, choicesValues
+	return choices, choicesValues
 end
 function CSPM_PieMenuEditorPanel:RebuildExternalPieMenuPresetSelectionChoices()
 	ClearTable(self.actionValueChoices[CATEGORY_P_OPEN_EXTERNAL_PIE_MENU])
 	ClearTable(self.actionValueChoicesValues[CATEGORY_P_OPEN_EXTERNAL_PIE_MENU])
-	ClearTable(self.actionValueChoicesTooltips[CATEGORY_P_OPEN_EXTERNAL_PIE_MENU])
-	self.actionValueChoices[CATEGORY_P_OPEN_EXTERNAL_PIE_MENU], self.actionValueChoicesValues[CATEGORY_P_OPEN_EXTERNAL_PIE_MENU], self.actionValueChoicesTooltips[CATEGORY_P_OPEN_EXTERNAL_PIE_MENU] = self:GetExternalPieMenuPresetSelectionChoices()
+	self.actionValueChoices[CATEGORY_P_OPEN_EXTERNAL_PIE_MENU], self.actionValueChoicesValues[CATEGORY_P_OPEN_EXTERNAL_PIE_MENU] = self:GetExternalPieMenuPresetSelectionChoices()
 	self.externalPieMenuIsDirty = false
 end
 
@@ -452,8 +446,7 @@ function CSPM_PieMenuEditorPanel:GetCollectibleSelectionChoicesByCollectibleCate
 			end
 		end
 	end
-	-- In overridden custom tooltip functions, the choicesTooltips table uses the collectibleId value instead of a string.
-	return choices, choicesValues, choicesValues
+	return choices, choicesValues
 end
 function CSPM_PieMenuEditorPanel:GetCollectibleSelectionChoicesByCategoryType(categoryType, unlockedOnly)
 --	categoryType : ZOS CollectibleCategoryType
@@ -470,8 +463,7 @@ function CSPM_PieMenuEditorPanel:GetCollectibleSelectionChoicesByCategoryType(ca
 			end
 		end
 	end
-	-- In overridden custom tooltip functions, the choicesTooltips table uses the collectibleId value instead of a string.
-	return choices, choicesValues, choicesValues
+	return choices, choicesValues
 end
 function CSPM_PieMenuEditorPanel:GetCollectibleSelectionChoicesByCategoryId(categoryId, unlockedOnly)
 --	categoryId : CSPM category id
@@ -484,8 +476,7 @@ end
 function CSPM_PieMenuEditorPanel:RebuildCollectibleSelectionChoicesByCategoryId(categoryId, unlockedOnly)
 	ClearTable(self.actionValueChoices[categoryId])
 	ClearTable(self.actionValueChoicesValues[categoryId])
-	ClearTable(self.actionValueChoicesTooltips[categoryId])
-	self.actionValueChoices[categoryId], self.actionValueChoicesValues[categoryId], self.actionValueChoicesTooltips[categoryId] = self:GetCollectibleSelectionChoicesByCategoryId(categoryId, unlockedOnly)
+	self.actionValueChoices[categoryId], self.actionValueChoicesValues[categoryId] = self:GetCollectibleSelectionChoicesByCategoryId(categoryId, unlockedOnly)
 end
 function CSPM_PieMenuEditorPanel:InitializeCollectibleSelectionChoices()
 	for categoryId, _ in pairs(CategoryId_To_CollectibleCategoryType) do
@@ -499,8 +490,7 @@ function CSPM_PieMenuEditorPanel:GetEmoteSelectionChoicesByEmoteCategory(emoteCa
 	for k, emoteId in pairs(choicesValues) do
 		table.insert(choices, zo_strformat(L(SI_CSPM_COMMON_FORMATTER), PLAYER_EMOTE_MANAGER:GetEmoteItemInfo(emoteId).displayName))
 	end
-	-- In overridden custom tooltip functions, the choicesTooltips table uses the emoteId value instead of a string.
-	return choices, choicesValues, choicesValues
+	return choices, choicesValues
 end
 function CSPM_PieMenuEditorPanel:GetEmoteSelectionChoicesByCategoryId(categoryId)
 --	categoryId : CSPM category id
@@ -509,9 +499,7 @@ end
 function CSPM_PieMenuEditorPanel:RebuildEmoteSelectionChoicesByCategoryId(categoryId)
 	ClearTable(self.actionValueChoices[categoryId])
 	ClearTable(self.actionValueChoicesValues[categoryId])
-	ClearTable(self.actionValueChoicesTooltips[categoryId])
-	-- In overridden custom tooltip functions, the choicesTooltips table uses the emoteId value instead of a string.
-	self.actionValueChoices[categoryId], self.actionValueChoicesValues[categoryId], self.actionValueChoicesTooltips[categoryId] = self:GetEmoteSelectionChoicesByCategoryId(categoryId) 
+	self.actionValueChoices[categoryId], self.actionValueChoicesValues[categoryId] = self:GetEmoteSelectionChoicesByCategoryId(categoryId) 
 end
 function CSPM_PieMenuEditorPanel:InitializeEmoteSelectionChoices()
 	for categoryId, _ in pairs(CategoryId_To_EmoteCategory) do
@@ -538,25 +526,21 @@ function CSPM_PieMenuEditorPanel:GetHouseSelectionChoices(unlockedOnly, includeP
 			table.insert(choicesValues, GetCollectibleReferenceId(collectibleId))
 		end
 	end
-	-- In overridden custom tooltip functions, the choicesTooltips table uses the houseId value instead of a string.
-	return choices, choicesValues, choicesValues
+	return choices, choicesValues
 end
 function CSPM_PieMenuEditorPanel:RebuildHouseSelectionChoicesByCategoryId(categoryId, unlockedOnly, includePrimaryHouse)
 	ClearTable(self.actionValueChoices[categoryId])
 	ClearTable(self.actionValueChoicesValues[categoryId])
-	ClearTable(self.actionValueChoicesTooltips[categoryId])
-	self.actionValueChoices[categoryId], self.actionValueChoicesValues[categoryId], self.actionValueChoicesTooltips[categoryId] = self:GetHouseSelectionChoices(unlockedOnly, includePrimaryHouse)
+	self.actionValueChoices[categoryId], self.actionValueChoicesValues[categoryId] = self:GetHouseSelectionChoices(unlockedOnly, includePrimaryHouse)
 end
 function CSPM_PieMenuEditorPanel:RebuildHouseSelectionChoices(unlockedOnly, includePrimaryHouse)
-	local choices, choicesValues, choicesTooltips = self:GetHouseSelectionChoices(unlockedOnly, includePrimaryHouse)
+	local choices, choicesValues = self:GetHouseSelectionChoices(unlockedOnly, includePrimaryHouse)
 	ClearTable(self.actionValueChoices[CATEGORY_H_UNLOCKED_HOUSE_INSIDE])
 	ClearTable(self.actionValueChoicesValues[CATEGORY_H_UNLOCKED_HOUSE_INSIDE])
-	ClearTable(self.actionValueChoicesTooltips[CATEGORY_H_UNLOCKED_HOUSE_INSIDE])
 	ClearTable(self.actionValueChoices[CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE])
 	ClearTable(self.actionValueChoicesValues[CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE])
-	ClearTable(self.actionValueChoicesTooltips[CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE])
-	self.actionValueChoices[CATEGORY_H_UNLOCKED_HOUSE_INSIDE], self.actionValueChoicesValues[CATEGORY_H_UNLOCKED_HOUSE_INSIDE], self.actionValueChoicesTooltips[CATEGORY_H_UNLOCKED_HOUSE_INSIDE] = choices, choicesValues, choicesTooltips
-	self.actionValueChoices[CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE], self.actionValueChoicesValues[CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE], self.actionValueChoicesTooltips[CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE] = choices, choicesValues, choicesTooltips
+	self.actionValueChoices[CATEGORY_H_UNLOCKED_HOUSE_INSIDE], self.actionValueChoicesValues[CATEGORY_H_UNLOCKED_HOUSE_INSIDE] = choices, choicesValues
+	self.actionValueChoices[CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE], self.actionValueChoicesValues[CATEGORY_H_UNLOCKED_HOUSE_OUTSIDE] = choices, choicesValues
 end
 
 function CSPM_PieMenuEditorPanel:GetShortcutSelectionChoicesByCategoryId(categoryId)
@@ -566,14 +550,12 @@ function CSPM_PieMenuEditorPanel:GetShortcutSelectionChoicesByCategoryId(categor
 		local name = GetShortcutInfo(v)
 		choices[k] = name or ""
 	end
-	-- In overridden custom tooltip functions, the choicesTooltips table uses the shortcutId value instead of a string.
-	return choices, choicesValues, choicesValues
+	return choices, choicesValues
 end
 function CSPM_PieMenuEditorPanel:RebuildShortcutSelectionChoicesByCategoryId(categoryId)
 	ClearTable(self.actionValueChoices[categoryId])
 	ClearTable(self.actionValueChoicesValues[categoryId])
-	ClearTable(self.actionValueChoicesTooltips[categoryId])
-	self.actionValueChoices[categoryId], self.actionValueChoicesValues[categoryId], self.actionValueChoicesTooltips[categoryId] = self:GetShortcutSelectionChoicesByCategoryId(categoryId)
+	self.actionValueChoices[categoryId], self.actionValueChoicesValues[categoryId] = self:GetShortcutSelectionChoicesByCategoryId(categoryId)
 	if self.shortcutDataManager:IsExternalShortcutCategory(categoryId) then
 		self.externalShortcutIsDirty[categoryId] = false
 	end
@@ -634,7 +616,7 @@ function CSPM_PieMenuEditorPanel:OnLAMPanelOpened(panel)
 			CSPM.LDL:Debug("uiExternalShortcutChoices Updated: ", tostring(categoryId))
 			self:RebuildShortcutSelectionChoicesByCategoryId(categoryId)
 			if self.db.preset[self.currentPresetId].slot[self.currentSlotId].category == categoryId then
-				CSPM_UI_ActionValueMenu:UpdateChoices(self.actionValueChoices[categoryId], self.actionValueChoicesValues[categoryId], self.actionValueChoicesTooltips[categoryId])
+				CSPM_UI_ActionValueMenu:UpdateChoices(self.actionValueChoices[categoryId], self.actionValueChoicesValues[categoryId])
 				CSPM_UI_ActionValueMenu:UpdateValue()		-- Note : When called with no arguments, getFunc will be called, and setFunc will NOT be called.
 			end
 		end
@@ -646,7 +628,7 @@ function CSPM_PieMenuEditorPanel:OnLAMPanelOpened(panel)
 		self:RebuildExternalPieMenuPresetSelectionChoices()	-- actionValueChoices[CATEGORY_P_OPEN_EXTERNAL_PIE_MENU]
 		if self.db.preset[self.currentPresetId].slot[self.currentSlotId].type == ACTION_TYPE_PIE_MENU then
 			if self.db.preset[self.currentPresetId].slot[self.currentSlotId].category == CATEGORY_P_OPEN_EXTERNAL_PIE_MENU then
-				CSPM_UI_ActionValueMenu:UpdateChoices(self.actionValueChoices[CATEGORY_P_OPEN_EXTERNAL_PIE_MENU], self.actionValueChoicesValues[CATEGORY_P_OPEN_EXTERNAL_PIE_MENU], self.actionValueChoicesTooltips[CATEGORY_P_OPEN_EXTERNAL_PIE_MENU])
+				CSPM_UI_ActionValueMenu:UpdateChoices(self.actionValueChoices[CATEGORY_P_OPEN_EXTERNAL_PIE_MENU], self.actionValueChoicesValues[CATEGORY_P_OPEN_EXTERNAL_PIE_MENU])
 				CSPM_UI_ActionValueMenu:UpdateValue()		-- Note : When called with no arguments, getFunc will be called, and setFunc will NOT be called.
 			end
 		end
@@ -853,7 +835,7 @@ function CSPM_PieMenuEditorPanel:CreateSettingPanel()
 			CSPM_UI_ActionTypeMenu:UpdateValue()
 			CSPM_UI_CategoryMenu:UpdateChoices(self.categoryChoices[uiActionTypeId], self.categoryChoicesValues[uiActionTypeId])
 			CSPM_UI_CategoryMenu:UpdateValue()
-			CSPM_UI_ActionValueMenu:UpdateChoices(self.actionValueChoices[uiCategoryId], self.actionValueChoicesValues[uiCategoryId], self.actionValueChoicesTooltips[uiCategoryId])
+			CSPM_UI_ActionValueMenu:UpdateChoices(self.actionValueChoices[uiCategoryId], self.actionValueChoicesValues[uiCategoryId])
 			CSPM_UI_ActionValueMenu:UpdateValue()
 			CSPM_UI_ActionValueEditbox:UpdateValue()
 			CSPM_UI_ActionValueEditbox:UpdateDisabled()
@@ -912,12 +894,11 @@ function CSPM_PieMenuEditorPanel:CreateSettingPanel()
 --		tooltip = L(SI_CSPM_UI_CATEGORY_MENU_TIPS), 
 		choices = self.categoryChoices[self.db.preset[self.currentPresetId].slot[self.currentSlotId].type], 	-- If choicesValue is defined, choices table is only used for UI display!
 		choicesValues = self.categoryChoicesValues[self.db.preset[self.currentPresetId].slot[self.currentSlotId].type], 
---		choicesTooltips = self.categoryChoicesTooltips[self.db.preset[self.currentPresetId].slot[self.currentSlotId].type], 
 		getFunc = function() return self.db.preset[self.currentPresetId].slot[self.currentSlotId].category end, 
 		setFunc = function(newCategoryId)
 			CSPM.LDL:Debug("OnCategorySelectionChanged : %s", newCategoryId)
 			self.db.preset[self.currentPresetId].slot[self.currentSlotId].category = newCategoryId
-			CSPM_UI_ActionValueMenu:UpdateChoices(self.actionValueChoices[newCategoryId], self.actionValueChoicesValues[newCategoryId], self.actionValueChoicesTooltips[newCategoryId])
+			CSPM_UI_ActionValueMenu:UpdateChoices(self.actionValueChoices[newCategoryId], self.actionValueChoicesValues[newCategoryId])
 
 			-- To prevent a mismatch between the category id and the ActionValue,
 			-- the ActionValue should be initialized when the user changes the category selection.
@@ -938,7 +919,6 @@ function CSPM_PieMenuEditorPanel:CreateSettingPanel()
 --		tooltip = L(SI_CSPM_UI_ACTION_VALUE_MENU_TIPS), 
 		choices = self.actionValueChoices[self.db.preset[self.currentPresetId].slot[self.currentSlotId].category], 	-- If choicesValue is defined, choices table is only used for UI display!
 		choicesValues = self.actionValueChoicesValues[self.db.preset[self.currentPresetId].slot[self.currentSlotId].category], 
-		choicesTooltips = self.actionValueChoicesTooltips[self.db.preset[self.currentPresetId].slot[self.currentSlotId].category], 
 		getFunc = function() return self.db.preset[self.currentPresetId].slot[self.currentSlotId].value end, 
 		setFunc = function(newActionValue)
 			CSPM.LDL:Debug("OnActionValueSelectionChanged : %s", newActionValue)
@@ -1070,18 +1050,18 @@ function CSPM_PieMenuEditorPanel:CreateSettingPanel()
 end
 
 function CSPM_PieMenuEditorPanel:OnLAMPanelControlsCreated(panel)
-	-- override ScrollableDropdownHelper for CSPM_UI_ActionValueMenu to customize dropdown choices tooltips
-	CSPM_UI_ActionValueMenu.scrollHelper.OnMouseEnter = function(scrollHelper, control)
-		if control.m_data.tooltip then
-			local uiActionTypeId = self.db.preset[self.currentPresetId].slot[self.currentSlotId].type or ACTION_TYPE_NOTHING
-			LayoutSlotActionTooltip(uiActionTypeId, self.db.preset[self.currentPresetId].slot[self.currentSlotId].category or CATEGORY_NOTHING, control.m_data.tooltip)
-			ShowSlotActionTooltip(control, TOPLEFT, 0, 0, BOTTOMRIGHT)
-		end
+	-- Set up a custom tooltip for CSPM_UI_ActionValueMenu, a dropdown widget.
+	local function ActionValueMenu_OnMouseEnter(comboBox, entryControl)
+		local uiActionTypeId = self.db.preset[self.currentPresetId].slot[self.currentSlotId].type or ACTION_TYPE_NOTHING
+		LayoutSlotActionTooltip(uiActionTypeId, self.db.preset[self.currentPresetId].slot[self.currentSlotId].category or CATEGORY_NOTHING, entryControl.m_data.value)
+		ShowSlotActionTooltip(entryControl, TOPLEFT, 0, 0, BOTTOMRIGHT)
 	end
-	CSPM_UI_ActionValueMenu.scrollHelper.OnMouseExit = function(scrollHelper, control)
-		if control.m_data.tooltip then
-			HideSlotActionTooltip()
-		end
+	local function ActionValueMenu_OnMouseExit(comboBox, entryControl)
+		HideSlotActionTooltip()
+	end
+	local comboBox = self.GetComboBoxObject_FromDropdownWidget(CSPM_UI_ActionValueMenu)
+	if comboBox then
+		comboBox:SetEntryMouseOverCallbacks(ActionValueMenu_OnMouseEnter, ActionValueMenu_OnMouseExit)
 	end
 
 	-- Create a widget for the Preset Selection dropdown menu
@@ -1092,7 +1072,6 @@ function CSPM_PieMenuEditorPanel:OnLAMPanelControlsCreated(panel)
 		tooltip = L(SI_CSPM_UI_PRESET_SELECT_MENU_TIPS), 
 		choices = self.presetChoices, 	-- If choicesValue is defined, choices table is only used for UI display!
 		choicesValues = self.presetChoicesValues, 
-		choicesTooltips = self.presetChoicesTooltips, 
 		getFunc = function() return self.currentPresetId end, 
 		setFunc = function(newPresetId)
 			CSPM.LDL:Debug("OnPresetIdSelectionChanged : %s", newPresetId)
@@ -1125,17 +1104,18 @@ function CSPM_PieMenuEditorPanel:OnLAMPanelControlsCreated(panel)
 	CSPM_UI_PresetSelectMenu.combobox:SetWidth(300)	-- default : panelWidth(585) / 3
 	CSPM_UI_PresetSelectMenu:SetAnchor(BOTTOMLEFT, CSPM_UI_PresetSubmenu, TOPLEFT)
 	CSPM_UI_PresetSelectMenu:SetAnchor(BOTTOMRIGHT, CSPM_UI_PresetSubmenu, TOPRIGHT, -112, -4)
-	-- override ScrollableDropdownHelper for CSPM_UI_PresetSelectMenu to customize dropdown choices tooltips
-	CSPM_UI_PresetSelectMenu.scrollHelper.OnMouseEnter = function(scrollHelper, control)
-		if control.m_data.tooltip then
-			LayoutSlotActionTooltip(ACTION_TYPE_PIE_MENU, CATEGORY_NOTHING, control.m_data.tooltip, UI_NONE)
-			ShowSlotActionTooltip(control, TOPLEFT, 0, 0, BOTTOMRIGHT)
-		end
+
+	-- Set up a custom tooltip for CSPM_UI_PresetSelectMenu, a dropdown widget.
+	local function PresetSelectMenu_OnMouseEnter(comboBox, entryControl)
+		LayoutSlotActionTooltip(ACTION_TYPE_PIE_MENU, CATEGORY_NOTHING, entryControl.m_data.value, UI_NONE)
+		ShowSlotActionTooltip(entryControl, TOPLEFT, 0, 0, BOTTOMRIGHT)
 	end
-	CSPM_UI_PresetSelectMenu.scrollHelper.OnMouseExit = function(scrollHelper, control)
-		if control.m_data.tooltip then
-			HideSlotActionTooltip()
-		end
+	local function PresetSelectMenu_OnMouseExit(comboBox, entryControl)
+		HideSlotActionTooltip()
+	end
+	comboBox = self.GetComboBoxObject_FromDropdownWidget(CSPM_UI_PresetSelectMenu)
+	if comboBox then
+		comboBox:SetEntryMouseOverCallbacks(PresetSelectMenu_OnMouseEnter, PresetSelectMenu_OnMouseExit)
 	end
 
 	self:ChangePanelPresetState(1)

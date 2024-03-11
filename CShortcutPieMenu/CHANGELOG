@@ -1,3 +1,9 @@
+V1.5.2: [V10502] by Calamath
+- Fixed an issue with the settings menu in conjunction with the recent update to the LibAddonMenu drop-down widget.
+- Updated bundled LibCInteraction version to 1.0.2 (AddOnVersion: 10002).
+- Updated bundled LibCPieMenu version to 1.5.2 (AddOnVersion: 10502).
+- Updated API version to 101041 (ESO 9.3.x : Scions of Ithelia)
+
 V1.5.1: [V10501] by Calamath
 - Fixed an issue since the Necrom update where unlocking a new collection did not immediately reflect in the pie menu settings menu.
 

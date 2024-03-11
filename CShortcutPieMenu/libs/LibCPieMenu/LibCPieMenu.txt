@@ -1,13 +1,13 @@
 ## Title: LibCPieMenu
 ## Description: A library for providing a circular context menu called Pie Menu.
-## Version: 1.5.0
-## AddOnVersion: 10500
+## Version: 1.5.2
+## AddOnVersion: 10502
 ## Author: Calamath
 ## License: Artistic License 2.0
 ## IsLibrary: true
-## APIVersion: 101037 101038
-## DependsOn: LibCInteraction>=10000
-## OptionalDependsOn: LibDebugLogger>=262
+## APIVersion: 101040 101041
+## DependsOn: LibCInteraction>=10002
+## OptionalDependsOn: LibDebugLogger>=263
 
 ; This Add-on is not created by, affiliated with or sponsored by ZeniMax 
 ; Media Inc. or its affiliates. The Elder Scrolls® and related logos are 

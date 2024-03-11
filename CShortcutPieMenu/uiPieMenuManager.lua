@@ -81,15 +81,15 @@ function CSPM_PieMenuManagerPanel:OnUserPieMenuInfoUpdated(presetId)
 		self.presetChoices[key] = self:GetPresetDisplayNameByPresetId(presetId)
 	end
 	if self.panelInitialized then
-		CSPM_UI_MAN_PresetSelectMenuKeybinds1:UpdateChoices(self.presetChoices, self.presetChoicesValues, self.presetChoicesTooltips)
+		CSPM_UI_MAN_PresetSelectMenuKeybinds1:UpdateChoices(self.presetChoices, self.presetChoicesValues)
 		CSPM_UI_MAN_PresetSelectMenuKeybinds1:UpdateValue()		-- Note : When called with no arguments, getFunc will be called, and setFunc will NOT be called.
-		CSPM_UI_MAN_PresetSelectMenuKeybinds2:UpdateChoices(self.presetChoices, self.presetChoicesValues, self.presetChoicesTooltips)
+		CSPM_UI_MAN_PresetSelectMenuKeybinds2:UpdateChoices(self.presetChoices, self.presetChoicesValues)
 		CSPM_UI_MAN_PresetSelectMenuKeybinds2:UpdateValue()
-		CSPM_UI_MAN_PresetSelectMenuKeybinds3:UpdateChoices(self.presetChoices, self.presetChoicesValues, self.presetChoicesTooltips)
+		CSPM_UI_MAN_PresetSelectMenuKeybinds3:UpdateChoices(self.presetChoices, self.presetChoicesValues)
 		CSPM_UI_MAN_PresetSelectMenuKeybinds3:UpdateValue()
-		CSPM_UI_MAN_PresetSelectMenuKeybinds4:UpdateChoices(self.presetChoices, self.presetChoicesValues, self.presetChoicesTooltips)
+		CSPM_UI_MAN_PresetSelectMenuKeybinds4:UpdateChoices(self.presetChoices, self.presetChoicesValues)
 		CSPM_UI_MAN_PresetSelectMenuKeybinds4:UpdateValue()
-		CSPM_UI_MAN_PresetSelectMenuKeybinds5:UpdateChoices(self.presetChoices, self.presetChoicesValues, self.presetChoicesTooltips)
+		CSPM_UI_MAN_PresetSelectMenuKeybinds5:UpdateChoices(self.presetChoices, self.presetChoicesValues)
 		CSPM_UI_MAN_PresetSelectMenuKeybinds5:UpdateValue()
 	end
 end
@@ -107,14 +107,14 @@ function CSPM_PieMenuManagerPanel:GetPresetSelectionChoices()
 		table.insert(choices, self:GetPresetDisplayNameByPresetId(presetId))
 		table.insert(choicesValues, presetId)
 	end
-	-- In overridden custom tooltip functions, the choicesTooltips table uses the presetId value instead of a string.
-	return choices, choicesValues, choicesValues
+
+	return choices, choicesValues
 end
+
 function CSPM_PieMenuManagerPanel:RebuildPresetSelectionChoices()
 	ClearTable(self.presetChoices)
 	ClearTable(self.presetChoicesValues)
-	ClearTable(self.presetChoicesTooltips)
-	self.presetChoices, self.presetChoicesValues, self.presetChoicesTooltips = self:GetPresetSelectionChoices()
+	self.presetChoices, self.presetChoicesValues = self:GetPresetSelectionChoices()
 	self.presetSelectionIsDirty = false
 end
 
@@ -129,15 +129,15 @@ function CSPM_PieMenuManagerPanel:OnLAMPanelOpened(panel)
 		CSPM.LDL:Debug("PresetSelectionChoices Updated:")
 		self:RebuildPresetSelectionChoices()	-- 	presetChoices
 
-		CSPM_UI_MAN_PresetSelectMenuKeybinds1:UpdateChoices(self.presetChoices, self.presetChoicesValues, self.presetChoicesTooltips)
+		CSPM_UI_MAN_PresetSelectMenuKeybinds1:UpdateChoices(self.presetChoices, self.presetChoicesValues)
 		CSPM_UI_MAN_PresetSelectMenuKeybinds1:UpdateValue()		-- Note : When called with no arguments, getFunc will be called, and setFunc will NOT be called.
-		CSPM_UI_MAN_PresetSelectMenuKeybinds2:UpdateChoices(self.presetChoices, self.presetChoicesValues, self.presetChoicesTooltips)
+		CSPM_UI_MAN_PresetSelectMenuKeybinds2:UpdateChoices(self.presetChoices, self.presetChoicesValues)
 		CSPM_UI_MAN_PresetSelectMenuKeybinds2:UpdateValue()
-		CSPM_UI_MAN_PresetSelectMenuKeybinds3:UpdateChoices(self.presetChoices, self.presetChoicesValues, self.presetChoicesTooltips)
+		CSPM_UI_MAN_PresetSelectMenuKeybinds3:UpdateChoices(self.presetChoices, self.presetChoicesValues)
 		CSPM_UI_MAN_PresetSelectMenuKeybinds3:UpdateValue()
-		CSPM_UI_MAN_PresetSelectMenuKeybinds4:UpdateChoices(self.presetChoices, self.presetChoicesValues, self.presetChoicesTooltips)
+		CSPM_UI_MAN_PresetSelectMenuKeybinds4:UpdateChoices(self.presetChoices, self.presetChoicesValues)
 		CSPM_UI_MAN_PresetSelectMenuKeybinds4:UpdateValue()
-		CSPM_UI_MAN_PresetSelectMenuKeybinds5:UpdateChoices(self.presetChoices, self.presetChoicesValues, self.presetChoicesTooltips)
+		CSPM_UI_MAN_PresetSelectMenuKeybinds5:UpdateChoices(self.presetChoices, self.presetChoicesValues)
 		CSPM_UI_MAN_PresetSelectMenuKeybinds5:UpdateValue()
 	end
 end
@@ -198,7 +198,6 @@ function CSPM_PieMenuManagerPanel:CreateSettingPanel()
 		tooltip = L(SI_CSPM_UI_BINDINGS_INTERACTION1_TIPS), 
 		choices = self.presetChoices, 	-- If choicesValue is defined, choices table is only used for UI display!
 		choicesValues = self.presetChoicesValues, 
-		choicesTooltips = self.presetChoicesTooltips, 
 		getFunc = function() return self.svCurrent.keybinds[1] end, 
 		setFunc = function(newPreset) self.svCurrent.keybinds[1] = newPreset end, 
 		width = "full", 
@@ -212,7 +211,6 @@ function CSPM_PieMenuManagerPanel:CreateSettingPanel()
 --		tooltip = "", 
 		choices = self.presetChoices, 	-- If choicesValue is defined, choices table is only used for UI display!
 		choicesValues = self.presetChoicesValues, 
-		choicesTooltips = self.presetChoicesTooltips, 
 		getFunc = function() return self.svCurrent.keybinds[2] end, 
 		setFunc = function(newPreset) self.svCurrent.keybinds[2] = newPreset end, 
 		width = "full", 
@@ -226,7 +224,6 @@ function CSPM_PieMenuManagerPanel:CreateSettingPanel()
 --		tooltip = "", 
 		choices = self.presetChoices, 	-- If choicesValue is defined, choices table is only used for UI display!
 		choicesValues = self.presetChoicesValues, 
-		choicesTooltips = self.presetChoicesTooltips, 
 		getFunc = function() return self.svCurrent.keybinds[3] end, 
 		setFunc = function(newPreset) self.svCurrent.keybinds[3] = newPreset end, 
 		width = "full", 
@@ -240,7 +237,6 @@ function CSPM_PieMenuManagerPanel:CreateSettingPanel()
 --		tooltip = "", 
 		choices = self.presetChoices, 	-- If choicesValue is defined, choices table is only used for UI display!
 		choicesValues = self.presetChoicesValues, 
-		choicesTooltips = self.presetChoicesTooltips, 
 		getFunc = function() return self.svCurrent.keybinds[4] end, 
 		setFunc = function(newPreset) self.svCurrent.keybinds[4] = newPreset end, 
 		width = "full", 
@@ -254,7 +250,6 @@ function CSPM_PieMenuManagerPanel:CreateSettingPanel()
 --		tooltip = "", 
 		choices = self.presetChoices, 	-- If choicesValue is defined, choices table is only used for UI display!
 		choicesValues = self.presetChoicesValues, 
-		choicesTooltips = self.presetChoicesTooltips, 
 		getFunc = function() return self.svCurrent.keybinds[5] end, 
 		setFunc = function(newPreset) self.svCurrent.keybinds[5] = newPreset end, 
 		width = "full", 
@@ -345,18 +340,18 @@ function CSPM_PieMenuManagerPanel:CreateSettingPanel()
 end
 
 function CSPM_PieMenuManagerPanel:OnLAMPanelControlsCreated(panel)
-	-- override ScrollableDropdownHelper for CSPM_UI_MAN_PresetSelectMenuKeybindsX to customize dropdown choices tooltips
+	-- Set up a custom tooltip for CSPM_UI_MAN_PresetSelectMenuKeybindsX, a dropdown widget.
+	local function PresetSelectMenuKeybinds_OnMouseEnter(comboBox, entryControl)
+		LayoutSlotActionTooltip(ACTION_TYPE_PIE_MENU, CATEGORY_NOTHING, entryControl.m_data.value, UI_NONE)
+		ShowSlotActionTooltip(entryControl, TOPLEFT, 0, 0, BOTTOMRIGHT)
+	end
+	local function PresetSelectMenuKeybinds_OnMouseExit(comboBox, entryControl)
+		HideSlotActionTooltip()
+	end
 	for i = 1, 5 do
-		_G["CSPM_UI_MAN_PresetSelectMenuKeybinds" .. i].scrollHelper.OnMouseEnter = function(scrollHelper, control)
-			if control.m_data.tooltip then
-				LayoutSlotActionTooltip(ACTION_TYPE_PIE_MENU, CATEGORY_NOTHING, control.m_data.tooltip, UI_NONE)
-				ShowSlotActionTooltip(control, TOPLEFT, 0, 0, BOTTOMRIGHT)
-			end
-		end
-		_G["CSPM_UI_MAN_PresetSelectMenuKeybinds" .. i].scrollHelper.OnMouseExit = function(scrollHelper, control)
-			if control.m_data.tooltip then
-				HideSlotActionTooltip()
-			end
+		local comboBox = self.GetComboBoxObject_FromDropdownWidget(_G["CSPM_UI_MAN_PresetSelectMenuKeybinds" .. i])
+		if comboBox then
+			comboBox:SetEntryMouseOverCallbacks(PresetSelectMenuKeybinds_OnMouseEnter, PresetSelectMenuKeybinds_OnMouseExit)
 		end
 	end
 end

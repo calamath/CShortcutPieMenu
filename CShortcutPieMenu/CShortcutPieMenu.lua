@@ -27,7 +27,7 @@ end
 
 
 -- ---------------------------------------------------------------------------------------
--- CT_SimpleAddonFramework: Simple Add-on Framework Template Class              rel.1.0.10
+-- CT_SimpleAddonFramework: Simple Add-on Framework Template Class              rel.1.0.11
 -- ---------------------------------------------------------------------------------------
 local CT_SimpleAddonFramework = ZO_Object:Subclass()
 function CT_SimpleAddonFramework:New(...)
@@ -86,6 +86,7 @@ function CT_SimpleAddonFramework:ConfigDebug(arg)
 			Error = function() end, 
 		}
 	end
+	self._isDebugMode = debugMode
 end
 function CT_SimpleAddonFramework:RegisterClassObject(className, classObject)
 	if className and classObject and not self._class[className] then
@@ -113,7 +114,7 @@ function CT_SimpleAddonFramework:OnAddOnLoaded(event, addonName)
 end
 
 -- ---------------------------------------------------------------------------------------
--- CT_AddonFramework: Add-on Framework Template Class for multiple modules      rel.1.0.10
+-- CT_AddonFramework: Add-on Framework Template Class for multiple modules      rel.1.0.11
 -- ---------------------------------------------------------------------------------------
 local CT_AddonFramework = CT_SimpleAddonFramework:Subclass()
 function CT_AddonFramework:Initialize(name, attributes)
@@ -126,6 +127,7 @@ function CT_AddonFramework:Initialize(name, attributes)
 		LDL = self.LDL, 
 		HasAvailableClass = function(_, ...) return self:HasAvailableClass(...) end, 
 		CreateClassObject = function(_, ...) return self:CreateClassObject(...) end, 
+		RegisterGlobalObject = function(_, ...) return self:RegisterGlobalObject(...) end, 
 		RegisterSharedObject = function(_, ...) return self:RegisterSharedObject(...) end, 
 		RegisterCallback = function(_, ...) return self:RegisterCallback(...) end, 
 		UnregisterCallback = function(_, ...) return self:UnregisterCallback(...) end, 
@@ -164,15 +166,22 @@ function CT_AddonFramework:CreateCustomEnvironment(t, parent)	-- helper function
 	return setmetatable(type(t) == "table" and t or {}, { __index = type(parent) == "table" and parent or getfenv and type(getfenv) == "function" and getfenv(2) or _ENV or _G, })
 end
 function CT_AddonFramework:EnableCustomEnvironment(t, stackLevel)	-- helper function
--- This method is intended to be called in the main chunk and should not be called inside functions.
-	local stackLevel = type(stackLevel) == "number" and stackLevel > 1 and stackLevel or 2
+	local stackLevel = type(stackLevel) == "number" and stackLevel > 1 and stackLevel or type(ZO_GetCallstackFunctionNames) == "function" and #(ZO_GetCallstackFunctionNames()) + 1 or 2
 	local env = type(t) == "table" and t or type(self._env) == "table" and self._env
 	if env then
 		if setfenv and type(setfenv) == "function" then
-			setfenv(stackLevel, env)	-- [Main Chunk]: self:EnableCustomEnvironment(t, nil) -> [HERE]: setfenv(2, t)
+			setfenv(stackLevel, env)
 		else
 			_ENV = env
 		end
+	end
+end
+function CT_AddonFramework:RegisterGlobalObject(objectName, globalObject)
+	if objectName and globalObject and _G[objectName] == nil then
+		_G[objectName] = globalObject
+		return true
+	else
+		return false
 	end
 end
 function CT_AddonFramework:RegisterSharedObject(objectName, sharedObject)
@@ -229,7 +238,7 @@ local LCPM = LibCPieMenu:SetSharedEnvironment()
 local _ENV = CT_AddonFramework:CreateCustomEnvironment(_SHARED_DEFINITIONS)
 local CSPM = CT_AddonFramework:New("CShortcutPieMenu", {
 	name = "CShortcutPieMenu", 
-	version = "1.5.1", 
+	version = "1.5.2", 
 	author = "Calamath", 
 	savedVarsPieMenuEditor = "CShortcutPieMenuDB", 
 	savedVarsPieMenuManager = "CShortcutPieMenuSV", 
