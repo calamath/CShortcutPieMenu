@@ -238,7 +238,7 @@ local LCPM = LibCPieMenu:SetSharedEnvironment()
 local _ENV = CT_AddonFramework:CreateCustomEnvironment(_SHARED_DEFINITIONS)
 local CSPM = CT_AddonFramework:New("CShortcutPieMenu", {
 	name = "CShortcutPieMenu", 
-	version = "1.5.2", 
+	version = "1.5.3", 
 	author = "Calamath", 
 	savedVarsPieMenuEditor = "CShortcutPieMenuDB", 
 	savedVarsPieMenuManager = "CShortcutPieMenuSV", 
@@ -497,21 +497,27 @@ function CSPM:RegisterInteraction(pieMenu)
 			return not pieMenu:IsInteracting() and pieMenu:PrepareForInteraction()
 		end, 
 		multipleInput = true, 
-		holdTime = function() return self.svCurrent.menuAttributes.timeToHoldKey end, 
-		startedCallback = function(interaction, presetId)
-			self.holdDownInteractionKey = true
-			self.requestedPresetId = presetId
+		keyDownCallback = function(interaction, presetId)
+			interaction.presetId = presetId
 		end, 
-		endedCallback = function(interaction, clearSelection)
+		holdTime = function()
+			return self.svCurrent.menuAttributes.timeToHoldKey
+		end, 
+		startedCallback = function(interaction)
+			self.holdDownInteractionKey = true
+			self.requestedPresetId = interaction.presetId
+		end, 
+		endedCallback = function(interaction)
 			if interaction.isPerformed then
-				pieMenu:StopInteraction(clearSelection)
+				pieMenu:StopInteraction(false)
 				self:ClearActivePresetId()
 				self:SetTopmostPieMenu(nil)
 			end
+			interaction.presetId = 0
 			self.holdDownInteractionKey = false
 			self.requestedPresetId = 0
 		end, 
-		performedCallback = function(interaction)
+		performedCallback = function()
 			if not pieMenu:IsInteracting() then
 				self:SetActivePresetId(self.requestedPresetId)
 				pieMenu:ShowMenu()

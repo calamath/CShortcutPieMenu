@@ -1,3 +1,9 @@
+V1.5.3: [V10503] by Calamath
+- Avoided an issue where the icon in the Pie menu would unintentionally enlarge in rare cases..
+- Updated bundled LibCInteraction version to 1.1.0 (AddOnVersion: 10100).
+- Updated bundled LibCPieMenu version to 1.5.3 (AddOnVersion: 10503).
+- Updated API version to 101042 (ESO 10.0.x : Gold Road)
+
 V1.5.2: [V10502] by Calamath
 - Fixed an issue with the settings menu in conjunction with the recent update to the LibAddonMenu drop-down widget.
 - Updated bundled LibCInteraction version to 1.0.2 (AddOnVersion: 10002).

@@ -353,36 +353,6 @@ function CPieMenuManager:InitializeAPI()
 		return self:CreatePieMenuController(...)
 	end
 
---[[
--- * LibCInteraction:GetSupportedModifierKeys()
--- ** _Returns:_ *table* _keyCodeList_
-	self._external.GetSupportedModifierKeys = function()
-		return self:GetSupportedModifierKeys()
-	end
-
--- * LibCInteraction:IsSupportedModifierKey(*[KeyCode|#KeyCode]* _keyCode_)
--- ** _Returns:_ *bool* _isSupported_
-	self._external.IsSupportedModifierKey = function(_, keyCode)
-		return self:IsSupportedModifierKey(keyCode)
-	end
-
--- * LibCInteraction:RegisterInteraction([*string* or *table*] _actionNameOrNames_, *table* _interactionDataTable_)
--- ** _Returns:_ *object:nilable* _interactionWrapperObject_
-	self._external.RegisterInteraction = function(_, actionNameOrNames, data)
-		return self:RegisterInteraction(actionNameOrNames, data)
-	end
-
--- * LibCInteraction:HandleKeybindDown(*string* _actionName_)
-	self._external.HandleKeybindDown = function(_, actionName, ...)
-		return self:HandleKeybindDown(actionName, ...)
-	end
-
--- * LibCInteraction:HandleKeybindUp(*string* _actionName_)
-	self._external.HandleKeybindUp = function(_, actionName, ...)
-		return self:HandleKeybindUp(actionName, ...)
-	end
-]]
-
 -- * LibCPieMenu:RegisterPieMenu(*string* _presetId_, *table* _pieMenuData)
 -- NOTE: The first character of the presetId must begin with something other than an exclamation mark. (! : exclamation mark)
 	self._external.RegisterPieMenu = function(_, presetId, pieMenuData)
@@ -397,7 +367,7 @@ end
 -- ---------------------------------------------------------------------------------------
 local PIE_MENU_MANAGER = CPieMenuManager:New("LibCPieMenu", {
 	name = "LibCPieMenu", 
-	version = "1.5.2", 
+	version = "1.5.3", 
 	author = "Calamath", 
 	authority = {2973583419,210970542}, 
 	_env = _ENV, 

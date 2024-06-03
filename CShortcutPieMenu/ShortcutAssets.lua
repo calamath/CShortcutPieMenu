@@ -61,8 +61,7 @@ local shortcutAssets = {
 	["!CSPM_reloadui"] = {
 		name = L(SI_ADDON_MANAGER_RELOAD), 
 		tooltip = L(SI_CSPM_SHORTCUT_RELOADUI_TIPS), 
-		icon = "Esoui/Art/Loadscreen/Keyboard/load_ourosboros.dds", 
-		resizeIconToFitFile = true, 
+		icon = "Esoui/Art/Login/link_loginlogo_eso.dds", 
 		callback = function()
 			local messageParams = CENTER_SCREEN_ANNOUNCE:CreateMessageParams(CSA_CATEGORY_MAJOR_TEXT, SOUNDS.NONE)
 			messageParams:SetCSAType(CENTER_SCREEN_ANNOUNCE_TYPE_DISPLAY_ANNOUNCEMENT)
